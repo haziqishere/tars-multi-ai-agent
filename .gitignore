@@ -2,11 +2,12 @@
 /node_modules
 /.pnp
 .pnp.js
+/front-end-tars/node_modules
 
 # Testing
 /coverage
 
-# Next.js
+# Next.js specific build outputs
 /front-end-tars/.next/
 /front-end-tars/out/
 
