@@ -11,6 +11,7 @@ import ReactFlow, {
   MarkerType,
   Position,
   useReactFlow,
+  ReactFlowProvider,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
@@ -89,22 +90,23 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
 
   return (
     <div className="h-full w-full" style={{ minHeight: "240px" }}>
-      <ReactFlow
-        nodes={flowNodes}
-        edges={flowEdges}
-        defaultEdgeOptions={defaultEdgeOptions}
-        onNodeClick={onNodeClick}
-        fitView={fitView}
-        fitViewOptions={{ padding: 0.2 }}
-        attributionPosition="bottom-right"
-        minZoom={0.5}
-        maxZoom={1.5}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <Background color="#f8f8f8" gap={16} />
-        <Controls showInteractive={false} />
-      </ReactFlow>
+      <ReactFlowProvider>
+        <div style={{ width: "100%", height: "100%", position: "relative" }}>
+          <ReactFlow
+            nodes={flowNodes}
+            edges={flowEdges}
+            defaultEdgeOptions={defaultEdgeOptions}
+            onNodeClick={onNodeClick}
+            fitView={fitView}
+            fitViewOptions={{ padding: 0.2 }}
+            attributionPosition="bottom-right"
+            style={{ width: "100%", height: "100%" }}
+          >
+            <Background color="#f8f8f8" gap={16} />
+            <Controls showInteractive={false} />
+          </ReactFlow>
+        </div>
+      </ReactFlowProvider>
     </div>
   );
 };
