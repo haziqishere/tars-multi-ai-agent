@@ -3,10 +3,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { addMessage, setIsMinimized } from "@/store/slices/chatSlice";
+import {
+  addMessage,
+  setIsMinimized,
+  updateMessage,
+} from "@/store/slices/chatSlice";
 import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 import { motion } from "framer-motion";
+import { store } from "@/store";
 
 interface ChatInterfaceProps {
   onSubmit: (message: string) => void;
@@ -36,11 +41,39 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Add user message to chat
     dispatch(addMessage({ content: message, sender: "user" }));
 
-    // Start AI typing indicator
-    dispatch(addMessage({ content: "Thinking...", sender: "ai" }));
+    // Add loading message
+    dispatch(
+      addMessage({
+        content: "...",
+        sender: "ai",
+      })
+    );
 
     // Send message to parent for processing
     onSubmit(message);
+
+    // For development testing - simulate response after delay
+    // In production, this would happen when your API responds
+    setTimeout(() => {
+      // Get current state to find the latest AI message
+      const state = store.getState();
+      const currentMessages = state.chat.messages;
+      // Find last AI message
+      const aiMessages = currentMessages.filter((msg) => msg.sender === "ai");
+      const lastAiMessage = aiMessages[aiMessages.length - 1];
+
+      if (lastAiMessage) {
+        dispatch(
+          updateMessage({
+            id: lastAiMessage.id,
+            content:
+              'Here is my response to your question about "' +
+              message +
+              '". I hope this helps!',
+          })
+        );
+      }
+    }, 3000);
   };
 
   return (

@@ -10,12 +10,14 @@ import ReactFlow, {
   Edge,
   MarkerType,
   Position,
+  useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
 interface FlowVisualizationProps {
   nodes: any[];
   edges: any[];
+  fitView?: boolean;
 }
 
 // Custom node styling
@@ -23,10 +25,11 @@ const nodeStyle = {
   background: "#fff",
   border: "1px solid #ddd",
   borderRadius: "8px",
-  padding: "10px",
-  width: 120,
-  boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-  fontSize: "12px",
+  padding: "12px",
+  width: 150,
+  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+  fontSize: "14px",
+  fontWeight: 500,
 };
 
 // Default edge options
@@ -35,6 +38,8 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   markerEnd: {
     type: MarkerType.ArrowClosed,
     color: "#888",
+    width: 20,
+    height: 20,
   },
   style: {
     stroke: "#888",
@@ -45,8 +50,9 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 const FlowVisualization: React.FC<FlowVisualizationProps> = ({
   nodes,
   edges,
+  fitView = true,
 }) => {
-  // Transform nodes to ReactFlow format
+  // Transform nodes to ReactFlow format with adjusted positions for better visualization
   const flowNodes: Node[] = nodes.map((node) => ({
     id: node.id,
     data: { label: node.label },
@@ -66,6 +72,14 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
     markerEnd: {
       type: MarkerType.ArrowClosed,
     },
+    style: {
+      stroke: "#666",
+      strokeWidth: 2,
+    },
+    labelStyle: {
+      fontSize: 12,
+      fontWeight: 500,
+    },
   }));
 
   // This prevents rerendering the flow when nothing has changed
@@ -74,14 +88,19 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
   }, []);
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full" style={{ minHeight: "240px" }}>
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}
         defaultEdgeOptions={defaultEdgeOptions}
         onNodeClick={onNodeClick}
-        fitView
+        fitView={fitView}
+        fitViewOptions={{ padding: 0.2 }}
         attributionPosition="bottom-right"
+        minZoom={0.5}
+        maxZoom={1.5}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
+        style={{ width: "100%", height: "100%" }}
       >
         <Background color="#f8f8f8" gap={16} />
         <Controls showInteractive={false} />

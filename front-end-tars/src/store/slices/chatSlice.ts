@@ -42,6 +42,13 @@ export const chatSlice = createSlice({
     clearMessages: (state) => {
       state.messages = [];
     },
+    updateMessage: (state, action: PayloadAction<{ id: string; content: string }>) => {
+      const { id, content } = action.payload;
+      const messageIndex = state.messages.findIndex(m => m.id === id);
+      if (messageIndex !== -1) {
+        state.messages[messageIndex].content = content;
+      }
+    },
   },
 });
 
@@ -49,7 +56,8 @@ export const {
   addMessage, 
   setIsMinimized, 
   setIsTyping, 
-  clearMessages 
+  clearMessages,
+  updateMessage
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

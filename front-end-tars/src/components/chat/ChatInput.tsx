@@ -41,7 +41,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           placeholder="Ask me anything..."
           className="flex-1 p-3 outline-none resize-none max-h-24"
           rows={1}
-          disabled={disabled}
+          disabled={false}
         />
         <Button
           type="submit"

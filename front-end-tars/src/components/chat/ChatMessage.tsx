@@ -18,6 +18,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest }) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  // Determine if message is a loading indicator
+  const isLoading =
+    message.content === "..." || message.content === "Thinking...";
+
   return (
     <motion.div
       className={`flex ${isUser ? "justify-end" : "justify-start"}`}
@@ -41,7 +45,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest }) => {
               : "bg-gray-100 text-gray-800 rounded-bl-none"
           }`}
         >
-          {message.content === "Thinking..." && isLatest ? (
+          {isLoading && isLatest ? (
             <div className="flex space-x-1">
               <motion.div
                 className="w-2 h-2 rounded-full bg-current"

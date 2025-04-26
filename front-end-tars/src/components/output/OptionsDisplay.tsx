@@ -110,10 +110,11 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
                       </Button>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-4 pt-4 border-t">
-                      <div className="h-48 border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="h-96 w-full border border-gray-200 rounded-lg overflow-hidden">
                         <FlowVisualization
                           nodes={option.nodes}
                           edges={option.edges}
+                          fitView={true}
                         />
                       </div>
                     </CollapsibleContent>
