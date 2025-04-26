@@ -1,0 +1,116 @@
+# Agent Workflow UI - Implementation Guide
+
+## Project Overview
+
+This document provides guidance for implementing the Agent Workflow UI system, a Next.js application that visualizes and interacts with a system of 5 AI agents working together on business process optimization tasks.
+
+## Project Structure
+
+The project follows a standard Next.js structure with the following key directories:
+
+- `/src/app`: Next.js App Router pages and layouts
+- `/src/components`: React components organized by feature
+- `/src/store`: Redux store with slices for different state domains
+- `/src/types`: TypeScript type definitions
+- `/src/lib`: Utility functions and API client
+
+## Key Components
+
+### 1. Main Layout
+
+The main layout divides the screen into multiple sections:
+- **Agent Workflow Sidebar**: Shows the status and progress of 5 agents working on the task
+- **Chat Interface**: Allows users to input prompts and view responses
+- **Output Interface**: Displays the results of the agent workflow, including business flow visualizations and optimization options
+
+### 2. State Management
+
+The application uses Redux Toolkit to manage state across three main domains:
+- **Agent State**: Tracks the status and progress of each agent in the workflow
+- **Chat State**: Manages chat history and UI state for the chat interface
+- **Output State**: Stores the business flow visualizations and optimization options
+
+### 3. Visualization Components
+
+The application uses React Flow to visualize business processes as nodes and edges:
+- **FlowVisualization**: Renders a directed graph of business operations
+- **OptionsDisplay**: Shows optimization options with their cost and timeline metrics
+
+## Implementation Steps
+
+### 1. Setup and Dependencies
+
+1. Clone the repository and install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Ensure you have all required dependencies:
+   - Next.js
+   - React
+   - Redux Toolkit
+   - React Flow
+   - Framer Motion
+   - Magic UI
+
+### 2. Development Workflow
+
+1. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+2. Access the application at http://localhost:3000
+
+### 3. Backend Integration
+
+The application is designed to work with a REST API backend:
+
+1. Update the API endpoints in `/src/lib/api.ts` with your actual backend URLs
+2. Implement the required API methods on your backend:
+   - Process prompt through agent workflow
+   - Return business flow visualization data
+   - Return optimization options
+
+### 4. Deployment
+
+Deploy to Vercel following these steps:
+
+1. Push your code to a GitHub repository
+2. Connect the repository to Vercel
+3. Configure environment variables for the API URL
+4. Deploy
+
+## Component Customization
+
+### Agent Workflow Visualization
+
+The agent workflow visualization can be customized by:
+1. Updating the agent definitions in `/src/store/slices/agentSlice.ts`
+2. Modifying the animation timing in `/src/components/agent-workflow/AgentWorkflow.tsx`
+3. Styling the agent nodes in `/src/components/agent-workflow/AgentNode.tsx`
+
+### Flow Visualization
+
+The business flow visualization can be customized by:
+1. Modifying the node and edge styles in `/src/components/output/FlowVisualization.tsx`
+2. Updating the layout algorithm by configuring ReactFlow options
+
+## Future Enhancements
+
+Consider the following enhancements for future iterations:
+
+1. **Real-time Updates**: Implement WebSocket connections to receive real-time updates from agents
+2. **User Authentication**: Add user authentication to save preferences and history
+3. **More Visualization Types**: Add alternative visualization types for different data sets
+4. **Customizable Workflows**: Allow users to define custom agent workflows
+5. **Export/Import**: Add functionality to export results or import existing business flows
+
+## Libraries and Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Redux Toolkit Documentation](https://redux-toolkit.js.org/)
+- [React Flow Documentation](https://reactflow.dev/)
+- [Framer Motion Documentation](https://www.framer.com/motion/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Magic UI Documentation](https://magic-ui.design/)

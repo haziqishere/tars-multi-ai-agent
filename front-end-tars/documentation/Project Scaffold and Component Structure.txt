@@ -1,0 +1,70 @@
+# Agentic UI Workflow System - Project Scaffold
+
+## Project Overview
+We're building a UI system for visualizing and interacting with an agent workflow system consisting of 5 agents. The application will include:
+
+1. A main interface with agent workflows visualization
+2. A chat UI for user interaction
+3. An output display showing multiple options and flows with node/edge visualization
+4. Animations to show progress between different agent states
+
+## Tech Stack
+- Frontend: Next.js, Tailwind CSS, Magic UI
+- State Management: Redux
+- Graph Visualization: React Flow (for Neo4j-like node/edge visualization)
+- Infrastructure: Vercel deployment
+- Backend Integration: REST API calls
+
+## Key Components
+
+### 1. Main Layout
+The main layout will divide the screen into two main sections initially:
+- Left sidebar: Agent Workflows
+- Main content: Chat UI
+
+After user input, the layout transitions to:
+- Left sidebar: Agent Workflows (with update flow animation)
+- Top section: Minimized Chat UI
+- Main content: Output UI
+
+### 2. Agent Workflow Visualization
+This component will visualize the 5 agents and their current status/progress.
+- Each agent will be represented as a node
+- Connections between agents will be shown as edges
+- Active agents will be highlighted
+- Progress/status will be shown with animations and text indicators
+
+### 3. Chat Interface
+Based on your reference image, the chat interface will include:
+- Chat history display
+- User input area with send button
+- AI responses with appropriate styling
+- Support for minimizing after input
+
+### 4. Output Visualization
+The output area will display:
+- Multiple scenario options
+- Node-edge graphs showing business operations flow
+- Cost and timeline estimates for each option
+- Selection mechanism for users to choose an option
+
+## Animation States
+1. Initial State: Agent Workflow sidebar + Chat UI
+2. Processing State: Agent Workflow shows progress animations
+3. Output State: Minimized Chat + Output visualization with options
+
+## Data Flow
+1. User provides input via Chat UI
+2. Input triggers agent workflow
+3. Agents process input sequentially (visualized in sidebar)
+4. Output is generated and displayed in main content area
+5. User can select from options in the output
+
+## Next Steps
+1. Set up project with required dependencies
+2. Implement base layout and component structure
+3. Create basic UI components
+4. Implement state management with Redux
+5. Add animations and transitions
+6. Connect to backend API
+7. Test and refine UI/UX
