@@ -15,7 +15,6 @@ import {
   Menu,
   Bell,
   Settings,
-  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -132,10 +131,6 @@ export default function Home() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="sm" className="hidden md:flex">
-            <Download className="h-4 w-4 mr-1" />
-            Export
-          </Button>
           <Button variant="ghost" size="icon" className="h-9 w-9">
             <Bell className="h-5 w-5" />
           </Button>
@@ -239,10 +234,6 @@ export default function Home() {
                 </Badge>
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" className="h-7 text-xs">
-                  <Download className="h-3 w-3 mr-1" />
-                  Export
-                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
