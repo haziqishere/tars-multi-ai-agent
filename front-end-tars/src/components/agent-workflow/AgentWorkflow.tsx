@@ -160,7 +160,7 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
   }, [isProcessing, dispatch]);
 
   return (
-    <div className={`h-full ${minimized ? "overflow-hidden px-2" : "p-3"}`}>
+    <div className={`h-full ${minimized ? "overflow-hidden px-3" : "p-3"}`}>
       {!minimized && (
         <h2 className="text-sm font-semibold mb-3">Agent Workflows</h2>
       )}
@@ -173,7 +173,7 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
         )}
 
       {minimized && (
-        <div className="space-y-2 relative">
+        <div className="space-y-3 relative">
           {/* Connection lines between agents - positioned absolutely behind the agents */}
           <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
 
@@ -186,8 +186,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
                 key={`connection-${index}`}
                 className="absolute left-4 w-0.5 z-0"
                 style={{
-                  top: `${index * 60 + 25}px`, // Reduced from 88px to 60px
-                  height: "60px", // Reduced from 88px to 60px
+                  top: `${index * 70 + 25}px`, // Increased from 60px to 70px
+                  height: "70px", // Increased from 60px to 70px
                 }}
                 animate={{
                   backgroundColor:
@@ -203,7 +203,7 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
 
           {/* Agent nodes rendered above the lines */}
           {agents.map((agent, index) => (
-            <div key={agent.id} className="relative z-10">
+            <div key={agent.id} className="relative z-10 mb-1">
               <AgentNode agent={agent} isActive={currentAgentId === agent.id} minimized={true} />
             </div>
           ))}

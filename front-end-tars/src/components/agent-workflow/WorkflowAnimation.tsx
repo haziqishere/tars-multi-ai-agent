@@ -24,9 +24,9 @@ const WorkflowAnimation: React.FC<WorkflowAnimationProps> = ({
     if (!fromAgentId || !toAgentId) return null;
 
     // Adjust these calculations to match your agent node positions
-    // Using 60px per agent node instead of 88px to match our more compact layout
-    const startY = (fromAgentId - 1) * 60 + 20; // 60px per agent node, centered at 20px
-    const endY = (toAgentId - 1) * 60 + 20;
+    // Using 70px per agent node instead of 60px to match our more compact layout
+    const startY = (fromAgentId - 1) * 70 + 20; // 70px per agent node, centered at 20px
+    const endY = (toAgentId - 1) * 70 + 20;
 
     return {
       start: { x: 20, y: startY },

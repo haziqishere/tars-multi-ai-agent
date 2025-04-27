@@ -102,14 +102,14 @@ const AgentNode: React.FC<AgentNodeProps> = ({
               )}
             </div>
             {agent.status === "working" && agent.message && (
-              <p className="text-[10px] text-gray-500 mt-0.5 truncate max-w-[150px]">
+              <div className="text-[10px] text-gray-500 mt-0.5 max-w-full">
                 <TypingAnimation
                   className="text-[10px] leading-tight"
-                  duration={20}
+                  duration={50}
                 >
                   {agent.message}
                 </TypingAnimation>
-              </p>
+              </div>
             )}
           </div>
         </div>
