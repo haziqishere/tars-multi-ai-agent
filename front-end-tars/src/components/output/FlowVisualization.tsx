@@ -28,60 +28,299 @@ interface FlowVisualizationProps {
 const FlowVisualization: React.FC<FlowVisualizationProps> = ({
   nodes,
   edges,
+  fitView = false,
+  zoomOnResize = false,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
+  const [containerDimensions, setContainerDimensions] = useState({
+    width: 800,
+    height: 400,
+  });
 
-  // Calculate positions for nodes if needed
+  // Calculate positions for nodes using improved layout algorithm
   const getNodePositions = () => {
     const result: Record<string, { x: number; y: number }> = {};
 
-    // Use positions from props if available, otherwise calculate
-    nodes.forEach((node, index) => {
-      if (node.position) {
-        result[node.id] = {
-          x: node.position.x,
-          y: node.position.y,
-        };
-      } else {
-        // Default simple horizontal layout
-        const spacing = 200;
-        const startX = 100;
-        result[node.id] = {
-          x: startX + index * spacing,
-          y: 100,
-        };
-      }
+    // If all nodes have explicit positions, use those
+    const allHavePositions = nodes.every((node) => node.position);
+
+    if (allHavePositions) {
+      nodes.forEach((node) => {
+        if (node.position) {
+          result[node.id] = {
+            x: node.position.x,
+            y: node.position.y,
+          };
+        }
+      });
+      return result;
+    }
+
+    // Create a graph representation for analysis
+    const graph: Record<string, string[]> = {};
+    const inDegree: Record<string, number> = {};
+
+    // Initialize graph structures
+    nodes.forEach((node) => {
+      graph[node.id] = [];
+      inDegree[node.id] = 0;
     });
 
+    // Build the graph
+    edges.forEach((edge) => {
+      graph[edge.source].push(edge.target);
+      inDegree[edge.target] = (inDegree[edge.target] || 0) + 1;
+    });
+
+    // Find root nodes (nodes with no incoming edges)
+    const roots = nodes
+      .filter((node) => inDegree[node.id] === 0)
+      .map((node) => node.id);
+
+    // If no roots found, just use the first node as root
+    if (roots.length === 0 && nodes.length > 0) {
+      roots.push(nodes[0].id);
+    }
+
+    // Perform level assignment - group nodes by their level in the graph
+    const levels: string[][] = [];
+    let currentLevel = [...roots];
+
+    while (currentLevel.length > 0) {
+      levels.push([...currentLevel]);
+
+      const nextLevel: string[] = [];
+      currentLevel.forEach((nodeId) => {
+        graph[nodeId].forEach((target) => {
+          inDegree[target]--;
+          if (inDegree[target] === 0) {
+            nextLevel.push(target);
+          }
+        });
+      });
+
+      currentLevel = nextLevel;
+    }
+
+    // Check for remaining nodes (cycles) and add them to the last level
+    const remainingNodes = nodes
+      .filter((node) => !levels.flat().includes(node.id))
+      .map((node) => node.id);
+
+    if (remainingNodes.length > 0) {
+      levels.push(remainingNodes);
+    }
+
+    // Calculate container size for better scaling
+    const containerWidth = containerDimensions.width || 800;
+    const containerHeight = containerDimensions.height || 400;
+
+    // Node dimensions
+    const nodeWidth = 120;
+    const nodeHeight = 60;
+
+    // DRAMATICALLY INCREASED SPACING: Calculate much more generous horizontal and vertical spacing
+    // Horizontal spacing between levels - massive increase for maximum readability
+    const horizontalSpacing = Math.max(
+      280, // Dramatically increased minimum spacing from 150 to 280
+      Math.min(
+        400,
+        (containerWidth - nodeWidth * levels.length) /
+          Math.max(1, levels.length)
+      )
+    );
+
+    // Position nodes based on their levels
+    levels.forEach((levelNodes, levelIndex) => {
+      const levelWidth = nodeWidth + (levelIndex > 0 ? horizontalSpacing : 0);
+
+      // Increase the starting position for better left margin
+      const levelStart = 150 + levelIndex * levelWidth; // Increased from 100 to 150
+
+      // DRAMATICALLY INCREASED SPACING: Much more vertical spacing between nodes in the same level
+      const verticalSpacing = Math.max(
+        200, // Dramatically increased minimum spacing from 100 to 200
+        Math.min(
+          300,
+          (containerHeight - nodeHeight * levelNodes.length) /
+            Math.max(1, levelNodes.length)
+        )
+      );
+
+      // IMPROVED VERTICAL DISTRIBUTION: Ensure nodes are centered within available height
+      // with much more space between them
+      const totalLevelHeight =
+        levelNodes.length * nodeHeight +
+        (levelNodes.length - 1) * verticalSpacing;
+      const startY = Math.max(100, (containerHeight - totalLevelHeight) / 2); // Increased from 50 to 100
+
+      levelNodes.forEach((nodeId, nodeIndex) => {
+        // STAGGERING: Stagger nodes in adjacent levels for better visibility and edge routing
+        const verticalOffset =
+          levelNodes.length > 2 && levelIndex % 2 === 1
+            ? verticalSpacing / 2
+            : 0;
+
+        result[nodeId] = {
+          x: levelStart,
+          y:
+            startY +
+            nodeIndex * (nodeHeight + verticalSpacing) +
+            verticalOffset,
+        };
+      });
+    });
+
+    // Special case handling for small diagrams
+    if (nodes.length <= 3) {
+      // Simple horizontal layout for 2-3 nodes with MASSIVE SPACING
+      nodes.forEach((node, index) => {
+        result[node.id] = {
+          x: 120 + index * (nodeWidth + 350), // Dramatically increased from 200 to 350
+          y: containerHeight / 2 - nodeHeight / 2,
+        };
+      });
+    } else if (levels.length <= 1 && nodes.length > 3) {
+      // For flat structures with many nodes, use a grid layout with MASSIVE SPACING
+      const cols = Math.ceil(Math.sqrt(nodes.length));
+      const rows = Math.ceil(nodes.length / cols);
+
+      const gridSpacingX = Math.min(450, containerWidth / cols); // Dramatically increased from 300 to 450
+      const gridSpacingY = Math.min(350, containerHeight / rows); // Dramatically increased from 200 to 350
+
+      nodes.forEach((node, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+
+        result[node.id] = {
+          x: 100 + col * gridSpacingX, // Increased from 80 to 100
+          y: 100 + row * gridSpacingY, // Increased from 60 to 100
+        };
+      });
+    }
+
+    // COMPLEX LAYOUTS: Special handling for complex diagrams with many nodes
+    if (nodes.length > 6 && levels.length > 2) {
+      // For complex layouts, try to optimize spacing based on the overall shape
+
+      // Step 1: Find the level with the most nodes
+      const maxNodesInLevel = Math.max(...levels.map((level) => level.length));
+
+      // Step 2: Re-position levels horizontally with much more spacing for complex diagrams
+      const complexHorizontalSpacing = Math.max(
+        350, // Dramatically increased from 200 to 350
+        Math.min(
+          450,
+          (containerWidth - nodeWidth * levels.length) /
+            Math.max(1, levels.length - 1)
+        )
+      );
+
+      // Step 3: Re-position levels with balanced vertical distribution
+      levels.forEach((levelNodes, levelIndex) => {
+        const levelStart =
+          150 + levelIndex * (nodeWidth + complexHorizontalSpacing); // Increased from 100 to 150
+
+        // Calculate vertical distribution with much more spacing
+        const levelNodesCount = levelNodes.length;
+        const useableHeight = containerHeight - 150; // Increased margins from 100 to 150
+        const levelHeight =
+          levelNodesCount * nodeHeight + (levelNodesCount - 1) * 250; // Increased from 120 to 250
+        const startY = (useableHeight - levelHeight) / 2 + 75; // Increased from 50 to 75
+
+        levelNodes.forEach((nodeId, nodeIndex) => {
+          result[nodeId] = {
+            x: levelStart,
+            y: startY + nodeIndex * (nodeHeight + 250), // Dramatically increased from 120 to 250
+          };
+        });
+      });
+    }
+
     return result;
+  };
+
+  // Set SVG size based on container
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current && svgRef.current) {
+        const { clientWidth, clientHeight } = containerRef.current;
+        setContainerDimensions({
+          width: clientWidth || 800,
+          height: clientHeight || 400,
+        });
+
+        svgRef.current.setAttribute("width", `${clientWidth}px`);
+        svgRef.current.setAttribute("height", `${clientHeight}px`);
+
+        // When container resizes, recalculate viewBox for better fit
+        if (fitView || zoomOnResize) {
+          fitViewToContent();
+        }
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(updateDimensions);
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+      updateDimensions(); // Initial update
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [fitView, zoomOnResize]);
+
+  // Function to fit the view to content
+  const fitViewToContent = () => {
+    if (!svgRef.current || nodes.length === 0) return;
+
+    const nodePositions = getNodePositions();
+    const nodeWidth = 120;
+    const nodeHeight = 60;
+
+    // Calculate the bounds of all nodes
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    Object.values(nodePositions).forEach((pos) => {
+      minX = Math.min(minX, pos.x);
+      minY = Math.min(minY, pos.y);
+      maxX = Math.max(maxX, pos.x + nodeWidth);
+      maxY = Math.max(maxY, pos.y + nodeHeight);
+    });
+
+    // Add generous padding for maximum space
+    const padding = 150; // Dramatically increased from 80 to 150
+    minX -= padding;
+    minY -= padding;
+    maxX += padding;
+    maxY += padding;
+
+    // Set the viewBox to fit all nodes
+    const viewBoxWidth = maxX - minX;
+    const viewBoxHeight = maxY - minY;
+
+    if (viewBoxWidth > 0 && viewBoxHeight > 0) {
+      svgRef.current.setAttribute(
+        "viewBox",
+        `${minX} ${minY} ${viewBoxWidth} ${viewBoxHeight}`
+      );
+    }
   };
 
   // Positions for all nodes
   const nodePositions = getNodePositions();
 
-  // Set SVG size based on container
+  // Apply fit view on initial render and when nodes change
   useEffect(() => {
-    const resizeObserver = new ResizeObserver(() => {
-      if (containerRef.current && svgRef.current) {
-        svgRef.current.setAttribute(
-          "width",
-          `${containerRef.current.clientWidth}px`
-        );
-        svgRef.current.setAttribute(
-          "height",
-          `${containerRef.current.clientHeight}px`
-        );
-      }
-    });
-
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
+    if (fitView) {
+      fitViewToContent();
     }
-
-    return () => resizeObserver.disconnect();
-  }, []);
+  }, [nodes, fitView, containerDimensions]);
 
   // Renders a node
   const renderNode = (node: Node) => {
