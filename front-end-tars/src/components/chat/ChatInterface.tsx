@@ -36,8 +36,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }, [minimized, dispatch]);
 
   useEffect(() => {
-    // Scroll to bottom when messages change
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Scroll to bottom when messages change with better behavior
+    if (messagesEndRef.current) {
+      // Use requestAnimationFrame to ensure DOM updates are complete
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "end" 
+        });
+      });
+    }
   }, [messages]);
 
   // Calculate AI response time
@@ -127,8 +135,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       )}
 
-      {/* Messages container - should flex-grow to fill available space */}
-      <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50">
+      {/* Messages container - should flex-grow to fill available space but not push layout */}
+      <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 relative" style={{ height: minimized ? "calc(100% - 38px)" : "calc(100% - 130px)" }}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <Card className="w-full max-w-md bg-white border-gray-200">
@@ -189,7 +197,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </Card>
           </div>
         ) : (
-          <>
+          <div className="h-full overflow-y-auto pb-2">
             {messages.map((message, index) => (
               <ChatMessage
                 key={message.id}
@@ -198,7 +206,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               />
             ))}
             <div ref={messagesEndRef} />
-          </>
+          </div>
         )}
       </div>
 
