@@ -40,9 +40,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (messagesEndRef.current) {
       // Use requestAnimationFrame to ensure DOM updates are complete
       requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ 
-          behavior: "smooth", 
-          block: "end" 
+        messagesEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
         });
       });
     }
@@ -136,7 +136,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       )}
 
       {/* Messages container - should flex-grow to fill available space but not push layout */}
-      <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 relative" style={{ height: minimized ? "calc(100% - 38px)" : "calc(100% - 130px)" }}>
+      <div
+        className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 relative"
+        style={{
+          height: minimized ? "calc(100% - 38px)" : "calc(100% - 130px)",
+        }}
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <Card className="w-full max-w-md bg-white border-gray-200">

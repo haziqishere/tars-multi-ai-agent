@@ -1,7 +1,7 @@
 // src/components/output/FlowVisualization.tsx
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 
 // Define types for the props
 interface Node {
@@ -31,17 +31,18 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
+
   // Calculate positions for nodes if needed
   const getNodePositions = () => {
-    const result: Record<string, {x: number, y: number}> = {};
-    
+    const result: Record<string, { x: number; y: number }> = {};
+
     // Use positions from props if available, otherwise calculate
     nodes.forEach((node, index) => {
       if (node.position) {
         result[node.id] = {
           x: node.position.x,
-          y: node.position.y, 
+          y: node.position.y,
         };
       } else {
         // Default simple horizontal layout
@@ -53,50 +54,56 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
         };
       }
     });
-    
+
     return result;
   };
-  
+
   // Positions for all nodes
   const nodePositions = getNodePositions();
-  
+
   // Set SVG size based on container
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
       if (containerRef.current && svgRef.current) {
-        svgRef.current.setAttribute('width', `${containerRef.current.clientWidth}px`);
-        svgRef.current.setAttribute('height', `${containerRef.current.clientHeight}px`);
+        svgRef.current.setAttribute(
+          "width",
+          `${containerRef.current.clientWidth}px`
+        );
+        svgRef.current.setAttribute(
+          "height",
+          `${containerRef.current.clientHeight}px`
+        );
       }
     });
-    
+
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
-    
+
     return () => resizeObserver.disconnect();
   }, []);
-  
+
   // Renders a node
   const renderNode = (node: Node) => {
     const pos = nodePositions[node.id];
     if (!pos) return null;
-    
-    // Determine node status
-    let statusColor = 'transparent';
-    let statusLabel = '';
 
-    if (node.id === 'B') {
-      statusColor = '#ef4444'; // red
-      statusLabel = '⚠ Critical';
-    } else if (node.id === 'D' || node.id === 'E' || node.id === 'F') {
-      statusColor = '#0ea5e9'; // blue
-      statusLabel = '+ New Process';
+    // Determine node status
+    let statusColor = "transparent";
+    let statusLabel = "";
+
+    if (node.id === "B") {
+      statusColor = "#ef4444"; // red
+      statusLabel = "⚠ Critical";
+    } else if (node.id === "D" || node.id === "E" || node.id === "F") {
+      statusColor = "#0ea5e9"; // blue
+      statusLabel = "+ New Process";
     }
-    
+
     return (
       <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`}>
         {/* Node background */}
-        <rect 
+        <rect
           width="120"
           height="60"
           rx="6"
@@ -104,7 +111,7 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
           stroke="#e5e7eb"
           strokeWidth="1"
         />
-        
+
         {/* Node label */}
         <text
           x="60"
@@ -117,7 +124,7 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
         >
           {node.label}
         </text>
-        
+
         {/* Status indicator if it exists */}
         {statusLabel && (
           <g>
@@ -146,121 +153,391 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
       </g>
     );
   };
-  
+
   // Renders an edge with arrow
   const renderEdge = (edge: Edge) => {
     const sourcePos = nodePositions[edge.source];
     const targetPos = nodePositions[edge.target];
-    
+    const isHovered = hoveredEdge === edge.id;
+
     if (!sourcePos || !targetPos) return null;
-    
-    // Source point should be on the right side of the node
-    const sourceX = sourcePos.x + 120; // Full width of node
-    const sourceY = sourcePos.y + 30; // Half height of node
-    
-    // Target point should be on the left side of the node
-    const targetX = targetPos.x;
-    const targetY = targetPos.y + 30; // Half height of node
-    
+
+    // Node dimensions
+    const nodeWidth = 120;
+    const nodeHeight = 60;
+    const nodeRadius = 6;
+
+    // Calculate optimal exit and entry points for the edge
+    // Decide which sides of the nodes to connect based on their relative positions
+    let sourceX, sourceY, targetX, targetY;
+
+    const sourceCenterX = sourcePos.x + nodeWidth / 2;
+    const sourceCenterY = sourcePos.y + nodeHeight / 2;
+    const targetCenterX = targetPos.x + nodeWidth / 2;
+    const targetCenterY = targetPos.y + nodeHeight / 2;
+
+    const dx = targetCenterX - sourceCenterX;
+    const dy = targetCenterY - sourceCenterY;
+
+    // Determine whether the connection is primarily horizontal or vertical
+    if (Math.abs(dx) > Math.abs(dy)) {
+      // Primarily horizontal connection
+      if (dx > 0) {
+        // Target is to the right of source
+        sourceX = sourcePos.x + nodeWidth;
+        sourceY = sourcePos.y + nodeHeight / 2;
+        targetX = targetPos.x;
+        targetY = targetPos.y + nodeHeight / 2;
+      } else {
+        // Target is to the left of source
+        sourceX = sourcePos.x;
+        sourceY = sourcePos.y + nodeHeight / 2;
+        targetX = targetPos.x + nodeWidth;
+        targetY = targetPos.y + nodeHeight / 2;
+      }
+    } else {
+      // Primarily vertical connection
+      if (dy > 0) {
+        // Target is below source
+        sourceX = sourcePos.x + nodeWidth / 2;
+        sourceY = sourcePos.y + nodeHeight;
+        targetX = targetPos.x + nodeWidth / 2;
+        targetY = targetPos.y;
+      } else {
+        // Target is above source
+        sourceX = sourcePos.x + nodeWidth / 2;
+        sourceY = sourcePos.y;
+        targetX = targetPos.x + nodeWidth / 2;
+        targetY = targetPos.y + nodeHeight;
+      }
+    }
+
+    // Adjust connection points to account for rounded corners if needed
+    // This is a simplified adjustment
+    if (dx > 0 && Math.abs(dy) < nodeRadius) {
+      // Horizontal connection and close to the corner radius
+      sourceY = Math.max(
+        sourcePos.y + nodeRadius,
+        Math.min(sourceY, sourcePos.y + nodeHeight - nodeRadius)
+      );
+      targetY = Math.max(
+        targetPos.y + nodeRadius,
+        Math.min(targetY, targetPos.y + nodeHeight - nodeRadius)
+      );
+    } else if (Math.abs(dx) < nodeRadius && dy !== 0) {
+      // Vertical connection and close to the corner radius
+      sourceX = Math.max(
+        sourcePos.x + nodeRadius,
+        Math.min(sourceX, sourcePos.x + nodeWidth - nodeRadius)
+      );
+      targetX = Math.max(
+        targetPos.x + nodeRadius,
+        Math.min(targetX, targetPos.x + nodeWidth - nodeRadius)
+      );
+    }
+
+    // Calculate the distance between nodes
+    const distance = Math.sqrt(
+      Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2)
+    );
+
     // Determine edge color based on connected nodes
     const isCriticalPath = edge.source === "B" || edge.target === "B";
     const isOptimizedPath =
-      edge.source === "D" || edge.target === "D" ||
-      edge.source === "E" || edge.target === "E" ||
-      edge.source === "F" || edge.target === "F";
-      
-    const strokeColor = isCriticalPath 
-      ? '#ef4444' // red for critical
+      edge.source === "D" ||
+      edge.target === "D" ||
+      edge.source === "E" ||
+      edge.target === "E" ||
+      edge.source === "F" ||
+      edge.target === "F";
+
+    const strokeColor = isCriticalPath
+      ? "#ef4444" // red for critical
       : isOptimizedPath
-      ? '#22c55e' // green for optimized
-      : '#64748b'; // slate for normal
-      
-    const strokeWidth = isCriticalPath || isOptimizedPath ? 2.5 : 1.5;
-    
-    // Calculate bezier curve control points
-    const dx = targetX - sourceX;
-    const dy = targetY - sourceY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    // Better control point calculation based on distance and angle
-    const offsetX = Math.min(distance * 0.3, 100); // Cap the offset to avoid extreme curves
-    const offsetY = Math.abs(dy) < 50 ? 0 : Math.sign(dy) * Math.min(Math.abs(dy) * 0.2, 50);
-    
-    const controlPoint1X = sourceX + offsetX;
-    const controlPoint1Y = sourceY + offsetY;
-    const controlPoint2X = targetX - offsetX;
-    const controlPoint2Y = targetY + offsetY;
-    
+      ? "#22c55e" // green for optimized
+      : "#64748b"; // slate for normal
+
+    // Enhanced styling for hover state
+    const baseStrokeWidth = isCriticalPath || isOptimizedPath ? 2.5 : 1.5;
+    const strokeWidth = isHovered ? baseStrokeWidth * 1.5 : baseStrokeWidth;
+    const strokeOpacity = isHovered ? 0.8 : 0.5; // Static 50% opacity when not hovered
+
     // Define arrow properties
-    const arrowSize = 8;
-    
+    const arrowSize = isHovered ? 10 : 8;
+
+    // Calculate bezier curve control points
+    // Enhance the curve calculation for smoother flows
+    let controlPoint1X, controlPoint1Y, controlPoint2X, controlPoint2Y;
+
+    // Adaptive control point calculation based on distance and direction
+    const curveFactor = Math.min(distance * 0.5, 120);
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      // Horizontal dominant flow - smoother horizontal curves
+      const vertOffset = Math.min(Math.abs(dy) * 0.3, 40) * Math.sign(dy);
+      controlPoint1X = sourceX + curveFactor / 2;
+      controlPoint1Y = sourceY + vertOffset / 2;
+      controlPoint2X = targetX - curveFactor / 2;
+      controlPoint2Y = targetY + vertOffset / 2;
+    } else {
+      // Vertical dominant flow - smoother vertical curves
+      const horizOffset = Math.min(Math.abs(dx) * 0.3, 40) * Math.sign(dx);
+      controlPoint1X = sourceX + horizOffset / 2;
+      controlPoint1Y = sourceY + curveFactor / 2;
+      controlPoint2X = targetX + horizOffset / 2;
+      controlPoint2Y = targetY - curveFactor / 2;
+    }
+
+    // Calculate the actual path points for a cubic bezier curve to use for the arrow placement
+    // We evaluate the Bezier curve formula at t = 0.95 to get a point very close to the target
+    // This ensures the arrow head is correctly aligned with the path direction
+    const t = 0.95; // We use t = 0.95 instead of t = 1.0 to get a point before the very end
+    const bezierPoint = (t: number) => {
+      // Cubic Bezier formula: P(t) = (1-t)^3 * P0 + 3(1-t)^2 * t * P1 + 3(1-t) * t^2 * P2 + t^3 * P3
+      const mt = 1 - t;
+      const mt2 = mt * mt;
+      const mt3 = mt2 * mt;
+      const t2 = t * t;
+      const t3 = t2 * t;
+
+      return {
+        x:
+          mt3 * sourceX +
+          3 * mt2 * t * controlPoint1X +
+          3 * mt * t2 * controlPoint2X +
+          t3 * targetX,
+        y:
+          mt3 * sourceY +
+          3 * mt2 * t * controlPoint1Y +
+          3 * mt * t2 * controlPoint2Y +
+          t3 * targetY,
+      };
+    };
+
+    // For extreme curves, we'll use the bezier formula to compute the tangent directly
+    // This will give us a more precise arrow angle for extreme curves
+    const t1 = 0.9; // Use a slightly earlier point to get a better tangent vector
+    const t2 = 0.99; // Use a point very close to the end
+    const p1 = bezierPoint(t1);
+    const p2 = bezierPoint(t2);
+
+    // Calculate the tangent vector
+    const tangentX = p2.x - p1.x;
+    const tangentY = p2.y - p1.y;
+    const betterAngle = Math.atan2(tangentY, tangentX);
+
     // Calculate a point slightly before the target for the arrow
-    // Using vector math to place the arrow correctly at any angle
-    const angle = Math.atan2(targetY - controlPoint2Y, targetX - controlPoint2X);
-    const beforeTargetX = targetX - Math.cos(angle) * (arrowSize * 2);
-    const beforeTargetY = targetY - Math.sin(angle) * (arrowSize * 2);
-    
+    const arrowBackoffDistance = arrowSize * 1.5; // Slightly reduced backoff distance to ensure better connection
+    const beforeTargetX =
+      targetX - Math.cos(betterAngle) * arrowBackoffDistance;
+    const beforeTargetY =
+      targetY - Math.sin(betterAngle) * arrowBackoffDistance;
+
     // Create a smooth bezier curve path
     const pathDAttr = `M${sourceX},${sourceY} C${controlPoint1X},${controlPoint1Y} ${controlPoint2X},${controlPoint2Y} ${beforeTargetX},${beforeTargetY}`;
-    
-    // Calculate arrow points properly aligned with the path direction
+
+    // Precise calculation for the arrow path - the extension now uses the same control points
+    // but extends precisely to the target point using the calculated tangent angle
+    const finalSegmentLength = 5; // tiny extension to ensure perfect connection
+    const connectorX = targetX - Math.cos(betterAngle) * finalSegmentLength;
+    const connectorY = targetY - Math.sin(betterAngle) * finalSegmentLength;
+
+    // The connector path now precisely extends from the end of the visible path to the target point
+    // This tiny extension will be nearly invisible but ensures perfect connection
+    const connectorDAttr = `M${beforeTargetX},${beforeTargetY} L${connectorX},${connectorY} L${targetX},${targetY}`;
+
+    // Calculate improved arrow points with thicker base for better appearance
+    const arrowBaseWidth = arrowSize * 0.6;
     const arrowPoints = [
       [
-        targetX - Math.cos(angle - Math.PI/6) * arrowSize,
-        targetY - Math.sin(angle - Math.PI/6) * arrowSize
+        targetX - Math.cos(betterAngle - Math.PI / 6) * arrowSize,
+        targetY - Math.sin(betterAngle - Math.PI / 6) * arrowSize,
       ],
       [targetX, targetY],
       [
-        targetX - Math.cos(angle + Math.PI/6) * arrowSize,
-        targetY - Math.sin(angle + Math.PI/6) * arrowSize
-      ]
+        targetX - Math.cos(betterAngle + Math.PI / 6) * arrowSize,
+        targetY - Math.sin(betterAngle + Math.PI / 6) * arrowSize,
+      ],
+      [
+        targetX - Math.cos(betterAngle) * arrowBaseWidth,
+        targetY - Math.sin(betterAngle) * arrowBaseWidth,
+      ],
     ];
-    
+
+    // Prepare optional edge label
+    const showLabel = edge.label || isHovered;
+    let labelX, labelY;
+
+    // Position the label at the middle of the path
+    if (showLabel) {
+      // Find the midpoint of the bezier curve (approximation)
+      labelX = (sourceX + targetX) / 2;
+      labelY = (sourceY + targetY) / 2 - 10; // Offset above the line
+    }
+
+    // Generate a unique ID for the path for gradient and animation
+    const pathId = `path-${edge.id}`;
+    const gradientId = `gradient-${edge.id}`;
+
     return (
-      <g key={edge.id}>
-        {/* Path line */}
+      <g
+        key={edge.id}
+        onMouseEnter={() => setHoveredEdge(edge.id)}
+        onMouseLeave={() => setHoveredEdge(null)}
+      >
+        {/* Gradient definition for animated flow path */}
+        {(isCriticalPath || isOptimizedPath) && (
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={strokeColor} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={strokeColor} stopOpacity="0.9" />
+            </linearGradient>
+          </defs>
+        )}
+
+        {/* Invisible connector path to ensure the arrow connects properly */}
         <path
+          d={connectorDAttr}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          opacity="0"
+        />
+
+        {/* Path with shadow for depth */}
+        {isHovered && (
+          <path
+            d={pathDAttr}
+            fill="none"
+            stroke="#000000"
+            strokeWidth={strokeWidth + 2}
+            strokeLinecap="round"
+            opacity={0.07}
+            filter="blur(3px)"
+          />
+        )}
+
+        {/* Main path line */}
+        <path
+          id={pathId}
           d={pathDAttr}
           fill="none"
           stroke={strokeColor}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
+          opacity={strokeOpacity}
+          strokeDasharray={
+            isHovered ? "0" : isCriticalPath ? "0" : isOptimizedPath ? "0" : "0"
+          }
         />
-        
-        {/* Arrow head */}
+
+        {/* Path line overlay with animation restored but static opacity */}
+        {(isCriticalPath || isOptimizedPath) && (
+          <path
+            d={pathDAttr}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray="6 12"
+            opacity={isHovered ? 0.7 : 0.5}
+            strokeDashoffset="0"
+          >
+            <animate
+              attributeName="stroke-dashoffset"
+              from="18"
+              to="0"
+              dur="1s"
+              repeatCount="indefinite"
+            />
+          </path>
+        )}
+
+        {/* Improved arrow head with better shape */}
         <polygon
-          points={`${arrowPoints[0][0]},${arrowPoints[0][1]} ${arrowPoints[1][0]},${arrowPoints[1][1]} ${arrowPoints[2][0]},${arrowPoints[2][1]}`}
+          points={`${arrowPoints[0][0]},${arrowPoints[0][1]} ${arrowPoints[1][0]},${arrowPoints[1][1]} ${arrowPoints[2][0]},${arrowPoints[2][1]} ${arrowPoints[3][0]},${arrowPoints[3][1]}`}
           fill={strokeColor}
+          opacity={strokeOpacity}
         />
+
+        {/* Edge label */}
+        {(edge.label || isHovered) && (
+          <g transform={`translate(${labelX}, ${labelY})`}>
+            {isHovered && !edge.label && (
+              <rect
+                x="-30"
+                y="-15"
+                width="60"
+                height="20"
+                rx="4"
+                fill="white"
+                stroke={strokeColor}
+                strokeWidth="1"
+                opacity="0.9"
+              />
+            )}
+            <text
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize="10"
+              fontWeight={isHovered ? "500" : "400"}
+              fill={strokeColor}
+              opacity={isHovered ? 1 : 0.9}
+            >
+              {edge.label ||
+                (isCriticalPath
+                  ? "Critical Path"
+                  : isOptimizedPath
+                  ? "Optimized"
+                  : "Flow")}
+            </text>
+          </g>
+        )}
       </g>
     );
   };
-  
+
   return (
-    <div 
-      ref={containerRef} 
-      style={{ width: '100%', height: '100%', minHeight: '250px', position: 'relative' }}
+    <div
+      ref={containerRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: "250px",
+        position: "relative",
+      }}
     >
-      <svg 
-        ref={svgRef} 
-        width="100%" 
-        height="100%" 
-        viewBox="0 0 800 400" 
+      <svg
+        ref={svgRef}
+        width="100%"
+        height="100%"
+        viewBox="0 0 800 400"
         preserveAspectRatio="xMidYMid meet"
       >
         {/* Background grid */}
         <defs>
-          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f8f8f8" strokeWidth="1"/>
+          <pattern
+            id="grid"
+            width="20"
+            height="20"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 20 0 L 0 0 0 20"
+              fill="none"
+              stroke="#f8f8f8"
+              strokeWidth="1"
+            />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#grid)" />
-        
+
         {/* Render edges first so they appear behind nodes */}
-        {edges.map(edge => renderEdge(edge))}
-        
+        {edges.map((edge) => renderEdge(edge))}
+
         {/* Render nodes */}
-        {nodes.map(node => renderNode(node))}
+        {nodes.map((node) => renderNode(node))}
       </svg>
     </div>
   );

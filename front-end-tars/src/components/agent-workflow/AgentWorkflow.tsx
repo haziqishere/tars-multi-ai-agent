@@ -173,11 +173,20 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
         )}
 
       {minimized && (
-        <div className="space-y-3 relative">
-          {/* Connection lines between agents - positioned absolutely behind the agents */}
-          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
+        <div className="space-y-3 relative py-1">
+          {/* Main vertical connection line - now with correct height calculation */}
+          <div
+            className="absolute left-4 top-0 w-0.5 bg-gray-200 z-0"
+            style={{
+              height: `${Math.min(agents.length - 1, 4) * 70 + 25}px`, // Calculate height to stop at agent 5
+            }}
+          ></div>
 
+          {/* Individual connection lines between agents */}
           {agents.slice(0, -1).map((agent, index) => {
+            // Skip rendering connection after agent 5
+            if (index >= 4) return null;
+
             const currentAgentIndex = getAgentIndex(currentAgentId);
             const agentNumber = getAgentIndex(agent.id);
 
@@ -186,8 +195,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
                 key={`connection-${index}`}
                 className="absolute left-4 w-0.5 z-0"
                 style={{
-                  top: `${index * 70 + 25}px`, // Increased from 60px to 70px
-                  height: "70px", // Increased from 60px to 70px
+                  top: `${index * 70 + 25}px`,
+                  height: "70px",
                 }}
                 animate={{
                   backgroundColor:
@@ -204,7 +213,11 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           {/* Agent nodes rendered above the lines */}
           {agents.map((agent, index) => (
             <div key={agent.id} className="relative z-10 mb-1">
-              <AgentNode agent={agent} isActive={currentAgentId === agent.id} minimized={true} />
+              <AgentNode
+                agent={agent}
+                isActive={currentAgentId === agent.id}
+                minimized={true}
+              />
             </div>
           ))}
 
