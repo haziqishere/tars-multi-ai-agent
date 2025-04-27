@@ -10,9 +10,14 @@ import { Badge } from "@/components/ui/badge";
 interface AgentNodeProps {
   agent: Agent;
   isActive: boolean;
+  minimized?: boolean;
 }
 
-const AgentNode: React.FC<AgentNodeProps> = ({ agent, isActive }) => {
+const AgentNode: React.FC<AgentNodeProps> = ({
+  agent,
+  isActive,
+  minimized = false,
+}) => {
   // Determine status color
   const getStatusColor = () => {
     switch (agent.status) {
@@ -47,6 +52,22 @@ const AgentNode: React.FC<AgentNodeProps> = ({ agent, isActive }) => {
         return "";
     }
   };
+
+  if (minimized) {
+    return (
+      <div className="flex items-center space-x-2">
+        <div
+          className={`w-5 h-5 rounded-full flex items-center justify-center ${getStatusColor()}`}
+        >
+          <span className="text-white text-xs">{agent.id}</span>
+        </div>
+        <span className="text-xs truncate">{agent.name}</span>
+        {agent.status === "completed" && (
+          <span className="text-xs text-green-600">✓</span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
