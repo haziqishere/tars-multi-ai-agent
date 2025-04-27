@@ -175,22 +175,22 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
   }, [isProcessing, dispatch]);
 
   return (
-    <div className={`h-full ${minimized ? "overflow-hidden" : "p-4"}`}>
+    <div className={`h-full ${minimized ? "overflow-hidden px-2" : "p-3"}`}>
       {!minimized && (
-        <h2 className="text-lg font-semibold mb-4">Agent Workflows</h2>
+        <h2 className="text-sm font-semibold mb-3">Agent Workflows</h2>
       )}
 
       {!isWorkflowActive &&
         !agents.some((agent) => agent.status === "completed") && (
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-xs text-gray-500 mb-3">
             Enter your prompt to start the agent workflow
           </p>
         )}
 
       {minimized && (
-        <div className="space-y-4 relative">
+        <div className="space-y-2 relative">
           {/* Connection lines between agents - positioned absolutely behind the agents */}
-          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
 
           {agents.slice(0, -1).map((agent, index) => {
             const currentAgentIndex = getAgentIndex(currentAgentId);
@@ -199,10 +199,10 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
             return (
               <motion.div
                 key={`connection-${index}`}
-                className="absolute left-6 w-0.5 z-0"
+                className="absolute left-4 w-0.5 z-0"
                 style={{
-                  top: `${index * 88 + 40}px`, // Adjust based on card height
-                  height: "88px", // Connect to the next agent
+                  top: `${index * 60 + 25}px`, // Reduced from 88px to 60px
+                  height: "60px", // Reduced from 88px to 60px
                 }}
                 animate={{
                   backgroundColor:
@@ -219,7 +219,7 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           {/* Agent nodes rendered above the lines */}
           {agents.map((agent, index) => (
             <div key={agent.id} className="relative z-10">
-              <AgentNode agent={agent} isActive={currentAgentId === agent.id} />
+              <AgentNode agent={agent} isActive={currentAgentId === agent.id} minimized={true} />
             </div>
           ))}
 

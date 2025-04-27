@@ -75,11 +75,11 @@ const AgentNode: React.FC<AgentNodeProps> = ({
 
   if (minimized) {
     return (
-      <div className="flex items-center py-2.5 px-4">
+      <div className="flex items-center py-1.5 px-2">
         <div className="flex items-center">
           {/* Status dot with agent number */}
           <div
-            className={`w-7 h-7 rounded-full flex items-center justify-center ${
+            className={`w-6 h-6 rounded-full flex items-center justify-center ${
               agent.status === "working" ? statusConfig.color : "bg-gray-100"
             } ${statusConfig.textColor}`}
           >
@@ -87,20 +87,20 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           </div>
 
           {/* Agent details */}
-          <div className="ml-3 flex-1">
+          <div className="ml-2 flex-1">
             <div className="flex items-center">
-              <p className="text-sm font-medium">{agent.name}</p>
+              <p className="text-xs font-medium truncate max-w-[120px]">{agent.name}</p>
               {agent.status !== "idle" && (
                 <Badge
                   variant="outline"
-                  className={`ml-2 text-xs ${statusConfig.color} ${statusConfig.textColor}`}
+                  className={`ml-1.5 text-[10px] py-0 px-1.5 h-4 ${statusConfig.color} ${statusConfig.textColor}`}
                 >
                   {statusConfig.label}
                 </Badge>
               )}
             </div>
             {agent.status === "working" && (
-              <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[180px]">
+              <p className="text-[10px] text-gray-500 mt-0.5 truncate max-w-[150px]">
                 {agent.message || "Processing..."}
               </p>
             )}
@@ -109,8 +109,8 @@ const AgentNode: React.FC<AgentNodeProps> = ({
 
         {/* Progress bar for active agents only */}
         {agent.status === "working" && (
-          <div className="mt-1 w-full">
-            <Progress value={agent.progress} className="h-1" />
+          <div className="mt-0.5 w-full">
+            <Progress value={agent.progress} className="h-0.5" />
           </div>
         )}
       </div>
@@ -119,7 +119,7 @@ const AgentNode: React.FC<AgentNodeProps> = ({
 
   return (
     <Card
-      className={`overflow-hidden transition-all duration-300 mb-4 ${
+      className={`overflow-hidden transition-all duration-300 mb-2 ${
         isActive
           ? `bg-blue-50 border-blue-200`
           : agent.status === "completed"
@@ -127,11 +127,11 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           : "bg-white border-gray-200"
       }`}
     >
-      <div className="p-4">
+      <div className="p-3">
         <div className="flex items-center">
           {/* Status indicator - positioned to align with the connection line */}
           <motion.div
-            className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
               agent.status === "working"
                 ? "bg-blue-500"
                 : agent.status === "completed"
@@ -148,7 +148,7 @@ const AgentNode: React.FC<AgentNodeProps> = ({
               duration: 1.5,
             }}
           >
-            <span className="text-white text-sm font-medium">
+            <span className="text-white text-xs font-medium">
               {getAgentNumber()}
             </span>
           </motion.div>
@@ -156,10 +156,10 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           {/* Agent name and status */}
           <div className="flex-1">
             <div className="flex items-center">
-              <h3 className="text-base font-medium">{agent.name}</h3>
+              <h3 className="text-sm font-medium">{agent.name}</h3>
               <Badge
                 variant="outline"
-                className={`ml-2 ${statusConfig.color} ${statusConfig.textColor} border-0`}
+                className={`ml-1.5 text-[10px] py-0 px-1.5 ${statusConfig.color} ${statusConfig.textColor} border-0`}
               >
                 <span className="flex items-center">
                   {statusConfig.icon}
@@ -167,15 +167,15 @@ const AgentNode: React.FC<AgentNodeProps> = ({
                 </span>
               </Badge>
             </div>
-            <p className="text-sm text-gray-600 mt-1">{agent.role}</p>
+            <p className="text-xs text-gray-600 mt-0.5">{agent.role}</p>
           </div>
         </div>
 
         {/* Agent message - only visible when there's a message */}
         {agent.message && (
-          <div className="mt-3 pl-[52px]">
+          <div className="mt-2 pl-10">
             <div
-              className={`text-sm p-2 rounded ${
+              className={`text-xs p-1.5 rounded ${
                 agent.status === "working"
                   ? "bg-blue-50 text-blue-800"
                   : agent.status === "completed"
@@ -192,12 +192,12 @@ const AgentNode: React.FC<AgentNodeProps> = ({
 
         {/* Progress bar - only visible when processing */}
         {agent.status === "working" && (
-          <div className="mt-4 pl-[52px]">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-600">Progress</span>
-              <span className="text-xs font-medium">{agent.progress}%</span>
+          <div className="mt-2 pl-10">
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] text-gray-600">Progress</span>
+              <span className="text-[10px] font-medium">{agent.progress}%</span>
             </div>
-            <Progress value={agent.progress} className="h-2" />
+            <Progress value={agent.progress} className="h-1.5" />
           </div>
         )}
       </div>
