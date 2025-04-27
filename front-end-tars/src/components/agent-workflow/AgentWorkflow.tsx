@@ -55,11 +55,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent1", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent1", status: "completed" }));
 
         // Animate transition to Agent 2
@@ -81,11 +78,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent2", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent2", status: "completed" }));
 
         // Animate transition to Agent 3
@@ -107,11 +101,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent3", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent3", status: "completed" }));
 
         // Animate transition to Agent 4
@@ -133,11 +124,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent4", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent4", status: "completed" }));
 
         // Animate transition to Agent 5
@@ -159,11 +147,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent5", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent5", status: "completed" }));
 
         // Complete workflow

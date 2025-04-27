@@ -4,9 +4,9 @@
 import { motion } from "framer-motion";
 import { Agent } from "@/store/slices/agentSlice";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Clock, ActivityIcon } from "lucide-react";
+import { TypingAnimation } from "@/components/magicui/typing-animation";
 
 interface AgentNodeProps {
   agent: Agent;
@@ -89,7 +89,9 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           {/* Agent details */}
           <div className="ml-2 flex-1">
             <div className="flex items-center">
-              <p className="text-xs font-medium truncate max-w-[120px]">{agent.name}</p>
+              <p className="text-xs font-medium truncate max-w-[120px]">
+                {agent.name}
+              </p>
               {agent.status !== "idle" && (
                 <Badge
                   variant="outline"
@@ -99,20 +101,18 @@ const AgentNode: React.FC<AgentNodeProps> = ({
                 </Badge>
               )}
             </div>
-            {agent.status === "working" && (
+            {agent.status === "working" && agent.message && (
               <p className="text-[10px] text-gray-500 mt-0.5 truncate max-w-[150px]">
-                {agent.message || "Processing..."}
+                <TypingAnimation
+                  className="text-[10px] leading-tight"
+                  duration={20}
+                >
+                  {agent.message}
+                </TypingAnimation>
               </p>
             )}
           </div>
         </div>
-
-        {/* Progress bar for active agents only */}
-        {agent.status === "working" && (
-          <div className="mt-0.5 w-full">
-            <Progress value={agent.progress} className="h-0.5" />
-          </div>
-        )}
       </div>
     );
   }
@@ -171,7 +171,7 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           </div>
         </div>
 
-        {/* Agent message - only visible when there's a message */}
+        {/* Agent message with typing animation - only visible when there's a message */}
         {agent.message && (
           <div className="mt-2 pl-10">
             <div
@@ -185,19 +185,17 @@ const AgentNode: React.FC<AgentNodeProps> = ({
                   : "bg-gray-50 text-gray-700"
               }`}
             >
-              {agent.message}
+              {agent.status === "working" ? (
+                <TypingAnimation
+                  className="text-xs leading-tight"
+                  duration={50}
+                >
+                  {agent.message}
+                </TypingAnimation>
+              ) : (
+                agent.message
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Progress bar - only visible when processing */}
-        {agent.status === "working" && (
-          <div className="mt-2 pl-10">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[10px] text-gray-600">Progress</span>
-              <span className="text-[10px] font-medium">{agent.progress}%</span>
-            </div>
-            <Progress value={agent.progress} className="h-1.5" />
           </div>
         )}
       </div>
