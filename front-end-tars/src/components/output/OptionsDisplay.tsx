@@ -147,6 +147,7 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
                             nodes={option.nodes}
                             edges={option.edges}
                             fitView={true}
+                            zoomOnResize={true}
                           />
                         </div>
                       )}

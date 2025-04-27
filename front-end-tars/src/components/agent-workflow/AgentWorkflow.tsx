@@ -16,9 +16,13 @@ import { motion } from "framer-motion";
 
 interface AgentWorkflowProps {
   isProcessing: boolean;
+  minimized?: boolean;
 }
 
-const AgentWorkflow: React.FC<AgentWorkflowProps> = ({ isProcessing }) => {
+const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
+  isProcessing,
+  minimized = false,
+}) => {
   const dispatch = useAppDispatch();
   const { agents, currentAgentId, isWorkflowActive } = useAppSelector(
     (state) => state.agent
@@ -171,8 +175,10 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({ isProcessing }) => {
   }, [isProcessing, dispatch]);
 
   return (
-    <div className="h-full p-4">
-      <h2 className="text-lg font-semibold mb-4">Agent Workflows</h2>
+    <div className={`h-full ${minimized ? "overflow-hidden" : "p-4"}`}>
+      {!minimized && (
+        <h2 className="text-lg font-semibold mb-4">Agent Workflows</h2>
+      )}
 
       {!isWorkflowActive &&
         !agents.some((agent) => agent.status === "completed") && (
@@ -181,49 +187,51 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({ isProcessing }) => {
           </p>
         )}
 
-      <div className="space-y-4 relative">
-        {/* Connection lines between agents - positioned absolutely behind the agents */}
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
+      {minimized && (
+        <div className="space-y-4 relative">
+          {/* Connection lines between agents - positioned absolutely behind the agents */}
+          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
 
-        {agents.slice(0, -1).map((agent, index) => {
-          const currentAgentIndex = getAgentIndex(currentAgentId);
-          const agentNumber = getAgentIndex(agent.id);
+          {agents.slice(0, -1).map((agent, index) => {
+            const currentAgentIndex = getAgentIndex(currentAgentId);
+            const agentNumber = getAgentIndex(agent.id);
 
-          return (
-            <motion.div
-              key={`connection-${index}`}
-              className="absolute left-6 w-0.5 z-0"
-              style={{
-                top: `${index * 88 + 40}px`, // Adjust based on card height
-                height: "88px", // Connect to the next agent
-              }}
-              animate={{
-                backgroundColor:
-                  currentAgentIndex &&
-                  agentNumber &&
-                  currentAgentIndex > agentNumber
-                    ? "#0ea5e9"
-                    : "#e5e7eb",
-              }}
-            />
-          );
-        })}
+            return (
+              <motion.div
+                key={`connection-${index}`}
+                className="absolute left-6 w-0.5 z-0"
+                style={{
+                  top: `${index * 88 + 40}px`, // Adjust based on card height
+                  height: "88px", // Connect to the next agent
+                }}
+                animate={{
+                  backgroundColor:
+                    currentAgentIndex &&
+                    agentNumber &&
+                    currentAgentIndex > agentNumber
+                      ? "#0ea5e9"
+                      : "#e5e7eb",
+                }}
+              />
+            );
+          })}
 
-        {/* Agent nodes rendered above the lines */}
-        {agents.map((agent, index) => (
-          <div key={agent.id} className="relative z-10">
-            <AgentNode agent={agent} isActive={currentAgentId === agent.id} />
-          </div>
-        ))}
+          {/* Agent nodes rendered above the lines */}
+          {agents.map((agent, index) => (
+            <div key={agent.id} className="relative z-10">
+              <AgentNode agent={agent} isActive={currentAgentId === agent.id} />
+            </div>
+          ))}
 
-        {/* Workflow animation between agents */}
-        <WorkflowAnimation
-          fromAgentId={animatingFromAgent}
-          toAgentId={animatingToAgent}
-          isAnimating={isAnimating}
-          onAnimationComplete={() => setIsAnimating(false)}
-        />
-      </div>
+          {/* Workflow animation between agents */}
+          <WorkflowAnimation
+            fromAgentId={animatingFromAgent}
+            toAgentId={animatingToAgent}
+            isAnimating={isAnimating}
+            onAnimationComplete={() => setIsAnimating(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -31,58 +31,85 @@ export default function Home() {
   };
 
   return (
-    <ResizablePanelGroup
-      direction="horizontal"
-      className="min-h-screnn h-screen"
-    >
-      {/* Agent Workflow Sidebar */}
-      <ResizablePanel
-        defaultSize={20}
-        minSize={15}
-        maxSize={30}
-        className="border-r border-gray-200 bg-white overflow-y-auto"
-      >
-        <AgentWorkflow isProcessing={isProcessing} />
-      </ResizablePanel>
+    <div className="h-screen flex flex-col">
+      {showOutput ? (
+        // After workflow completion layout
+        <ResizablePanelGroup direction="vertical" className="h-screen">
+          {/* Top section: minimized agent workflow and chat */}
+          <ResizablePanel
+            defaultSize={20}
+            minSize={10}
+            maxSize={40}
+            className="border-b border-gray-200"
+          >
+            <ResizablePanelGroup direction="horizontal">
+              {/* Agent Workflow Sidebar - Minimized */}
+              <ResizablePanel
+                defaultSize={20}
+                minSize={15}
+                maxSize={30}
+                className="border-r border-gray-200 bg-white"
+              >
+                <div className="p-3 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold">Agent Workflows</h2>
+                    <span className="text-xs text-gray-500">*Minimize</span>
+                  </div>
+                </div>
+                <div className="h-full overflow-y-auto">
+                  <AgentWorkflow isProcessing={isProcessing} minimized={true} />
+                </div>
+              </ResizablePanel>
 
-      <ResizableHandle withHandle />
+              <ResizableHandle withHandle />
 
-      {/* Main Content Area */}
-      <ResizablePanel defaultSize={80}>
-        {showOutput ? (
-          <ResizablePanelGroup direction="vertical">
-            {/* Chat Interface - Default to 1/3 when output is shown */}
-            <ResizablePanel
-              defaultSize={33}
-              minSize={20}
-              maxSize={50}
-              className="bg-white border-b border-gray-200"
-            >
-              <ChatInterface
-                onSubmit={handleChatSubmit}
-                minimized={showOutput}
-              />
-            </ResizablePanel>
+              {/* Chat Interface - Minimized */}
+              <ResizablePanel defaultSize={80} className="bg-white">
+                <div className="p-3 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold">UI for Chat</h2>
+                    <span className="text-xs text-gray-500">*Minimize</span>
+                  </div>
+                </div>
+                <div className="h-full overflow-y-auto">
+                  <ChatInterface onSubmit={handleChatSubmit} minimized={true} />
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
 
-            <ResizableHandle withHandle />
+          <ResizableHandle withHandle />
 
-            {/* Output Interface - Default to 2/3 when shown */}
-            <ResizablePanel
-              defaultSize={67}
-              className="bg-white overflow-y-auto"
-            >
-              <div className="h-full overflow-y-auto">
-                <OutputInterface />
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        ) : (
-          // When output is not shown, chat takes full height
-          <div className="h-full bg-white">
-            <ChatInterface onSubmit={handleChatSubmit} minimized={false} />
-          </div>
-        )}
-      </ResizablePanel>
-    </ResizablePanelGroup>
+          {/* Bottom section: Output UI */}
+          <ResizablePanel defaultSize={80} className="bg-white overflow-hidden">
+            <div className="h-full overflow-y-auto">
+              <OutputInterface />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      ) : (
+        // Initial layout - side by side
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Agent Workflow Sidebar */}
+          <ResizablePanel
+            defaultSize={20}
+            minSize={15}
+            maxSize={30}
+            className="border-r border-gray-200 bg-white overflow-y-auto"
+          >
+            <AgentWorkflow isProcessing={isProcessing} minimized={false} />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Main Content Area - Full Chat */}
+          <ResizablePanel defaultSize={80} className="bg-white">
+            <div className="h-full">
+              <ChatInterface onSubmit={handleChatSubmit} minimized={false} />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      )}
+    </div>
   );
 }
