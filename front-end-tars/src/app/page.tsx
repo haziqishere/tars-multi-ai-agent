@@ -171,9 +171,7 @@ export default function Home() {
             }}
           >
             <div className="h-8 w-full bg-gray-100 flex items-center justify-between px-3">
-              <div className="flex items-center">
-                {/* No text here */}
-              </div>
+              <div className="flex items-center">{/* No text here */}</div>
               <div className="flex items-center">
                 <Button
                   variant="ghost"

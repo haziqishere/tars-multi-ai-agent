@@ -27,8 +27,12 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
   selectedOptionId,
   onSelectOption,
 }) => {
-  const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
-  const [renderFlowKeys, setRenderFlowKeys] = useState<Record<string, number>>({});
+  const [expandedOptions, setExpandedOptions] = useState<Set<string>>(
+    new Set()
+  );
+  const [renderFlowKeys, setRenderFlowKeys] = useState<Record<string, number>>(
+    {}
+  );
 
   // Force ReactFlow to recalculate when expanded
   useEffect(() => {
