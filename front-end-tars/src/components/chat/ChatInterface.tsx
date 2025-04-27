@@ -12,6 +12,10 @@ import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 import { motion } from "framer-motion";
 import { store } from "@/store";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Bot, User, Clock, AlertCircle } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface ChatInterfaceProps {
   onSubmit: (message: string) => void;
@@ -25,6 +29,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const dispatch = useAppDispatch();
   const { messages, isTyping } = useAppSelector((state) => state.chat);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [aiResponseTime, setAiResponseTime] = useState<number | null>(null);
 
   useEffect(() => {
     dispatch(setIsMinimized(minimized));
@@ -33,6 +38,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Calculate AI response time
+  useEffect(() => {
+    if (messages.length >= 2) {
+      const lastUserMessageIndex = messages.findIndex(
+        (msg, i, arr) =>
+          msg.sender === "user" &&
+          i < arr.length - 1 &&
+          arr[i + 1].sender === "ai"
+      );
+
+      if (lastUserMessageIndex !== -1) {
+        const userMessageTime = messages[lastUserMessageIndex].timestamp;
+        const aiMessageTime = messages[lastUserMessageIndex + 1].timestamp;
+        const responseTime = (aiMessageTime - userMessageTime) / 1000; // in seconds
+        setAiResponseTime(responseTime);
+      }
+    }
   }, [messages]);
 
   const handleSubmit = (message: string) => {
@@ -44,7 +68,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Add loading message
     dispatch(
       addMessage({
-        content: "...",
+        content: "Thinking...",
         sender: "ai",
       })
     );
@@ -66,10 +90,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         dispatch(
           updateMessage({
             id: lastAiMessage.id,
-            content:
-              'Here is my response to your question about "' +
-              message +
-              '". I hope this helps!',
+            content: `I've analyzed your request about "${message}" and generated several business optimization options. The analysis is complete and you can view the results in the dashboard below.`,
           })
         );
       }
@@ -78,27 +99,94 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-2">
-        <h2 className="text-lg font-semibold">
-          {minimized ? "UI for Chat *Minimize" : "UI for Chat"}
-        </h2>
-      </div>
+      {!minimized && (
+        <div className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+              <Bot className="h-4 w-4 text-blue-700" />
+            </div>
+            <div>
+              <h3 className="font-medium text-sm">TARS Assistant</h3>
+              <div className="flex items-center">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></span>
+                <span className="text-xs text-gray-500">Online</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            {aiResponseTime && (
+              <Badge
+                variant="outline"
+                className="bg-blue-50 text-blue-700 text-xs"
+              >
+                <Clock className="h-3 w-3 mr-1" />
+                {aiResponseTime.toFixed(1)}s response
+              </Badge>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Messages container - should flex-grow to fill available space */}
-      <div className="flex-grow overflow-y-auto p-4 space-y-4">
+      <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <div className="w-16 h-16 rounded-full bg-purple-200 mb-4 flex items-center justify-center">
-              <span className="text-purple-600 text-3xl">✨</span>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">
-              Need help planning the perfect event?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Get expert tips on budgeting, guest management, and themes to make
-              your event unforgettable!
-            </p>
+            <Card className="w-full max-w-md bg-white border-gray-200">
+              <CardContent className="pt-6 pb-6 px-6">
+                <div className="w-12 h-12 rounded-full bg-blue-100 mb-4 flex items-center justify-center mx-auto">
+                  <Bot className="h-6 w-6 text-blue-700" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">
+                  TARS Multi-Agent System
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  I can help you analyze business operations, identify
+                  optimization opportunities, and generate implementation
+                  strategies.
+                </p>
+
+                <div className="space-y-3">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-50"
+                    onClick={() =>
+                      handleSubmit(
+                        "Analyze our supply chain operations for cost optimization opportunities"
+                      )
+                    }
+                  >
+                    <div className="mr-2 text-blue-600">→</div>
+                    Analyze supply chain operations
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-50"
+                    onClick={() =>
+                      handleSubmit(
+                        "Evaluate the impact of new tariff regulations on our operations"
+                      )
+                    }
+                  >
+                    <div className="mr-2 text-blue-600">→</div>
+                    Evaluate tariff regulation impact
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-50"
+                    onClick={() =>
+                      handleSubmit(
+                        "Generate strategies to reduce our operations cost by 25%"
+                      )
+                    }
+                  >
+                    <div className="mr-2 text-blue-600">→</div>
+                    Generate cost reduction strategies
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         ) : (
           <>
@@ -115,8 +203,24 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Input area - fixed at bottom */}
-      <div className="border-t border-gray-200 p-4 bg-white">
-        <ChatInput onSubmit={handleSubmit} disabled={isTyping} />
+      <div
+        className={`border-t border-gray-200 ${
+          minimized ? "p-2" : "p-4"
+        } bg-white`}
+      >
+        <ChatInput
+          onSubmit={handleSubmit}
+          disabled={isTyping}
+          minimized={minimized}
+        />
+
+        {!minimized && (
+          <div className="flex justify-center mt-2">
+            <span className="text-xs text-gray-400">
+              TARS uses AI agents for comprehensive business analysis
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

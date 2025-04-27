@@ -9,6 +9,8 @@
 
 body {
   background: rgb(var(--background-rgb));
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  color: #1a1d1f;
 }
 
 /* Custom scrollbar */
@@ -87,65 +89,72 @@ body {
   animation: bounce 1s infinite;
 }
 
+/* Dashboard-specific styles */
+.dashboard-card {
+  @apply rounded-xl border border-gray-200 bg-white shadow-sm;
+}
 
+.dashboard-card-header {
+  @apply p-4 border-b border-gray-100;
+}
+
+.dashboard-card-title {
+  @apply text-base font-medium;
+}
+
+.dashboard-card-content {
+  @apply p-4;
+}
+
+.stat-value {
+  @apply text-2xl font-semibold text-gray-900;
+}
+
+.stat-label {
+  @apply text-sm text-gray-500;
+}
+
+.badge-premium {
+  @apply bg-blue-50 text-blue-700 border border-blue-200;
+}
+
+.badge-success {
+  @apply bg-green-50 text-green-700 border border-green-200;
+}
+
+.badge-warning {
+  @apply bg-amber-50 text-amber-700 border border-amber-200;
+}
 
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --foreground: 215 25% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 215 25% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
+    --popover-foreground: 215 25% 12%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 215 25% 27%;
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 25% 40%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 215 25% 27%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --chart-1: 222 89% 41%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
 }
-
-
 
 @layer base {
   * {
@@ -154,4 +163,21 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.app-header {
+  @apply bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between;
+}
+
+.app-main-content {
+  @apply flex-1 overflow-hidden;
+}
+
+/* Professional data display */
+.metrics-grid {
+  @apply grid grid-cols-3 gap-4;
+}
+
+.metric-card {
+  @apply p-4 bg-white rounded-xl border border-gray-100;
 }

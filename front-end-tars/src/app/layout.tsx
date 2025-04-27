@@ -1,14 +1,32 @@
 // src/app/layout.tsx
 import "./globals.css";
 import { Providers } from "@/store/provider";
-import { MantineProvider } from "@mantine/core";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 
-const inter = Inter({ subsets: ["latin"] });
+// Import Geist font
+const geistSans = localFont({
+  src: [
+    {
+      path: "./fonts/GeistVF.woff",
+      style: "normal",
+    },
+  ],
+  variable: "--font-geist-sans",
+});
+
+const geistMono = localFont({
+  src: [
+    {
+      path: "./fonts/GeistMonoVF.woff",
+      style: "normal",
+    },
+  ],
+  variable: "--font-geist-mono",
+});
 
 export const metadata: Metadata = {
-  title: "Agent Workflow System",
+  title: "TARS Multi-Agent System",
   description: "AI Agent Workflow Visualization and Interaction System",
   viewport: {
     width: "device-width",
@@ -23,11 +41,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full">
-      <body className={`${inter.className} h-full overflow-hidden`}>
-        <MantineProvider>
-          <Providers>{children}</Providers>
-        </MantineProvider>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
+      <body className="h-full overflow-hidden bg-[#f8fafc]">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -13,25 +13,50 @@ import ReactFlow, {
   useReactFlow,
   ReactFlowProvider,
   ReactFlowInstance,
+  NodeTypes,
 } from "reactflow";
 import "reactflow/dist/style.css";
+
+// Custom node component for better visualization
+const CustomNode = ({ data, isConnectable, id }: any) => {
+  return (
+    <div className="px-4 py-2 shadow-sm bg-white border border-gray-200 rounded-lg min-w-[120px] text-center">
+      <div className="font-medium text-gray-800">{data.label}</div>
+      {data.subLabel && (
+        <div className="text-xs text-gray-500 mt-1">{data.subLabel}</div>
+      )}
+      {data.status && (
+        <div
+          className={`text-xs mt-1 ${
+            data.status === "critical"
+              ? "text-red-600"
+              : data.status === "warning"
+              ? "text-amber-600"
+              : data.status === "optimized"
+              ? "text-green-600"
+              : "text-blue-600"
+          }`}
+        >
+          {data.status === "critical" && "⚠ Critical"}
+          {data.status === "warning" && "⚠ Warning"}
+          {data.status === "optimized" && "✓ Optimized"}
+          {data.status === "new" && "+ New Process"}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface FlowVisualizationProps {
   nodes: any[];
   edges: any[];
   fitView?: boolean;
+  zoomOnResize?: boolean;
 }
 
-// Custom node styling
-const nodeStyle = {
-  background: "#fff",
-  border: "1px solid #ddd",
-  borderRadius: "8px",
-  padding: "12px",
-  width: 150,
-  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-  fontSize: "14px",
-  fontWeight: 500,
+// Define node types for ReactFlow
+const nodeTypes: NodeTypes = {
+  custom: CustomNode,
 };
 
 // Default edge options
@@ -39,31 +64,123 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   type: "smoothstep",
   markerEnd: {
     type: MarkerType.ArrowClosed,
-    color: "#888",
+    color: "#666",
     width: 20,
     height: 20,
   },
   style: {
-    stroke: "#888",
+    stroke: "#666",
     strokeWidth: 2,
   },
+  animated: false,
 };
 
-const FlowVisualization: React.FC<{
-  nodes: any[];
-  edges: any[];
-  fitView?: boolean;
-  zoomOnResize?: boolean;
-}> = ({ nodes, edges, fitView = true, zoomOnResize = true }) => {
+const FlowVisualization: React.FC<FlowVisualizationProps> = ({
+  nodes,
+  edges,
+  fitView = true,
+  zoomOnResize = true,
+}) => {
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Transform input nodes to ReactFlow format with custom styling
+  const flowNodes = nodes.map((node, index, arr) => {
+    // Calculate positions for better layout
+    // For a simple horizontal layout with 4 nodes max:
+    let xPos, yPos;
+
+    // If we have 4 nodes, use a more complex layout (A → E/F → C pattern)
+    if (arr.length === 4) {
+      if (index === 0) {
+        // Process A
+        xPos = 100;
+        yPos = 150;
+      } else if (index === 3) {
+        // Process C
+        xPos = 700;
+        yPos = 150;
+      } else {
+        // Middle processes (E, F)
+        xPos = 350 + (index - 1) * 150;
+        yPos = 50;
+      }
+    } else {
+      // Simple horizontal layout
+      const spacing = 220;
+      const startX = 100;
+      xPos = startX + index * spacing;
+      yPos = 100;
+    }
+
+    // Detect special status based on node id or label
+    let status = undefined;
+    if (node.id === "B") status = "critical";
+    if (node.id === "D" || node.id === "E" || node.id === "F") status = "new";
+
+    return {
+      id: node.id,
+      type: "custom",
+      position: { x: xPos, y: yPos },
+      data: {
+        label: node.label,
+        subLabel: node.subLabel || "",
+        status: status,
+      },
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
+    };
+  });
+
+  // Transform edges with styling based on process relationships
+  const flowEdges = edges.map((edge) => {
+    // Apply special styles to critical paths
+    const isCriticalPath = edge.source === "B" || edge.target === "B";
+    const isOptimizedPath =
+      edge.source === "D" ||
+      edge.target === "D" ||
+      edge.source === "E" ||
+      edge.target === "E" ||
+      edge.source === "F" ||
+      edge.target === "F";
+
+    return {
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      type: "smoothstep",
+      animated: isOptimizedPath,
+      style: {
+        stroke: isCriticalPath
+          ? "#ef4444"
+          : isOptimizedPath
+          ? "#22c55e"
+          : "#64748b",
+        strokeWidth: isCriticalPath || isOptimizedPath ? 2.5 : 2,
+        strokeDasharray: edge.dashed ? "5,5" : undefined,
+      },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: isCriticalPath
+          ? "#ef4444"
+          : isOptimizedPath
+          ? "#22c55e"
+          : "#64748b",
+      },
+    };
+  });
 
   // Force fit view when component mounts or nodes change
   useEffect(() => {
     if (reactFlowInstance) {
       setTimeout(() => {
-        reactFlowInstance.fitView({ padding: 0.3, includeHiddenNodes: true });
+        reactFlowInstance.fitView({
+          padding: 0.2,
+          includeHiddenNodes: true,
+          minZoom: 0.7,
+          maxZoom: 1.5,
+        });
       }, 100);
     }
   }, [reactFlowInstance, nodes]);
@@ -87,75 +204,8 @@ const FlowVisualization: React.FC<{
     };
   }, [reactFlowInstance, zoomOnResize]);
 
-  const flowNodes = nodes.map((node, index, arr) => {
-    // Calculate positions for better layout
-    // For a simple horizontal layout with 4 nodes max:
-    let xPos, yPos;
-
-    // If we have 4 nodes, use a more complex layout (A → E/F → C pattern)
-    if (arr.length === 4) {
-      if (index === 0) {
-        // Process A
-        xPos = 100;
-        yPos = 150;
-      } else if (index === 3) {
-        // Process C
-        xPos = 700;
-        yPos = 150;
-      } else {
-        // Middle processes (E, F)
-        xPos = 350 + (index - 1) * 150;
-        yPos = 50;
-      }
-    } else {
-      // Simple horizontal layout
-      const spacing = 200;
-      const startX = 100;
-      xPos = startX + index * spacing;
-      yPos = 100;
-    }
-
-    return {
-      id: node.id,
-      data: { label: node.label },
-      position: { x: xPos, y: yPos },
-      style: {
-        background: "#fff",
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "10px",
-        width: 120,
-        textAlign: "center" as const,
-        fontSize: "14px",
-      },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
-    };
-  });
-
-  // Transform edges
-  const flowEdges = edges.map((edge) => ({
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    type: "smoothstep",
-    style: { stroke: "#555", strokeWidth: 2 },
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-    },
-  }));
-
-  // This prevents rerendering the flow when nothing has changed
-  const onNodeClick = useCallback((event: any, node: Node) => {
-    console.log("Node clicked:", node);
-  }, []);
-
   return (
-    <div
-      ref={containerRef}
-      className="h-full w-full"
-      style={{ minHeight: "300px" }}
-    >
+    <div ref={containerRef} className="h-full w-full relative">
       <ReactFlowProvider>
         <ReactFlow
           nodes={flowNodes}
@@ -163,12 +213,17 @@ const FlowVisualization: React.FC<{
           onInit={setReactFlowInstance}
           fitView={fitView}
           fitViewOptions={{ padding: 0.3 }}
+          defaultEdgeOptions={defaultEdgeOptions}
           minZoom={0.5}
-          maxZoom={1.5}
+          maxZoom={2}
+          nodeTypes={nodeTypes}
           style={{ width: "100%", height: "100%" }}
         >
-          <Background color="#f8f8f8" gap={16} />
-          <Controls showInteractive={false} />
+          <Background color="#f8f8f8" gap={16} size={1} />
+          <Controls
+            showInteractive={false}
+            className="bg-white rounded-md shadow-sm border border-gray-200"
+          />
         </ReactFlow>
       </ReactFlowProvider>
     </div>
