@@ -37,9 +37,9 @@ export default function Home() {
         <ResizablePanelGroup direction="vertical" className="h-screen">
           {/* Top section: minimized agent workflow and chat */}
           <ResizablePanel
-            defaultSize={20}
-            minSize={10}
-            maxSize={40}
+            defaultSize={40}
+            minSize={45}
+            maxSize={50}
             className="border-b border-gray-200"
           >
             <ResizablePanelGroup direction="horizontal">
