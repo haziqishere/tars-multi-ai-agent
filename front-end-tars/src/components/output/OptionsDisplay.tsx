@@ -1,7 +1,8 @@
+// src/components/output/OptionsDisplay.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Option } from "@/store/slices/outputSlice";
 import FlowVisualization from "./FlowVisualization";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -26,38 +27,29 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
   selectedOptionId,
   onSelectOption,
 }) => {
-  // Change from single expandedOptionId to a Set of expanded option IDs
-  const [expandedOptionIds, setExpandedOptionIds] = useState<Set<string>>(
-    new Set()
-  );
-  const [renderFlowKeys, setRenderFlowKeys] = useState<Record<string, number>>(
-    {}
-  );
+  const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
+  const [renderFlowKeys, setRenderFlowKeys] = useState<Record<string, number>>({});
 
   // Force ReactFlow to recalculate when expanded
   useEffect(() => {
-    // Create a copy of the current state to avoid modifying the original
-    const newRenderFlowKeys = { ...renderFlowKeys };
+    if (expandedOptions.size > 0) {
+      const timer = setTimeout(() => {
+        const newKeys = { ...renderFlowKeys };
+        expandedOptions.forEach((id) => {
+          newKeys[id] = (newKeys[id] || 0) + 1;
+        });
 
-    // Update keys for any newly expanded options
-    expandedOptionIds.forEach((optionId) => {
-      // Small delay to ensure the collapsible is open
-      setTimeout(() => {
-        // Update the render key for this specific option
-        setRenderFlowKeys((prev) => ({
-          ...prev,
-          [optionId]: (prev[optionId] || 0) + 1,
-        }));
+        setRenderFlowKeys(newKeys);
 
-        // Also dispatch resize event
         window.dispatchEvent(new Event("resize"));
       }, 300);
-    });
-  }, [expandedOptionIds]);
+
+      return () => clearTimeout(timer);
+    }
+  }, [expandedOptions]);
 
   const handleExpand = (optionId: string) => {
-    // Toggle the expanded state for this option ID
-    setExpandedOptionIds((prev) => {
+    setExpandedOptions((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(optionId)) {
         newSet.delete(optionId);
@@ -81,20 +73,16 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
       >
         {options.map((option) => {
           const isSelected = option.id === selectedOptionId;
-          const isExpanded = expandedOptionIds.has(option.id);
+          const isExpanded = expandedOptions.has(option.id);
 
           return (
-            <motion.div
+            <div
               key={option.id}
               className={`border rounded-lg overflow-hidden transition-colors w-full ${
                 isSelected
                   ? "border-blue-500 bg-blue-50"
                   : "border-gray-200 bg-white hover:border-gray-300"
               }`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              layout
             >
               {/* Collapsible Flow Content */}
               <Collapsible
@@ -122,10 +110,10 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 flex-shrink-0"
                           >
                             <ChevronDownIcon
-                              className={`h-4 w-4 transform transition-transform ${
+                              className={`h-4 w-4 transition-transform ${
                                 isExpanded ? "rotate-180" : ""
                               }`}
                             />
@@ -156,27 +144,43 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
                   </div>
                 </div>
 
-                <CollapsibleContent className="w-full border-t border-gray-200">
-                  <div className="p-4 w-full">
-                    <div className="h-96 w-full border border-gray-200 rounded-lg overflow-hidden">
-                      {isExpanded && (
-                        <div
-                          key={renderFlowKeys[option.id] || 0}
-                          className="w-full h-full"
-                        >
-                          <FlowVisualization
-                            nodes={option.nodes}
-                            edges={option.edges}
-                            fitView={true}
-                            zoomOnResize={true}
-                          />
+                {/* Use AnimatePresence for smoother transitions */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <CollapsibleContent>
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="w-full border-t border-gray-200"
+                      >
+                        <div className="p-4 w-full">
+                          <div
+                            className="h-96 w-full border border-gray-200 rounded-lg overflow-hidden"
+                            style={{ position: "relative" }}
+                          >
+                            {isExpanded && (
+                              <div
+                                key={renderFlowKeys[option.id] || 0}
+                                className="w-full h-full"
+                              >
+                                <FlowVisualization
+                                  nodes={option.nodes}
+                                  edges={option.edges}
+                                  fitView={true}
+                                  zoomOnResize={true}
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </CollapsibleContent>
+                      </motion.div>
+                    </CollapsibleContent>
+                  )}
+                </AnimatePresence>
               </Collapsible>
-            </motion.div>
+            </div>
           );
         })}
       </RadioGroup>
