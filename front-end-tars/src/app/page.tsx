@@ -38,7 +38,7 @@ export default function Home() {
           {/* Top section: minimized agent workflow and chat */}
           <ResizablePanel
             defaultSize={40}
-            minSize={45}
+            minSize={1}
             maxSize={50}
             className="border-b border-gray-200"
           >
@@ -46,7 +46,7 @@ export default function Home() {
               {/* Agent Workflow Sidebar - Minimized */}
               <ResizablePanel
                 defaultSize={20}
-                minSize={15}
+                minSize={10}
                 maxSize={30}
                 className="border-r border-gray-200 bg-white"
               >

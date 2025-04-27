@@ -1,4 +1,3 @@
-// src/components/output/OptionsDisplay.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,27 +26,46 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
   selectedOptionId,
   onSelectOption,
 }) => {
-  const [expandedOptionId, setExpandedOptionId] = useState<string | null>(null);
-  const [renderFlowKey, setRenderFlowKey] = useState<number>(0);
+  // Change from single expandedOptionId to a Set of expanded option IDs
+  const [expandedOptionIds, setExpandedOptionIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [renderFlowKeys, setRenderFlowKeys] = useState<Record<string, number>>(
+    {}
+  );
 
   // Force ReactFlow to recalculate when expanded
   useEffect(() => {
-    if (expandedOptionId) {
+    // Create a copy of the current state to avoid modifying the original
+    const newRenderFlowKeys = { ...renderFlowKeys };
+
+    // Update keys for any newly expanded options
+    expandedOptionIds.forEach((optionId) => {
       // Small delay to ensure the collapsible is open
-      const timer = setTimeout(() => {
-        // Update key to force re-render
-        setRenderFlowKey((prev) => prev + 1);
+      setTimeout(() => {
+        // Update the render key for this specific option
+        setRenderFlowKeys((prev) => ({
+          ...prev,
+          [optionId]: (prev[optionId] || 0) + 1,
+        }));
 
         // Also dispatch resize event
         window.dispatchEvent(new Event("resize"));
       }, 300);
-
-      return () => clearTimeout(timer);
-    }
-  }, [expandedOptionId]);
+    });
+  }, [expandedOptionIds]);
 
   const handleExpand = (optionId: string) => {
-    setExpandedOptionId(expandedOptionId === optionId ? null : optionId);
+    // Toggle the expanded state for this option ID
+    setExpandedOptionIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(optionId)) {
+        newSet.delete(optionId);
+      } else {
+        newSet.add(optionId);
+      }
+      return newSet;
+    });
   };
 
   const selectedOption = options.find(
@@ -63,7 +81,7 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
       >
         {options.map((option) => {
           const isSelected = option.id === selectedOptionId;
-          const isExpanded = option.id === expandedOptionId;
+          const isExpanded = expandedOptionIds.has(option.id);
 
           return (
             <motion.div
@@ -142,7 +160,10 @@ const OptionsDisplay: React.FC<OptionsDisplayProps> = ({
                   <div className="p-4 w-full">
                     <div className="h-96 w-full border border-gray-200 rounded-lg overflow-hidden">
                       {isExpanded && (
-                        <div key={renderFlowKey} className="w-full h-full">
+                        <div
+                          key={renderFlowKeys[option.id] || 0}
+                          className="w-full h-full"
+                        >
                           <FlowVisualization
                             nodes={option.nodes}
                             edges={option.edges}
