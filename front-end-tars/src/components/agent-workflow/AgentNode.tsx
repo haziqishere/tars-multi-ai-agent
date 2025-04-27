@@ -14,6 +14,26 @@ interface AgentNodeProps {
   minimized?: boolean;
 }
 
+// Loading spinner SVG component
+const LoadingSpinner = ({ className = "" }: { className?: string }) => {
+  return (
+    <svg
+      className={`animate-spin ${className}`}
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  );
+};
+
 const AgentNode: React.FC<AgentNodeProps> = ({
   agent,
   isActive,
@@ -93,12 +113,20 @@ const AgentNode: React.FC<AgentNodeProps> = ({
                 {agent.name}
               </p>
               {agent.status !== "idle" && (
-                <Badge
-                  variant="outline"
-                  className={`ml-1.5 text-[10px] py-0 px-1.5 h-4 ${statusConfig.color} ${statusConfig.textColor}`}
-                >
-                  {statusConfig.label}
-                </Badge>
+                <>
+                  {agent.status === "working" ? (
+                    <div className="ml-1.5 flex items-center text-blue-600">
+                      <LoadingSpinner className="h-3 w-3" />
+                    </div>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className={`ml-1.5 text-[10px] py-0 px-1.5 h-4 ${statusConfig.color} ${statusConfig.textColor}`}
+                    >
+                      {statusConfig.label}
+                    </Badge>
+                  )}
+                </>
               )}
             </div>
             {agent.status === "working" && agent.message && (
@@ -157,15 +185,21 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           <div className="flex-1">
             <div className="flex items-center">
               <h3 className="text-sm font-medium">{agent.name}</h3>
-              <Badge
-                variant="outline"
-                className={`ml-1.5 text-[10px] py-0 px-1.5 ${statusConfig.color} ${statusConfig.textColor} border-0`}
-              >
-                <span className="flex items-center">
-                  {statusConfig.icon}
-                  <span className="ml-1">{statusConfig.label}</span>
-                </span>
-              </Badge>
+              {agent.status === "working" ? (
+                <div className="ml-2 flex items-center text-blue-600">
+                  <LoadingSpinner className="h-4 w-4" />
+                </div>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className={`ml-1.5 text-[10px] py-0 px-1.5 ${statusConfig.color} ${statusConfig.textColor} border-0`}
+                >
+                  <span className="flex items-center">
+                    {statusConfig.icon}
+                    <span className="ml-1">{statusConfig.label}</span>
+                  </span>
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-gray-600 mt-0.5">{agent.role}</p>
           </div>
