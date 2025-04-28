@@ -24,8 +24,9 @@ const WorkflowAnimation: React.FC<WorkflowAnimationProps> = ({
     if (!fromAgentId || !toAgentId) return null;
 
     // Adjust these calculations to match your agent node positions
-    const startY = (fromAgentId - 1) * 88 + 40; // 88px per agent node, centered
-    const endY = (toAgentId - 1) * 88 + 40;
+    // Using 70px per agent node instead of 60px to match our more compact layout
+    const startY = (fromAgentId - 1) * 70 + 20; // 70px per agent node, centered at 20px
+    const endY = (toAgentId - 1) * 70 + 20;
 
     return {
       start: { x: 20, y: startY },
@@ -70,7 +71,7 @@ const WorkflowAnimation: React.FC<WorkflowAnimationProps> = ({
     <div className="absolute left-0 top-0 w-full h-full pointer-events-none">
       {/* Animated particles */}
       <motion.div
-        className="absolute w-2 h-2 rounded-full bg-blue-500"
+        className="absolute w-1.5 h-1.5 rounded-full bg-blue-500"
         style={{ left: start.x, top: start.y }}
         animate={{
           left: [start.x, start.x],
@@ -85,7 +86,7 @@ const WorkflowAnimation: React.FC<WorkflowAnimationProps> = ({
 
       {/* Optional: Add more particles for a more dynamic effect */}
       <motion.div
-        className="absolute w-1.5 h-1.5 rounded-full bg-blue-400"
+        className="absolute w-1 h-1 rounded-full bg-blue-400"
         style={{ left: start.x + 2, top: start.y }}
         animate={{
           left: [start.x + 2, start.x + 2],
@@ -100,7 +101,7 @@ const WorkflowAnimation: React.FC<WorkflowAnimationProps> = ({
       />
 
       <motion.div
-        className="absolute w-1 h-1 rounded-full bg-blue-300"
+        className="absolute w-0.5 h-0.5 rounded-full bg-blue-300"
         style={{ left: start.x - 2, top: start.y }}
         animate={{
           left: [start.x - 2, start.x - 2],

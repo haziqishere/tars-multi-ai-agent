@@ -55,11 +55,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent1", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent1", status: "completed" }));
 
         // Animate transition to Agent 2
@@ -81,11 +78,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent2", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent2", status: "completed" }));
 
         // Animate transition to Agent 3
@@ -107,11 +101,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent3", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent3", status: "completed" }));
 
         // Animate transition to Agent 4
@@ -133,11 +124,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent4", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent4", status: "completed" }));
 
         // Animate transition to Agent 5
@@ -159,11 +147,8 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           })
         );
 
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          dispatch(updateAgentProgress({ agentId: "agent5", progress }));
-        }
-
+        // Instead of progress updates, just add a delay to simulate work
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         dispatch(updateAgentStatus({ agentId: "agent5", status: "completed" }));
 
         // Complete workflow
@@ -175,34 +160,43 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
   }, [isProcessing, dispatch]);
 
   return (
-    <div className={`h-full ${minimized ? "overflow-hidden" : "p-4"}`}>
+    <div className={`h-full ${minimized ? "overflow-hidden px-3" : "p-3"}`}>
       {!minimized && (
-        <h2 className="text-lg font-semibold mb-4">Agent Workflows</h2>
+        <h2 className="text-sm font-semibold mb-3">Agent Workflows</h2>
       )}
 
       {!isWorkflowActive &&
         !agents.some((agent) => agent.status === "completed") && (
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-xs text-gray-500 mb-3">
             Enter your prompt to start the agent workflow
           </p>
         )}
 
       {minimized && (
-        <div className="space-y-4 relative">
-          {/* Connection lines between agents - positioned absolutely behind the agents */}
-          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 z-0"></div>
+        <div className="space-y-3 relative py-1">
+          {/* Main vertical connection line - now with correct height calculation */}
+          <div
+            className="absolute left-4 top-0 w-0.5 bg-gray-200 z-0"
+            style={{
+              height: `${Math.min(agents.length - 1, 4) * 70 + 25}px`, // Calculate height to stop at agent 5
+            }}
+          ></div>
 
+          {/* Individual connection lines between agents */}
           {agents.slice(0, -1).map((agent, index) => {
+            // Skip rendering connection after agent 5
+            if (index >= 4) return null;
+
             const currentAgentIndex = getAgentIndex(currentAgentId);
             const agentNumber = getAgentIndex(agent.id);
 
             return (
               <motion.div
                 key={`connection-${index}`}
-                className="absolute left-6 w-0.5 z-0"
+                className="absolute left-4 w-0.5 z-0"
                 style={{
-                  top: `${index * 88 + 40}px`, // Adjust based on card height
-                  height: "88px", // Connect to the next agent
+                  top: `${index * 70 + 25}px`,
+                  height: "70px",
                 }}
                 animate={{
                   backgroundColor:
@@ -218,8 +212,12 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
 
           {/* Agent nodes rendered above the lines */}
           {agents.map((agent, index) => (
-            <div key={agent.id} className="relative z-10">
-              <AgentNode agent={agent} isActive={currentAgentId === agent.id} />
+            <div key={agent.id} className="relative z-10 mb-1">
+              <AgentNode
+                agent={agent}
+                isActive={currentAgentId === agent.id}
+                minimized={true}
+              />
             </div>
           ))}
 
