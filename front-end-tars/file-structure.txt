@@ -1,0 +1,213 @@
+# TARS Multi-Agent System - Front End Documentation
+
+## 1. File Tree Directory Structure
+
+```
+/Users/haziq/Developer/Projects/tars-multi-ai-agent/front-end-tars/
+│
+├── components.json
+├── file-structure.txt (this file)
+├── next-env.d.ts
+├── next.config.mjs
+├── package.json
+├── postcss.config.mjs
+├── README.md
+├── tailwind.config.ts
+├── tsconfig.json
+│
+├── documentation/
+│   ├── Project Implementation Guide.txt
+│   ├── Project Scaffold and Component Structure.txt
+│   └── Project Summary and Next Steps.txt
+│
+├── public/
+│   └── assets/
+│       └── images/
+│
+├── src/
+    ├── app/
+    │   ├── favicon.ico
+    │   ├── globals.css
+    │   ├── layout.tsx         # Root layout component with font definitions and providers
+    │   ├── page.tsx           # Main page component with responsive layout
+    │   └── fonts/
+    │       ├── GeistMonoVF.woff
+    │       └── GeistVF.woff
+    │
+    ├── components/
+    │   ├── agent-workflow/
+    │   │   ├── AgentNode.tsx          # Agent visualization component
+    │   │   ├── AgentWorkflow.tsx      # Workflow controller for agents
+    │   │   └── WorkflowAnimation.tsx  # Animation between agent transitions
+    │   │
+    │   ├── chat/
+    │   │   ├── ChatInput.tsx          # Input component for user messages
+    │   │   ├── ChatInterface.tsx      # Main chat container
+    │   │   └── ChatMessage.tsx        # Individual message component
+    │   │
+    │   ├── magicui/
+    │   │   └── typing-animation.tsx   # Text typing animation effect
+    │   │
+    │   ├── output/
+    │   │   ├── FlowVisualization.tsx  # Graph visualization component
+    │   │   ├── OptionsDisplay.tsx     # Options display component
+    │   │   └── OutputInterface.tsx    # Main output container
+    │   │
+    │   └── ui/               # UI components
+    │       ├── badge.tsx
+    │       ├── button.tsx
+    │       ├── card.tsx
+    │       ├── collapsible.tsx
+    │       ├── label.tsx
+    │       ├── progress.tsx
+    │       ├── radio-group.tsx
+    │       ├── resizable.tsx
+    │       ├── separator.tsx
+    │       └── tabs.tsx
+    │
+    ├── lib/
+    │   ├── api.ts            # API interaction functions
+    │   └── utils.ts          # Utility functions
+    │
+    ├── store/
+    │   ├── hooks.ts          # Redux hooks
+    │   ├── index.ts          # Redux store configuration
+    │   ├── provider.tsx      # Redux provider
+    │   └── slices/
+    │       ├── agentSlice.ts     # Agent state management
+    │       ├── chatSlice.ts      # Chat state management
+    │       └── outputSlice.ts    # Output state management
+    │
+    └── types/
+        ├── agent.ts          # Type definitions for agents
+        ├── chat.ts           # Type definitions for chat
+        └── output.ts         # Type definitions for output
+```
+
+## 2. Functions and Components by File
+
+### src/app/layout.tsx
+- **RootLayout**: Root component that sets up font variables and wraps children with Redux Providers.
+
+### src/app/page.tsx
+- **Home**: Main page component that manages layout and state for agent workflow, chat, and output interfaces.
+- Key functions:
+  - `handleChatSubmit`: Processes chat submissions and triggers the agent workflow
+  - `toggleFullscreen`: Toggles fullscreen mode for the output interface
+  - `handleMouseDown/Move/Up`: Custom resize functionality for output section
+
+### src/components/agent-workflow/AgentNode.tsx
+- **AgentNode**: Component for visualizing an individual agent in the workflow
+- **LoadingSpinner**: SVG spinner animation component
+- Key functions:
+  - `getStatusConfig`: Determines styling and icons based on agent status
+  - `getAgentNumber`: Extracts number from agent ID
+
+### src/components/agent-workflow/AgentWorkflow.tsx
+- **AgentWorkflow**: Main component for managing and displaying agent workflows
+- Key functions:
+  - `getAgentIndex`: Helper to get agent index from ID
+  - `processAgents`: Simulates agent workflow with animations
+
+### src/components/agent-workflow/WorkflowAnimation.tsx
+- **WorkflowAnimation**: Animated transitions between agent nodes
+- Key functions:
+  - `getAnimationPath`: Calculates positions for animation path
+
+### src/components/chat/ChatInput.tsx
+- **ChatInput**: Text input component for the chat interface
+- Key functions:
+  - `handleSubmit`: Processes submission of messages
+  - `handleKeyDown`: Handles Enter key submission
+
+### src/components/chat/ChatInterface.tsx
+- **ChatInterface**: Main chat container with messages and input
+- Key functions:
+  - `handleSubmit`: Processes message submission
+  - Uses auto-scrolling to keep newest messages visible
+
+### src/components/chat/ChatMessage.tsx
+- **ChatMessage**: Individual message component for chat
+- Key functions:
+  - `formatTime`: Formats message timestamp
+  - Contains loading animation for AI responses
+
+### src/components/magicui/typing-animation.tsx
+- **TypingAnimation**: Component that animates text appearing character by character
+- Uses IntersectionObserver for visibility detection
+
+### src/components/output/FlowVisualization.tsx
+- **FlowVisualization**: Complex SVG-based graph visualization component
+- Key functions:
+  - `getNodePositions`: Calculates optimal positions for graph nodes
+  - `fitViewToContent`: Adjusts view to fit all nodes
+  - `renderNode`: Renders a node with styling based on its state
+  - `renderEdge`: Renders edges between nodes with styling and animations
+
+### src/components/output/OptionsDisplay.tsx
+- **OptionsDisplay**: Component for displaying selectable options
+- Key functions:
+  - `handleExpand`: Toggle expansion of options
+
+### src/types/agent.ts
+- Type definitions for agent-related interfaces:
+  - **Agent**: Interface for agent properties
+  - **AgentStatus**: Type for possible agent statuses
+  - **AgentWorkflow**: Interface for workflow state
+  - **WorkflowStep**: Interface for workflow step definition
+
+### src/store/slices/agentSlice.ts (empty in current view)
+- Expected to contain Redux slice for agent state management:
+  - State for agents array, current agent, workflow status
+  - Actions for updating agent status, progress, and workflow navigation
+
+### src/store/slices/chatSlice.ts (empty in current view)
+- Expected to contain Redux slice for chat state management:
+  - State for messages array, typing status
+  - Actions for adding/updating messages and UI state
+
+## 3. File Relationships
+
+### State Management Flow
+- **store/provider.tsx** → Provides Redux store to the entire application via **app/layout.tsx**
+- **store/hooks.ts** → Exports typed hooks used throughout components for Redux state access
+- **store/slices/*.ts** → Define state and actions per feature, imported by relevant components
+- **types/*.ts** → Define TypeScript interfaces used in both state slices and components
+
+### Component Relationships
+1. **app/page.tsx** (Main Container)
+   - Imports and orchestrates main components:
+     - **components/agent-workflow/AgentWorkflow.tsx**
+     - **components/chat/ChatInterface.tsx**
+     - **components/output/OutputInterface.tsx**
+   - Manages overall app state and layout
+
+2. **Agent Workflow Components**
+   - **AgentWorkflow.tsx** → Uses **AgentNode.tsx** for each agent
+   - **AgentWorkflow.tsx** → Uses **WorkflowAnimation.tsx** for transitions
+   - **AgentNode.tsx** → Uses **typing-animation.tsx** for animated messages
+   - All access agent state via Redux using **store/hooks.ts**
+
+3. **Chat Components**
+   - **ChatInterface.tsx** → Contains **ChatInput.tsx** and multiple **ChatMessage.tsx**
+   - All access chat state via Redux using **store/hooks.ts**
+
+4. **Output Components**
+   - **OutputInterface.tsx** (expected) → Would contain **FlowVisualization.tsx** and **OptionsDisplay.tsx**
+   - These access output state via Redux using **store/hooks.ts**
+
+### Data Flow
+1. User input → **ChatInput.tsx** → **ChatInterface.tsx** → **page.tsx**
+2. **page.tsx** sets processing state → triggers **AgentWorkflow.tsx** processing
+3. **AgentWorkflow.tsx** updates agent states via Redux
+4. When processing completes, **page.tsx** shows **OutputInterface.tsx**
+5. **OutputInterface.tsx** displays results via **FlowVisualization.tsx** and **OptionsDisplay.tsx**
+
+### Utility Usage
+- **lib/utils.ts** → Contains utility functions used throughout the application (e.g., className merging)
+- **lib/api.ts** → Would contain API interaction functions for external data
+
+### UI Component Usage
+- UI components in **components/ui/** are used throughout the application for consistent styling
+
+This completes the documentation of the file structure, component relationships, and data flow in the TARS Multi-Agent System front-end.
