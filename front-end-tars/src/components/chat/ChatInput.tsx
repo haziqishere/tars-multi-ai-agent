@@ -114,16 +114,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="h-7 bg-white text-xs px-2.5 text-gray-700 hover:bg-gray-50"
-          >
-            <PlusIcon className="h-3 w-3 mr-1" />
-            New chat
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
             size="icon"
             className="h-7 w-7 bg-white text-gray-700 hover:bg-gray-50"
           >
