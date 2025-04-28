@@ -6,7 +6,7 @@ const optimizationData = {
     businessFlow: {
       nodes: [
         { id: "node-1", label: "Raw Materials Intake", type: "start", position: { x: 50, y: 100 } },
-        { id: "node-2", label: "Quality Control", type: "process", position: { x: 200, y: 50 } },
+        { id: "node-2", label: "Quality Control", type: "process", position: { x: 200, y: 50 }, status: { type: "critical", label: "⚠ Critical" } },
         { id: "node-3", label: "Production Line A", type: "process", position: { x: 350, y: 100 } },
         { id: "node-4", label: "Production Line B", type: "process", position: { x: 350, y: 200 } },
         { id: "node-5", label: "Assembly", type: "process", position: { x: 500, y: 150 } },
@@ -15,7 +15,7 @@ const optimizationData = {
       ],
       edges: [
         { id: "edge-1", source: "node-1", target: "node-2", label: "Inspection" },
-        { id: "edge-2", source: "node-2", target: "node-3", label: "Passed QC - High Priority" },
+        { id: "edge-2", source: "node-2", target: "node-3", label: "Passed QC - High Priority", flowType: "critical" },
         { id: "edge-3", source: "node-2", target: "node-4", label: "Passed QC - Standard" },
         { id: "edge-4", source: "node-3", target: "node-5", label: "Component A" },
         { id: "edge-5", source: "node-4", target: "node-5", label: "Component B" },
@@ -111,18 +111,18 @@ const optimizationData = {
         ],
         nodes: [
           { id: "node-1", label: "Raw Materials Intake", type: "start", position: { x: 50, y: 100 } },
-          { id: "node-2", label: "Automated Quality Control", type: "process", position: { x: 200, y: 100 } },
-          { id: "node-3", label: "Smart Production Line", type: "process", position: { x: 400, y: 100 } },
-          { id: "node-5", label: "Automated Assembly", type: "process", position: { x: 550, y: 100 } },
+          { id: "node-2", label: "Automated Quality Control", type: "process", position: { x: 200, y: 100 }, status: { type: "new", label: "+ New Process" } },
+          { id: "node-3", label: "Smart Production Line", type: "process", position: { x: 400, y: 100 }, status: { type: "new", label: "+ New Process" } },
+          { id: "node-5", label: "Automated Assembly", type: "process", position: { x: 550, y: 100 }, status: { type: "new", label: "+ New Process" } },
           { id: "node-6", label: "Packaging", type: "process", position: { x: 700, y: 100 } },
           { id: "node-7", label: "Warehouse", type: "end", position: { x: 850, y: 100 } }
         ],
         edges: [
-          { id: "edge-1", source: "node-1", target: "node-2", label: "AI Sorting" },
-          { id: "edge-2", source: "node-2", target: "node-3", label: "Real-time Optimization" },
-          { id: "edge-4", source: "node-3", target: "node-5", label: "Smart Routing" },
-          { id: "edge-6", source: "node-5", target: "node-6", label: "Assembled Product" },
-          { id: "edge-7", source: "node-6", target: "node-7", label: "Finished Goods" }
+          { id: "edge-1", source: "node-1", target: "node-2", label: "AI Sorting", flowType: "optimized" },
+          { id: "edge-2", source: "node-2", target: "node-3", label: "Real-time Optimization", flowType: "optimized" },
+          { id: "edge-4", source: "node-3", target: "node-5", label: "Smart Routing", flowType: "optimized" },
+          { id: "edge-6", source: "node-5", target: "node-6", label: "Assembled Product", flowType: "optimized" },
+          { id: "edge-7", source: "node-6", target: "node-7", label: "Finished Goods", flowType: "optimized" }
         ],
         financialImpact: [
           {
@@ -209,18 +209,18 @@ const optimizationData = {
           }
         ],
         nodes: [
-          { id: "node-1", label: "Supplier Hub", type: "start", position: { x: 50, y: 100 } },
-          { id: "node-2", label: "JIT Delivery System", type: "process", position: { x: 200, y: 100 } },
+          { id: "node-1", label: "Supplier Hub", type: "start", position: { x: 50, y: 100 }, status: { type: "new", label: "+ New Process" } },
+          { id: "node-2", label: "JIT Delivery System", type: "process", position: { x: 200, y: 100 }, status: { type: "new", label: "+ New Process" } },
           { id: "node-3", label: "Quality Control", type: "process", position: { x: 350, y: 100 } },
-          { id: "node-4", label: "Unified Production", type: "process", position: { x: 500, y: 100 } },
+          { id: "node-4", label: "Unified Production", type: "process", position: { x: 500, y: 100 }, status: { type: "new", label: "+ New Process" } },
           { id: "node-6", label: "Packaging", type: "process", position: { x: 650, y: 100 } },
           { id: "node-7", label: "Distribution Center", type: "end", position: { x: 800, y: 100 } }
         ],
         edges: [
-          { id: "edge-1", source: "node-1", target: "node-2", label: "Scheduled Deliveries" },
-          { id: "edge-2", source: "node-2", target: "node-3", label: "Material Inspection" },
-          { id: "edge-3", source: "node-3", target: "node-4", label: "Approved Materials" },
-          { id: "edge-4", source: "node-4", target: "node-6", label: "Finished Products" },
+          { id: "edge-1", source: "node-1", target: "node-2", label: "Scheduled Deliveries", flowType: "optimized" },
+          { id: "edge-2", source: "node-2", target: "node-3", label: "Material Inspection", flowType: "optimized" },
+          { id: "edge-3", source: "node-3", target: "node-4", label: "Approved Materials", flowType: "optimized" },
+          { id: "edge-4", source: "node-4", target: "node-6", label: "Finished Products", flowType: "optimized" },
           { id: "edge-5", source: "node-6", target: "node-7", label: "Shipping" }
         ],
         financialImpact: [

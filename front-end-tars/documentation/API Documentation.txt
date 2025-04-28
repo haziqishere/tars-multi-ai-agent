@@ -89,6 +89,10 @@ The response is a comprehensive JSON object containing:
     x: number;
     y: number;
   };
+  status?: {
+    type: "critical" | "new" | "warning" | string;  // Status type for visual styling
+    label: string;                                  // Status label to display (e.g. "⚠ Critical")
+  };
   data?: any;             // Additional node data
 }
 ```
@@ -100,7 +104,7 @@ The response is a comprehensive JSON object containing:
   source: string;         // ID of source node
   target: string;         // ID of target node
   label?: string;
-  type?: string;
+  flowType?: "critical" | "optimized" | "standard" | string;  // Determines animation and styling
   data?: any;             // Additional edge data
 }
 ```
