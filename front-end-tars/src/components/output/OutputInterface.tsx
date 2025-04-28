@@ -1038,12 +1038,6 @@ const OutputInterface: React.FC = () => {
                                   >
                                     Duration
                                   </th>
-                                  <th
-                                    scope="col"
-                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                  >
-                                    Status
-                                  </th>
                                 </tr>
                               </thead>
                               <tbody className="bg-white divide-y divide-gray-200">
@@ -1065,23 +1059,6 @@ const OutputInterface: React.FC = () => {
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {task.duration}
-                                      </td>
-                                      <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                            task.status === "completed"
-                                              ? "bg-green-100 text-green-800"
-                                              : task.status === "in-progress"
-                                              ? "bg-blue-100 text-blue-800"
-                                              : "bg-gray-100 text-gray-800"
-                                          }`}
-                                        >
-                                          {task.status === "completed"
-                                            ? "Completed"
-                                            : task.status === "in-progress"
-                                            ? "In Progress"
-                                            : "Pending"}
-                                        </span>
                                       </td>
                                     </tr>
                                   )
