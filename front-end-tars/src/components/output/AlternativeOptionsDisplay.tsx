@@ -31,10 +31,11 @@ const AlternativeOptionsDisplay: React.FC<AlternativeOptionsDisplayProps> = ({
   return (
     <div className="space-y-6">
       <p className="text-sm text-gray-600">
-        In each option radio box, review current content and compare the additional 
-        metrics such as savings from predicted loss events or projected profit increases.
+        In each option radio box, review current content and compare the
+        additional metrics such as savings from predicted loss events or
+        projected profit increases.
       </p>
-      
+
       <RadioGroup
         value={selectedOptionId || undefined}
         onValueChange={onSelectOption}
@@ -62,14 +63,19 @@ const AlternativeOptionsDisplay: React.FC<AlternativeOptionsDisplayProps> = ({
                         className="mt-1"
                       />
                     </div>
-                    
+
                     {/* Content column */}
                     <div className="flex-1">
                       <div className="mb-3">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-base font-medium">{option.title}</h3>
+                          <h3 className="text-base font-medium">
+                            {option.title}
+                          </h3>
                           {option.costReduction && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
+                            <Badge
+                              variant="outline"
+                              className="bg-green-50 text-green-700"
+                            >
                               {option.costReduction}
                             </Badge>
                           )}
@@ -78,7 +84,7 @@ const AlternativeOptionsDisplay: React.FC<AlternativeOptionsDisplayProps> = ({
                           {option.description}
                         </p>
                       </div>
-                      
+
                       <div className="flex items-center space-x-4 text-xs">
                         {option.timeToImplement && (
                           <div className="flex items-center text-gray-600">
@@ -88,30 +94,36 @@ const AlternativeOptionsDisplay: React.FC<AlternativeOptionsDisplayProps> = ({
                         )}
                         {/* Additional metrics display */}
                         {option.additionalMetrics?.map((metric, idx) => (
-                          <div key={idx} className="flex items-center text-gray-600">
+                          <div
+                            key={idx}
+                            className="flex items-center text-gray-600"
+                          >
                             <CircleDot className="h-3 w-3 mr-1" />
                             <span>
-                              {metric.label}: <span className="font-medium text-green-600">{metric.value}</span>
+                              {metric.label}:{" "}
+                              <span className="font-medium text-green-600">
+                                {metric.value}
+                              </span>
                             </span>
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Flow visualization section - now full width and taller */}
                   <div className="w-full h-64 border-t border-gray-100 bg-gray-50 mt-2">
-                    <FlowVisualization 
-                      nodes={option.nodes} 
-                      edges={option.edges} 
-                      fitView={true} 
+                    <FlowVisualization
+                      nodes={option.nodes}
+                      edges={option.edges}
+                      fitView={true}
                       zoomOnResize={true}
                     />
                   </div>
                 </div>
               </Card>
             </label>
-            
+
             {/* Selected indicator */}
             {selectedOptionId === option.id && (
               <motion.div

@@ -108,6 +108,17 @@ export const agentSlice = createSlice({
         state.isWorkflowActive = false;
       }
     },
+    completeWorkflow: (state) => {
+      // Mark all agents as completed
+      state.agents.forEach(agent => {
+        agent.status = 'completed';
+        agent.progress = 100;
+      });
+      
+      // Reset the current agent ID and mark workflow as inactive
+      state.currentAgentId = null;
+      state.isWorkflowActive = false;
+    },
     resetWorkflow: (state) => {
       return initialState;
     }
@@ -119,6 +130,7 @@ export const {
   updateAgentStatus, 
   updateAgentProgress, 
   advanceToNextAgent,
+  completeWorkflow,
   resetWorkflow 
 } = agentSlice.actions;
 

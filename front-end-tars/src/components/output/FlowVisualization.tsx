@@ -8,6 +8,11 @@ interface Node {
   id: string;
   label: string;
   position?: { x: number; y: number };
+  type?: string;
+  status?: {
+    type: "critical" | "new" | "warning" | string;
+    label: string;
+  };
   data?: any;
 }
 
@@ -16,6 +21,7 @@ interface Edge {
   source: string;
   target: string;
   label?: string;
+  flowType?: "critical" | "optimized" | "standard" | string;
 }
 
 interface FlowVisualizationProps {
@@ -327,16 +333,28 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
     const pos = nodePositions[node.id];
     if (!pos) return null;
 
-    // Determine node status
+    // Determine node status - now using the status property from the API
     let statusColor = "transparent";
     let statusLabel = "";
 
-    if (node.id === "B") {
-      statusColor = "#ef4444"; // red
-      statusLabel = "⚠ Critical";
-    } else if (node.id === "D" || node.id === "E" || node.id === "F") {
-      statusColor = "#0ea5e9"; // blue
-      statusLabel = "+ New Process";
+    if (node.status) {
+      switch (node.status.type) {
+        case "critical":
+          statusColor = "#ef4444"; // red
+          statusLabel = node.status.label;
+          break;
+        case "new":
+          statusColor = "#0ea5e9"; // blue
+          statusLabel = node.status.label;
+          break;
+        case "warning":
+          statusColor = "#f59e0b"; // amber
+          statusLabel = node.status.label;
+          break;
+        default:
+          statusColor = "#64748b"; // slate
+          statusLabel = node.status.label;
+      }
     }
 
     return (
@@ -480,15 +498,9 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
       Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2)
     );
 
-    // Determine edge color based on connected nodes
-    const isCriticalPath = edge.source === "B" || edge.target === "B";
-    const isOptimizedPath =
-      edge.source === "D" ||
-      edge.target === "D" ||
-      edge.source === "E" ||
-      edge.target === "E" ||
-      edge.source === "F" ||
-      edge.target === "F";
+    // Determine edge color and animation based on flowType from API
+    const isCriticalPath = edge.flowType === "critical";
+    const isOptimizedPath = edge.flowType === "optimized";
 
     const strokeColor = isCriticalPath
       ? "#ef4444" // red for critical
