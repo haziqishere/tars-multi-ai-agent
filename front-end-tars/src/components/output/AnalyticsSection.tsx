@@ -10,7 +10,9 @@ interface AnalyticsSectionProps {
   analyticsData: AnalyticsData | null;
 }
 
-const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ analyticsData }) => {
+const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
+  analyticsData,
+}) => {
   // Handle the case when data is not yet loaded
   if (!analyticsData) {
     return (
@@ -43,26 +45,37 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ analyticsData }) =>
   };
 
   // Get the trend badge for a specific metric
-  const getTrendBadge = (trend: "increasing" | "decreasing" | "stable", isPositive: boolean) => {
+  const getTrendBadge = (
+    trend: "increasing" | "decreasing" | "stable",
+    isPositive: boolean
+  ) => {
     // For cost and time, decreasing is good (green)
     // For efficiency and risk, increasing is good (green) if isPositive is true
     const isGood = isPositive ? trend === "increasing" : trend === "decreasing";
     const isNeutral = trend === "stable";
-    
+
     let className = "text-xs mr-2 ";
     let icon = null;
-    
+
     if (isNeutral) {
       className += "bg-gray-50 text-gray-700";
       icon = <Minus className="h-3 w-3 mr-1" />;
     } else if (isGood) {
       className += "bg-green-50 text-green-700";
-      icon = isPositive ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />;
+      icon = isPositive ? (
+        <ArrowUp className="h-3 w-3 mr-1" />
+      ) : (
+        <ArrowDown className="h-3 w-3 mr-1" />
+      );
     } else {
       className += "bg-red-50 text-red-700";
-      icon = isPositive ? <ArrowDown className="h-3 w-3 mr-1" /> : <ArrowUp className="h-3 w-3 mr-1" />;
+      icon = isPositive ? (
+        <ArrowDown className="h-3 w-3 mr-1" />
+      ) : (
+        <ArrowUp className="h-3 w-3 mr-1" />
+      );
     }
-    
+
     return (
       <Badge variant="outline" className={className}>
         <span className="flex items-center">
@@ -98,9 +111,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ analyticsData }) =>
             </p>
             <div className="flex items-center mt-1">
               {getTrendBadge(analyticsData.trends.costTrend, false)}
-              <span className="text-xs text-gray-500">
-                vs. Previous Year
-              </span>
+              <span className="text-xs text-gray-500">vs. Previous Year</span>
             </div>
           </div>
 
@@ -111,9 +122,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ analyticsData }) =>
             </p>
             <div className="flex items-center mt-1">
               {getTrendBadge(analyticsData.trends.efficiencyTrend, true)}
-              <span className="text-xs text-gray-500">
-                vs. Target (71%)
-              </span>
+              <span className="text-xs text-gray-500">vs. Target (71%)</span>
             </div>
           </div>
 
@@ -139,9 +148,15 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ analyticsData }) =>
               {analyticsData.riskAssessment > 60 && (
                 <AlertCircle className="h-3.5 w-3.5 text-red-600 mr-1" />
               )}
-              <span className={`text-xs ${analyticsData.riskAssessment > 60 ? 'text-red-600' : 'text-amber-600'}`}>
-                {analyticsData.riskAssessment > 60 
-                  ? "Requires Immediate Action" 
+              <span
+                className={`text-xs ${
+                  analyticsData.riskAssessment > 60
+                    ? "text-red-600"
+                    : "text-amber-600"
+                }`}
+              >
+                {analyticsData.riskAssessment > 60
+                  ? "Requires Immediate Action"
                   : "Monitor Closely"}
               </span>
             </div>

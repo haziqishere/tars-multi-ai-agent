@@ -24,9 +24,17 @@ import {
 } from "@/components/ui/resizable";
 import { Badge } from "@/components/ui/badge";
 import { fetchOptimizationData } from "@/lib/api";
-import { setCurrentBusinessFlow, setOptions, selectOption } from "@/store/slices/outputSlice";
+import {
+  setCurrentBusinessFlow,
+  setOptions,
+  selectOption,
+} from "@/store/slices/outputSlice";
 import { addMessage, setIsTyping } from "@/store/slices/chatSlice";
-import { startWorkflow, advanceToNextAgent, completeWorkflow } from "@/store/slices/agentSlice";
+import {
+  startWorkflow,
+  advanceToNextAgent,
+  completeWorkflow,
+} from "@/store/slices/agentSlice";
 
 export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -52,61 +60,66 @@ export default function Home() {
     try {
       // Set processing state to show agent workflow animation
       setIsProcessing(true);
-      
+
       // Start the agent workflow animation
       dispatch(startWorkflow());
-      
+
       // Simulate agent 1 working
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       dispatch(advanceToNextAgent());
-      
+
       // Simulate agent 2 working
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       dispatch(advanceToNextAgent());
 
       // Call the API with the user's message
       const data = await fetchOptimizationData(message);
-      
+
       // Simulate agent 3 working with the data
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       dispatch(advanceToNextAgent());
 
       // Add the API response as a message from the AI
       dispatch(setIsTyping(true));
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      dispatch(addMessage({
-        content: data.chatResponse,
-        sender: 'ai'
-      }));
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      dispatch(
+        addMessage({
+          content: data.chatResponse,
+          sender: "ai",
+        })
+      );
       dispatch(setIsTyping(false));
-      
+
       // Advance to the final agent
       dispatch(advanceToNextAgent());
-      
+
       // Update Redux store with the API response data
       dispatch(setCurrentBusinessFlow(data.analysis.businessFlow));
       dispatch(setOptions(data.recommendations.options));
-      
+
       // Select the first option by default
       if (data.recommendations.options.length > 0) {
         dispatch(selectOption(data.recommendations.options[0].id));
       }
-      
+
       // Mark the workflow as complete
       dispatch(completeWorkflow());
 
-      // Stop processing, show output section  
+      // Stop processing, show output section
       setIsProcessing(false);
       setShowOutput(true);
     } catch (error) {
-      console.error('Error processing request:', error);
+      console.error("Error processing request:", error);
       setIsProcessing(false);
-      
+
       // Notify the user of the error
-      dispatch(addMessage({
-        content: "Sorry, I encountered an error while processing your request. Please try again.",
-        sender: 'ai'
-      }));
+      dispatch(
+        addMessage({
+          content:
+            "Sorry, I encountered an error while processing your request. Please try again.",
+          sender: "ai",
+        })
+      );
     }
   };
 
