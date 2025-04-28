@@ -49,9 +49,14 @@
     │   │   └── typing-animation.tsx   # Text typing animation effect
     │   │
     │   ├── output/
-    │   │   ├── FlowVisualization.tsx  # Graph visualization component
-    │   │   ├── OptionsDisplay.tsx     # Options display component
-    │   │   └── OutputInterface.tsx    # Main output container
+    │   │   ├── AlternativeOptionsDisplay.tsx  # Display for alternative optimization options
+    │   │   ├── AnalyticsSection.tsx           # Analytics dashboard metrics component
+    │   │   ├── BusinessFlowSection.tsx        # Business flow visualization component
+    │   │   ├── FinancialImpactSection.tsx     # Financial impact analysis component
+    │   │   ├── FlowVisualization.tsx          # Graph visualization component
+    │   │   ├── ImplementationPlanSection.tsx  # Implementation plan and timeline component
+    │   │   ├── NewsAndImpactSection.tsx       # News and impact analysis component
+    │   │   └── OutputInterface.tsx            # Main output container integrating all sections
     │   │
     │   └── ui/               # UI components
     │       ├── badge.tsx
@@ -136,6 +141,32 @@
 - **TypingAnimation**: Component that animates text appearing character by character
 - Uses IntersectionObserver for visibility detection
 
+### src/components/output/AlternativeOptionsDisplay.tsx
+- **AlternativeOptionsDisplay**: Component for displaying and selecting alternative optimization options
+- Key functions:
+  - Renders selectable options with radio buttons
+  - Displays flow diagrams for each option
+  - Shows option metrics and implementation details
+
+### src/components/output/AnalyticsSection.tsx  
+- **AnalyticsSection**: Component for displaying key analytics metrics in a dashboard
+- Key features:
+  - Shows current annual cost, efficiency rating, process time, and risk assessment
+  - Displays trend badges for metric changes
+
+### src/components/output/BusinessFlowSection.tsx
+- **BusinessFlowSection**: Component for visualizing current business flow
+- Key features:
+  - Displays current business processes as a flow diagram
+  - Shows critical issues and potential disruptions
+
+### src/components/output/FinancialImpactSection.tsx
+- **FinancialImpactSection**: Component for detailed financial impact analysis
+- Key features:
+  - Displays key financial metrics for selected options
+  - Shows ROI analysis and breakeven points
+  - Contains cost-benefit comparison visualizations
+
 ### src/components/output/FlowVisualization.tsx
 - **FlowVisualization**: Complex SVG-based graph visualization component
 - Key functions:
@@ -144,17 +175,25 @@
   - `renderNode`: Renders a node with styling based on its state
   - `renderEdge`: Renders edges between nodes with styling and animations
 
-### src/components/output/OptionsDisplay.tsx
-- **OptionsDisplay**: Component for displaying selectable options
-- Key functions:
-  - `handleExpand`: Toggle expansion of options
+### src/components/output/ImplementationPlanSection.tsx
+- **ImplementationPlanSection**: Component for displaying implementation timeline and tasks
+- Key features:
+  - Shows implementation timeline with phases
+  - Displays department task allocation in a table format
+  - Contains action buttons for plan export and approval
 
-### src/types/agent.ts
-- Type definitions for agent-related interfaces:
-  - **Agent**: Interface for agent properties
-  - **AgentStatus**: Type for possible agent statuses
-  - **AgentWorkflow**: Interface for workflow state
-  - **WorkflowStep**: Interface for workflow step definition
+### src/components/output/NewsAndImpactSection.tsx
+- **NewsAndImpactSection**: Component for news and impact analysis display
+- Key features:
+  - Shows current news and events affecting business operations
+  - Displays future impact analysis with probability and impact metrics
+
+### src/components/output/OutputInterface.tsx
+- **OutputInterface**: Main container that integrates all output sections
+- Key functions:
+  - Manages tab navigation between Analysis and Recommendation views
+  - Coordinates data flow between child components
+  - Handles option selection and data updates
 
 ### src/store/slices/agentSlice.ts (empty in current view)
 - Expected to contain Redux slice for agent state management:
@@ -193,8 +232,11 @@
    - All access chat state via Redux using **store/hooks.ts**
 
 4. **Output Components**
-   - **OutputInterface.tsx** (expected) → Would contain **FlowVisualization.tsx** and **OptionsDisplay.tsx**
-   - These access output state via Redux using **store/hooks.ts**
+   - **OutputInterface.tsx** → Main container that integrates all output sections
+   - **AnalyticsSection.tsx**, **NewsAndImpactSection.tsx**, **BusinessFlowSection.tsx** → Display analysis data
+   - **AlternativeOptionsDisplay.tsx**, **FinancialImpactSection.tsx**, **ImplementationPlanSection.tsx** → Display recommendation options
+   - All components use **FlowVisualization.tsx** for rendering process flow diagrams
+   - All access output state via Redux using **store/hooks.ts**
 
 ### Data Flow
 1. User input → **ChatInput.tsx** → **ChatInterface.tsx** → **page.tsx**
