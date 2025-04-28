@@ -38,7 +38,7 @@ const AlternativeOptionsDisplay: React.FC<AlternativeOptionsDisplayProps> = ({
       <RadioGroup
         value={selectedOptionId || undefined}
         onValueChange={onSelectOption}
-        className="space-y-4"
+        className="space-y-6"
       >
         {options.map((option) => (
           <div key={option.id} className="relative">
@@ -51,57 +51,61 @@ const AlternativeOptionsDisplay: React.FC<AlternativeOptionsDisplayProps> = ({
               }`}
             >
               <Card className="overflow-hidden border-gray-200">
-                <div className="flex">
-                  {/* Radio button column */}
-                  <div className="p-4 flex items-start">
-                    <RadioGroupItem
-                      value={option.id}
-                      id={option.id}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  {/* Content column */}
-                  <CardContent className="flex-1 p-4 pt-4 pb-4 pl-0 border-r border-gray-100">
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-base font-medium">{option.title}</h3>
-                        {option.costReduction && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
-                            {option.costReduction}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {option.description}
-                      </p>
+                <div className="flex flex-col">
+                  {/* Content section at the top */}
+                  <div className="flex p-4 pb-2">
+                    {/* Radio button column */}
+                    <div className="pr-4 flex items-start">
+                      <RadioGroupItem
+                        value={option.id}
+                        id={option.id}
+                        className="mt-1"
+                      />
                     </div>
                     
-                    <div className="flex items-center space-x-4 text-xs mb-3">
-                      {option.timeToImplement && (
-                        <div className="flex items-center text-gray-600">
-                          <Clock className="h-3 w-3 mr-1" />
-                          <span>{option.timeToImplement}</span>
+                    {/* Content column */}
+                    <div className="flex-1">
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-base font-medium">{option.title}</h3>
+                          {option.costReduction && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700">
+                              {option.costReduction}
+                            </Badge>
+                          )}
                         </div>
-                      )}
-                      {/* Additional metrics display */}
-                      {option.additionalMetrics?.map((metric, idx) => (
-                        <div key={idx} className="flex items-center text-gray-600">
-                          <CircleDot className="h-3 w-3 mr-1" />
-                          <span>
-                            {metric.label}: <span className="font-medium text-green-600">{metric.value}</span>
-                          </span>
-                        </div>
-                      ))}
+                        <p className="text-sm text-gray-600 mt-1">
+                          {option.description}
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center space-x-4 text-xs">
+                        {option.timeToImplement && (
+                          <div className="flex items-center text-gray-600">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{option.timeToImplement}</span>
+                          </div>
+                        )}
+                        {/* Additional metrics display */}
+                        {option.additionalMetrics?.map((metric, idx) => (
+                          <div key={idx} className="flex items-center text-gray-600">
+                            <CircleDot className="h-3 w-3 mr-1" />
+                            <span>
+                              {metric.label}: <span className="font-medium text-green-600">{metric.value}</span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </CardContent>
+                  </div>
                   
-                  {/* Flow visualization column */}
-                  <div className="w-64 h-32 bg-gray-50 border-l border-gray-100">
+                  {/* Flow visualization section - now full width and taller */}
+                  <div className="w-full h-64 border-t border-gray-100 bg-gray-50 mt-2">
                     <FlowVisualization 
                       nodes={option.nodes} 
                       edges={option.edges} 
                       fitView={true} 
+                      zoomOnResize={true}
                     />
                   </div>
                 </div>
