@@ -130,9 +130,9 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
     // DRAMATICALLY INCREASED SPACING: Calculate much more generous horizontal and vertical spacing
     // Horizontal spacing between levels - massive increase for maximum readability
     const horizontalSpacing = Math.max(
-      280, // Dramatically increased minimum spacing from 150 to 280
+      2000, // Dramatically increased minimum spacing from 150 to 280
       Math.min(
-        400,
+        300,
         (containerWidth - nodeWidth * levels.length) /
           Math.max(1, levels.length)
       )
@@ -147,9 +147,9 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
 
       // DRAMATICALLY INCREASED SPACING: Much more vertical spacing between nodes in the same level
       const verticalSpacing = Math.max(
-        200, // Dramatically increased minimum spacing from 100 to 200
+        250, // Dramatically increased minimum spacing from 100 to 200
         Math.min(
-          300,
+          350,
           (containerHeight - nodeHeight * levelNodes.length) /
             Math.max(1, levelNodes.length)
         )
@@ -782,7 +782,7 @@ const FlowVisualization: React.FC<FlowVisualizationProps> = ({
             />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
+        <rect width="100%" height="100%" fill="white" />
 
         {/* Render edges first so they appear behind nodes */}
         {edges.map((edge) => renderEdge(edge))}

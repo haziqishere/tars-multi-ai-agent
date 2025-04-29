@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import AgentWorkflow from "@/components/agent-workflow/AgentWorkflow";
 import ChatInterface from "@/components/chat/ChatInterface";
 import OutputInterface from "@/components/output/OutputInterface";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import {
   Maximize2,
   Minimize2,
@@ -16,13 +17,11 @@ import {
   Bell,
   Settings,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Badge } from "@/components/ui/badge";
 import { fetchOptimizationData } from "@/lib/api";
 import {
   setCurrentBusinessFlow,
@@ -180,32 +179,35 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-dark-base">
       {/* Application Header */}
-      <header className="app-header">
+      <header className="bg-dark-elevated border-b border-dark-border px-4 py-3 flex items-center justify-between shadow-subtle">
         <div className="flex items-center space-x-4">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center text-white font-bold text-lg mr-2">
+            <div className="w-8 h-8 bg-accent-orange rounded-md flex items-center justify-center text-white font-bold text-lg mr-2 shadow-neo-dark">
               T
             </div>
-            <h1 className="text-lg font-semibold">TARS Multi-Agent System</h1>
+            <h1 className="text-lg font-semibold text-text-primary">
+              TARS Multi-Agent System
+            </h1>
           </div>
 
           <div className="hidden md:flex space-x-3">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+            <span className="py-1 px-2 rounded-md text-xs bg-accent-orange bg-opacity-10 text-accent-orange border border-accent-orange border-opacity-20">
               Multi-Agent
-            </Badge>
-            <Badge variant="outline" className="bg-purple-50 text-purple-700">
+            </span>
+            <span className="py-1 px-2 rounded-md text-xs bg-accent-green bg-opacity-10 text-accent-green border border-accent-green border-opacity-20">
               Analytics
-            </Badge>
+            </span>
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Bell className="h-5 w-5" />
-          </Button>
-          <div className="h-8 w-8 bg-orange-100 text-orange-800 rounded-full flex items-center justify-center">
+          <ThemeToggle />
+          <button className="neo-button h-9 w-9 flex items-center justify-center rounded-full">
+            <Bell className="h-5 w-5 text-text-secondary" />
+          </button>
+          <div className="h-8 w-8 bg-accent-orange bg-opacity-20 text-accent-orange rounded-full flex items-center justify-center shadow-neo-dark">
             <span className="text-sm font-medium">WW</span>
           </div>
         </div>
@@ -227,20 +229,17 @@ export default function Home() {
                 defaultSize={leftPanelSize}
                 minSize={15}
                 maxSize={30}
-                className="border-r border-gray-200 bg-white"
+                className="border-r border-dark-border bg-dark-surface"
                 onResize={setLeftPanelSize}
               >
-                <div className="p-3 border-b border-gray-200">
+                <div className="p-3 border-b border-dark-border">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-medium text-gray-800">
+                    <h2 className="text-sm font-medium text-text-primary">
                       Agent Workflows
                     </h2>
-                    <Badge
-                      variant="outline"
-                      className="text-xs bg-blue-50 text-blue-700"
-                    >
+                    <span className="py-0.5 px-1.5 rounded-sm text-xs bg-accent-green bg-opacity-10 text-accent-green border border-accent-green border-opacity-20">
                       Active
-                    </Badge>
+                    </span>
                   </div>
                 </div>
                 <div className="h-[calc(100%-48px)] overflow-y-auto">
@@ -248,20 +247,23 @@ export default function Home() {
                 </div>
               </ResizablePanel>
 
-              <ResizableHandle withHandle />
+              <ResizableHandle
+                withHandle
+                className="bg-dark-border border-dark-border"
+              />
 
               {/* Chat Interface - Minimized */}
               <ResizablePanel
                 defaultSize={rightPanelSize}
-                className="bg-white"
+                className="bg-dark-surface"
                 onResize={setRightPanelSize}
               >
-                <div className="p-3 border-b border-gray-200">
+                <div className="p-3 border-b border-dark-border">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-medium text-gray-800">
+                    <h2 className="text-sm font-medium text-text-primary">
                       TARS Assistant
                     </h2>
-                    <span className="text-xs text-blue-600 font-medium">
+                    <span className="text-xs text-accent-green">
                       Processing complete
                     </span>
                   </div>
@@ -276,47 +278,42 @@ export default function Home() {
           {/* Custom resize handle */}
           <div
             ref={dragHandleRef}
-            className="h-2 w-full bg-gray-100 cursor-ns-resize flex justify-center hover:bg-gray-200 items-center z-10"
+            className="h-2 w-full bg-dark-elevated cursor-ns-resize flex justify-center hover:bg-dark-hover items-center z-10 border-y border-dark-border"
             onMouseDown={handleMouseDown}
           >
-            <div className="w-12 h-1 rounded bg-gray-300"></div>
+            <div className="w-12 h-1 rounded bg-dark-border"></div>
           </div>
 
           {/* Bottom section: Output UI with custom resizing */}
           <div
             ref={outputRef}
-            className="bg-white overflow-hidden"
+            className="bg-dark-surface overflow-hidden"
             style={{
               height: `${outputHeight}px`,
               minHeight: "80px",
-              borderTop: "1px solid rgb(229, 231, 235)",
+              borderTop: "1px solid rgb(var(--border-rgb))",
             }}
           >
-            <div className="h-10 w-full bg-gray-50 flex items-center justify-between px-4 border-b border-gray-200">
+            <div className="h-10 w-full bg-dark-elevated flex items-center justify-between px-4 border-b border-dark-border">
               <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-text-primary">
                   Analysis Results
                 </span>
-                <Badge
-                  variant="outline"
-                  className="text-xs bg-green-50 text-green-700"
-                >
+                <span className="py-0.5 px-1.5 rounded-sm text-xs bg-accent-green bg-opacity-10 text-accent-green border border-accent-green border-opacity-20">
                   Updated
-                </Badge>
+                </span>
               </div>
               <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0"
+                <button
+                  className="neo-button h-7 w-7 flex items-center justify-center rounded-full"
                   onClick={toggleFullscreen}
                 >
                   {isFullscreen ? (
-                    <Minimize2 className="h-4 w-4" />
+                    <Minimize2 className="h-4 w-4 text-text-secondary" />
                   ) : (
-                    <Maximize2 className="h-4 w-4" />
+                    <Maximize2 className="h-4 w-4 text-text-secondary" />
                   )}
-                </Button>
+                </button>
               </div>
             </div>
             <div className="h-[calc(100%-40px)] overflow-y-auto">
@@ -333,11 +330,11 @@ export default function Home() {
               defaultSize={leftPanelSize}
               minSize={15}
               maxSize={30}
-              className="border-r border-gray-200 bg-white overflow-y-auto"
+              className="border-r border-dark-border bg-dark-surface overflow-y-auto"
               onResize={setLeftPanelSize}
             >
-              <div className="p-3 border-b border-gray-200">
-                <h2 className="text-sm font-medium text-gray-800">
+              <div className="p-3 border-b border-dark-border">
+                <h2 className="text-sm font-medium text-text-primary">
                   Agent Workflows
                 </h2>
               </div>
@@ -346,17 +343,20 @@ export default function Home() {
               </div>
             </ResizablePanel>
 
-            <ResizableHandle withHandle />
+            <ResizableHandle
+              withHandle
+              className="bg-dark-border border-dark-border"
+            />
 
             {/* Main Content Area - Full Chat */}
             <ResizablePanel
               defaultSize={rightPanelSize}
-              className="bg-white"
+              className="bg-dark-surface"
               onResize={setRightPanelSize}
             >
               <div className="h-full">
-                <div className="p-3 border-b border-gray-200">
-                  <h2 className="text-sm font-medium text-gray-800">
+                <div className="p-3 border-b border-dark-border">
+                  <h2 className="text-sm font-medium text-text-primary">
                     TARS Assistant
                   </h2>
                 </div>

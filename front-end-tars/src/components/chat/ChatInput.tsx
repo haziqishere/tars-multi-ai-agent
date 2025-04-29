@@ -1,8 +1,7 @@
 // src/components/chat/ChatInput.tsx
 "use client";
 
-import { useState, useRef, useEffect, FormEvent, KeyboardEvent } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useRef, FormEvent, KeyboardEvent } from "react";
 import { Send, PlusIcon, MicIcon, ImageIcon, FileTextIcon } from "lucide-react";
 import TextareaAutosize from "react-textarea-autosize";
 
@@ -47,30 +46,28 @@ const ChatInput: React.FC<ChatInputProps> = ({
       className={`relative ${minimized ? "w-full" : ""}`}
     >
       <div
-        className={`flex items-center border rounded-lg overflow-hidden transition-colors ${
-          isFocused ? "border-blue-300 ring-2 ring-blue-100" : "border-gray-200"
-        } bg-white`}
+        className={`flex items-center rounded-lg overflow-hidden transition-colors shadow-neo-inset ${
+          isFocused
+            ? "border border-accent-orange border-opacity-50 bg-dark-elevated"
+            : "border border-dark-border bg-dark-elevated"
+        }`}
       >
         {!minimized && (
           <div className="flex px-2">
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+              className="h-8 w-8 text-text-muted hover:text-text-secondary hover:bg-dark-hover rounded-full transition-colors duration-200 flex items-center justify-center"
               title="Upload file"
             >
               <FileTextIcon className="h-4 w-4" />
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+              className="h-8 w-8 text-text-muted hover:text-text-secondary hover:bg-dark-hover rounded-full transition-colors duration-200 flex items-center justify-center"
               title="Upload image"
             >
               <ImageIcon className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         )}
 
@@ -86,39 +83,35 @@ const ChatInput: React.FC<ChatInputProps> = ({
               ? "Type a message..."
               : "Ask TARS about business optimization..."
           }
-          className="flex-1 py-2 px-3 outline-none resize-none max-h-32 text-sm"
+          className="flex-1 py-2 px-3 outline-none resize-none max-h-32 text-sm bg-transparent text-text-primary placeholder-text-muted"
           disabled={disabled}
           minRows={minimized ? 1 : 1}
           maxRows={minimized ? 3 : 5}
         />
 
         <div className="px-2">
-          <Button
+          <button
             type="submit"
             disabled={!message.trim() || disabled}
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 ${
+            className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors duration-200 ${
               message.trim() && !disabled
-                ? "text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                : "text-gray-400"
-            } rounded-full`}
+                ? "text-accent-orange hover:text-accent-orange-muted hover:bg-dark-hover"
+                : "text-text-muted"
+            }`}
           >
             <Send className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
       {!minimized && (
         <div className="absolute left-2 -top-9 flex space-x-1">
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="icon"
-            className="h-7 w-7 bg-white text-gray-700 hover:bg-gray-50"
+            className="h-7 w-7 bg-dark-elevated text-text-secondary hover:text-text-primary border border-dark-border rounded-full flex items-center justify-center shadow-neo-dark hover:bg-dark-hover transition-colors duration-200"
           >
             <MicIcon className="h-3.5 w-3.5" />
-          </Button>
+          </button>
         </div>
       )}
     </form>

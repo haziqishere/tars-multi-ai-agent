@@ -3,14 +3,57 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 248, 250, 252;
+  /* Dark theme colors as RGB values for easier opacity adjustments */
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 26, 26, 31;
+  --surface-rgb: 36, 36, 41;
+  --elevated-rgb: 44, 44, 50;
+  --border-rgb: 57, 57, 63;
+  
+  --accent-orange-rgb: 248, 116, 59;
+  --accent-green-rgb: 66, 184, 131;
+  
+  --text-primary-rgb: 255, 255, 255;
+  --text-secondary-rgb: 169, 169, 178;
+  --text-muted-rgb: 110, 110, 120;
+
+  /* Keep original HSL variables from your theme */
+  --background: 226 30% 9%;
+  --foreground: 0 0% 100%;
+  --card: 226 25% 12%;
+  --card-foreground: 0 0% 100%;
+  --popover: 226 25% 12%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 214 32% 91%;
+  --secondary-foreground: 215 25% 27%;
+  --muted: 214 32% 91%;
+  --muted-foreground: 215 25% 40%;
+  --accent: 214 32% 91%;
+  --accent-foreground: 215 25% 27%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 226 25% 25%;
+  --input: 214 32% 91%;
+  --ring: 217 91% 60%;
+  --chart-1: 222 89% 41%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+  --radius: 0.5rem;
 }
 
 body {
   background: rgb(var(--background-rgb));
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  color: #1a1d1f;
+  color: rgb(var(--text-primary-rgb));
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJcEhZcwAACxMAAAsTAQCanBgAAABLUExURUdwTP///////////////////////////////////////////////////////////////////////////////////////////////////////////////////w+NMU8AAAAYdFJOUwAH+/kKGQdB7x44OsxgH9xLrqJLVpqmsiQj/gAABLxJREFUWMOtWdm2qyAMRUARGdRC//9PbwKiKAptPa4HqyVsNgmZDlVVVVd3+VAbW3ddNwyj0aPTuqnruqq7S31xHPm/ujmqulVaa9NOWh31UVddnZeIb02n2zGTNKOuh2PEKtNm6PbwqOs+Q93wsKqG/fqouxzRDhbjTrP0eXU9nB3V9h/1x9msrmkNXWUI1LrL0mf1cWSJtD6uEekx+a0ZrhNAcJzBYLgaH8PgzzvArWB1nmrUZ0t0t54fwqo5h6O+YdD3TGPdA9AY+1tQVLcY2Ft0uQdtFV/f8G7jtdaPArR6wfqIQT1m9YjAMwDrWwbHHIv1bQaTBo7ZHc8arO8wsPrBan8T4PEkDxxMcL9/KCL7RgYDg7H1S2Y8ACg9BujuxCMDtU8BLU8C1q8Bds8C7NXiYTcD1PcBGtc+6L5lMP4/QPXEQOErrLCJefsY4ImB/2sSmxiflQOD5eIQAkRkecEgPGBhEOINgcEFg7r4DYB6gKUaACzW3GOFKxg4HvwlIOsHALUCLAE6M5X+z4A+qhmrPO8GZv8cYO8D7kNAnHh3kbkDkKsG2B17wD4AeAdgbwM1LzOAmx1sfoTZJUBuANx7wOaMQQDYVEAnUyH+3TRIu1wLUJoB7V4XNOA2YL8F6GdHpF06GzTR9wA+APQEUCcuGIIbgK/L2pwSSXaXVEzZSzD4c0DtAu43APM7+CwQWAD4WU4mTgTOO5xyoGsnj9WNJPTnlw5ODU41xO3fngK6u32yQZSHtjP2l01yKsG5xkI4XrKvysDhS4L0IUBrwtLmowEQM/l4CdCZ3keMxRLwQA+SGZABZWDc3ORXAJfwt30esH3EYAGwW9Io2YE4nUbsz1MG+Lx29gDPNxPQo/E0+vCUAfL1vB7JAUuGRhU2L9sZYHPOIAP4KgcEgMUMkAOrUQnA9gYggUQlrhpGmUxJE1NhR4x0Gm0V17ZdTqOAIQI6jzCdRgNgcTWNyqwBMJtG2+J60iCFD6+noC6nEQE+Ar/Jc2gPUMoAmdCYRUGzGTADuCkAE+BHDM7ylOJaGQqAMiqZRl5zZE4ixfn1r3KtnGXjepuuCJ8DbKwwLAEt4PN3AN0Yb3I+2hN2pAyQPrIRVvg+OI1egOFOKfKULQBLgJYV+GnUAaZQywByGlk2jdwSKJtGJOCW09ExnZdGYRp1F0sHp9GQnkZxGo1MQ5JLw5A7jeQ0wjCXhsmlYW4K8KYRTaP+6DQCXgSMz3QfSB6ZT6IhFIcm2wVQZNOwAWCZYxPSCJtGDJhPY29ipLPFmb8AGQagG86hLACYADz+0jTKpVEb0rB+v+6UKiAG+jQsAK7pNIqBiTp1oZw/E9hD9oHHaQQP0D2oAuCmEGHXwL3JEBcAIY1mmMww6ZcDSLMTGAAFa0bUKwH2MGJgBrC9gVicnSbRbHK4xrCT3mw52hRwLVnuVFFPIzC4lbScqKKOSYtv/UXfEyDjFwC3uwSWeI4OgRqncZWfXx9/D1DbQi/U6iCqPMCjnMQXAaOhz2pxvTYo7PUKx6fuvCZ1a0ZQCmCMPQvRvArUVPzq8h/sRWLTo/QKFQAAAABJRU5ErkJggg==");
+  background-repeat: repeat;
+  background-size: 40px 40px;
+  background-blend-mode: overlay;
+  opacity: 0.98;
 }
 
 /* Custom scrollbar */
@@ -20,45 +63,144 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgb(var(--surface-rgb));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: rgb(var(--border-rgb));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
+  background: rgb(var(--text-muted-rgb));
 }
 
-/* Smooth transitions */
+/* Transitions */
 .transition-all {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
-/* Reactflow overrides */
-.react-flow__node {
-  font-family: inherit;
+/* Neomorphic elements */
+.neo-dark {
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(70, 70, 80, 0.1);
+  background: rgb(var(--surface-rgb));
+  border-radius: 8px;
 }
 
-.react-flow__controls {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.neo-dark-inset {
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -2px -2px 5px rgba(70, 70, 80, 0.1);
+  background: rgb(var(--surface-rgb));
+  border-radius: 8px;
+}
+
+.neo-button {
+  background: rgb(var(--elevated-rgb));
   border-radius: 6px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), -2px -2px 5px rgba(70, 70, 80, 0.1);
+  transition: all 0.2s ease;
+}
+
+.neo-button:hover {
+  background: rgb(var(--border-rgb));
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3), -1px -1px 3px rgba(70, 70, 80, 0.1);
+}
+
+.neo-button:active {
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(70, 70, 80, 0.1);
+}
+
+/* Highlight glow effect for active navigation items */
+.nav-active {
+  position: relative;
+  color: rgb(var(--accent-green-rgb));
+}
+
+.nav-active::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: rgb(var(--accent-green-rgb));
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px rgba(var(--accent-green-rgb), 0.6);
+}
+
+/* Container styles */
+.dark-container {
+  background: rgb(var(--surface-rgb));
+  border-radius: 8px;
+  border: 1px solid rgba(var(--border-rgb), 0.6);
   overflow: hidden;
 }
 
-.react-flow__controls-button {
-  background: #fff;
-  border: none;
-  border-bottom: 1px solid #eee;
+.dark-elevated {
+  background: rgb(var(--elevated-rgb));
+  border-radius: 6px;
+  border: 1px solid rgba(var(--border-rgb), 0.3);
 }
 
-.react-flow__controls-button svg {
-  fill: #666;
+/* Button styles */
+.btn-dark {
+  background: rgb(var(--elevated-rgb));
+  color: rgb(var(--text-primary-rgb));
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 500;
+  border: 1px solid rgba(var(--border-rgb), 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-dark:hover {
+  background: rgb(var(--border-rgb));
+}
+
+.btn-accent-orange {
+  background: rgb(var(--accent-orange-rgb));
+  color: white;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-accent-orange:hover {
+  background: rgba(var(--accent-orange-rgb), 0.8);
+}
+
+.btn-accent-green {
+  background: rgb(var(--accent-green-rgb));
+  color: white;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-accent-green:hover {
+  background: rgba(var(--accent-green-rgb), 0.8);
+}
+
+/* App-specific styles from old CSS, updated with new theme */
+.app-header {
+  @apply bg-dark-elevated border-b border-dark-border px-4 py-3 flex items-center justify-between;
+}
+
+.app-main-content {
+  @apply flex-1 overflow-hidden;
+}
+
+/* Data display */
+.metrics-grid {
+  @apply grid grid-cols-3 gap-4;
+}
+
+.metric-card {
+  @apply p-4 bg-dark-surface rounded-xl border border-dark-border;
 }
 
 /* Animation classes */
@@ -89,17 +231,43 @@ body {
   animation: bounce 1s infinite;
 }
 
-/* Dashboard-specific styles */
+/* Add subtle white borders on component corners for depth */
+.corner-highlights::before,
+.corner-highlights::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.corner-highlights::before {
+  top: 0;
+  left: 0;
+  border-top: 1px solid;
+  border-left: 1px solid;
+  border-top-left-radius: 2px;
+}
+
+.corner-highlights::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+  border-bottom-right-radius: 2px;
+}
+
+/* Dashboard card styling */
 .dashboard-card {
-  @apply rounded-xl border border-gray-200 bg-white shadow-sm;
+  @apply rounded-xl border border-dark-border bg-dark-surface shadow-subtle relative overflow-hidden;
 }
 
 .dashboard-card-header {
-  @apply p-4 border-b border-gray-100;
+  @apply p-4 border-b border-dark-border;
 }
 
 .dashboard-card-title {
-  @apply text-base font-medium;
+  @apply text-base font-medium text-text-primary;
 }
 
 .dashboard-card-content {
@@ -107,51 +275,53 @@ body {
 }
 
 .stat-value {
-  @apply text-2xl font-semibold text-gray-900;
+  @apply text-2xl font-semibold text-text-primary;
 }
 
 .stat-label {
-  @apply text-sm text-gray-500;
+  @apply text-sm text-text-secondary;
 }
 
+/* Badge styling */
 .badge-premium {
-  @apply bg-blue-50 text-blue-700 border border-blue-200;
+  @apply bg-accent-orange bg-opacity-10 text-accent-orange border border-accent-orange border-opacity-20;
 }
 
 .badge-success {
-  @apply bg-green-50 text-green-700 border border-green-200;
+  @apply bg-accent-green bg-opacity-10 text-accent-green border border-accent-green border-opacity-20;
 }
 
 .badge-warning {
   @apply bg-amber-50 text-amber-700 border border-amber-200;
 }
 
+/* Additional layer base declarations for other components that may use them */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 215 25% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 12%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 12%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 214 32% 91%;
-    --secondary-foreground: 215 25% 27%;
-    --muted: 214 32% 91%;
-    --muted-foreground: 215 25% 40%;
-    --accent: 214 32% 91%;
-    --accent-foreground: 215 25% 27%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 60%;
-    --chart-1: 222 89% 41%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --background: 26 26 31;
+    --foreground: 255 255 255;
+    --card: 36 36 41;
+    --card-foreground: 255 255 255;
+    --popover: 36 36 41;
+    --popover-foreground: 255 255 255;
+    --primary: 248 116 59;
+    --primary-foreground: 255 255 255;
+    --secondary: 44 44 50;
+    --secondary-foreground: 169 169 178;
+    --muted: 44 44 50;
+    --muted-foreground: 169 169 178;
+    --accent: 66 184 131;
+    --accent-foreground: 255 255 255;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 57 57 63;
+    --input: 44 44 50;
+    --ring: 248 116 59;
+    --chart-1: 248 116 59;
+    --chart-2: 66 184 131;
+    --chart-3: 49 46 129;
+    --chart-4: 234 179 8;
+    --chart-5: 239 68 68;
     --radius: 0.5rem;
   }
 }
@@ -163,21 +333,4 @@ body {
   body {
     @apply bg-background text-foreground;
   }
-}
-
-.app-header {
-  @apply bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between;
-}
-
-.app-main-content {
-  @apply flex-1 overflow-hidden;
-}
-
-/* Professional data display */
-.metrics-grid {
-  @apply grid grid-cols-3 gap-4;
-}
-
-.metric-card {
-  @apply p-4 bg-white rounded-xl border border-gray-100;
 }

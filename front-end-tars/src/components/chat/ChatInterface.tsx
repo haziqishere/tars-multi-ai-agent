@@ -12,8 +12,6 @@ import ChatInput from "./ChatInput";
 import ChatMessage from "./ChatMessage";
 import { motion } from "framer-motion";
 import { store } from "@/store";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Bot, User, Clock, AlertCircle } from "lucide-react";
 import { Button } from "../ui/button";
 
@@ -88,104 +86,106 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <div className="flex flex-col h-full">
       {!minimized && (
-        <div className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+        <div className="bg-dark-elevated border-b border-dark-border px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-              <Bot className="h-4 w-4 text-blue-700" />
+            <div className="w-8 h-8 rounded-full bg-accent-green bg-opacity-20 flex items-center justify-center mr-2 shadow-neo-dark">
+              <Bot className="h-4 w-4 text-accent-green" />
             </div>
             <div>
-              <h3 className="font-medium text-sm">TARS Assistant</h3>
+              <h3 className="font-medium text-sm text-text-primary">
+                TARS Assistant
+              </h3>
               <div className="flex items-center">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></span>
-                <span className="text-xs text-gray-500">Online</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-accent-green mr-1.5"></span>
+                <span className="text-xs text-text-secondary">Online</span>
               </div>
             </div>
           </div>
           <div>
             {aiResponseTime && (
-              <Badge
-                variant="outline"
-                className="bg-blue-50 text-blue-700 text-xs"
-              >
-                <Clock className="h-3 w-3 mr-1" />
-                {aiResponseTime.toFixed(1)}s response
-              </Badge>
+              <span className="py-1 px-2 rounded-md text-xs bg-dark-surface border border-dark-border shadow-subtle">
+                <Clock className="h-3 w-3 mr-1 inline-block" />
+                <span className="text-text-secondary">
+                  {aiResponseTime.toFixed(1)}s response
+                </span>
+              </span>
             )}
           </div>
         </div>
       )}
 
-      {/* Messages container - should flex-grow to fill available space but not push layout */}
+      {/* Messages container */}
       <div
-        className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50 relative"
+        className="flex-grow overflow-y-auto p-4 space-y-4 bg-dark-base relative"
         style={{
           height: minimized ? "calc(100% - 38px)" : "calc(100% - 130px)",
         }}
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <Card className="w-full max-w-md bg-white border-gray-200">
-              <CardContent className="pt-6 pb-6 px-6">
-                <div className="w-12 h-12 rounded-full bg-blue-100 mb-4 flex items-center justify-center mx-auto">
-                  <Bot className="h-6 w-6 text-blue-700" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">
-                  TARS Multi-Agent System
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  I can help you analyze business operations, identify
-                  optimization opportunities, and generate implementation
-                  strategies.
-                </p>
+            <div className="w-full max-w-md bg-dark-surface border border-dark-border rounded-xl shadow-neo-dark p-6 relative corner-highlights">
+              <div className="w-12 h-12 rounded-full bg-accent-green bg-opacity-20 mb-4 flex items-center justify-center mx-auto shadow-neo-dark">
+                <Bot className="h-6 w-6 text-accent-green" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-text-primary">
+                TARS Multi-Agent System
+              </h3>
+              <p className="text-text-secondary mb-6">
+                I can help you analyze business operations, identify
+                optimization opportunities, and generate implementation
+                strategies.
+              </p>
 
-                <div className="space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-50"
-                    onClick={() =>
-                      handleSubmit(
-                        "Analyze our supply chain operations for cost optimization opportunities"
-                      )
-                    }
-                  >
-                    <div className="mr-2 text-blue-600">→</div>
+              <div className="space-y-3">
+                <button
+                  className="w-full justify-start text-left border border-dark-border bg-dark-elevated hover:bg-dark-hover p-2 rounded-md flex items-center space-x-2 shadow-subtle"
+                  onClick={() =>
+                    handleSubmit(
+                      "Analyze our supply chain operations for cost optimization opportunities"
+                    )
+                  }
+                >
+                  <div className="text-accent-orange">→</div>
+                  <span className="text-text-primary text-sm">
                     Analyze supply chain operations
-                  </Button>
+                  </span>
+                </button>
 
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-50"
-                    onClick={() =>
-                      handleSubmit(
-                        "Evaluate the impact of new tariff regulations on our operations"
-                      )
-                    }
-                  >
-                    <div className="mr-2 text-blue-600">→</div>
+                <button
+                  className="w-full justify-start text-left border border-dark-border bg-dark-elevated hover:bg-dark-hover p-2 rounded-md flex items-center space-x-2 shadow-subtle"
+                  onClick={() =>
+                    handleSubmit(
+                      "Evaluate the impact of new tariff regulations on our operations"
+                    )
+                  }
+                >
+                  <div className="text-accent-orange">→</div>
+                  <span className="text-text-primary text-sm">
                     Evaluate tariff regulation impact
-                  </Button>
+                  </span>
+                </button>
 
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-50"
-                    onClick={() =>
-                      handleSubmit(
-                        "Generate strategies to reduce our operations cost by 25%"
-                      )
-                    }
-                  >
-                    <div className="mr-2 text-blue-600">→</div>
+                <button
+                  className="w-full justify-start text-left border border-dark-border bg-dark-elevated hover:bg-dark-hover p-2 rounded-md flex items-center space-x-2 shadow-subtle"
+                  onClick={() =>
+                    handleSubmit(
+                      "Generate strategies to reduce our operations cost by 25%"
+                    )
+                  }
+                >
+                  <div className="text-accent-orange">→</div>
+                  <span className="text-text-primary text-sm">
                     Generate cost reduction strategies
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="h-full overflow-y-auto pb-2">
+          <div className="flex flex-col h-full overflow-y-auto pb-2 space-y-4">
             {messages.map((message, index) => (
               <ChatMessage
-                key={message.id}
+                key={message.id || index}
                 message={message}
                 isLatest={index === messages.length - 1}
               />
@@ -197,9 +197,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* Input area - fixed at bottom */}
       <div
-        className={`border-t border-gray-200 ${
+        className={`border-t border-dark-border ${
           minimized ? "p-2" : "p-4"
-        } bg-white`}
+        } bg-dark-surface`}
       >
         <ChatInput
           onSubmit={handleSubmit}
@@ -209,7 +209,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {!minimized && (
           <div className="flex justify-center mt-2">
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-text-muted">
               TARS uses AI agents for comprehensive business analysis
             </span>
           </div>
