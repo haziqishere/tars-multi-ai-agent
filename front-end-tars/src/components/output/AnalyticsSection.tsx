@@ -121,7 +121,14 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
               {analyticsData.efficiencyRating}%
             </p>
             <div className="flex items-center mt-1">
-              {getTrendBadge(analyticsData.trends.efficiencyTrend, true)}
+              {getTrendBadge(
+                analyticsData.trends.efficiencyTrend === "improving"
+                  ? "increasing"
+                  : analyticsData.trends.efficiencyTrend === "worsening"
+                  ? "decreasing"
+                  : "stable",
+                true
+              )}
               <span className="text-xs text-gray-500">vs. Target (71%)</span>
             </div>
           </div>

@@ -83,26 +83,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     // Send message to parent for processing
     onSubmit(message);
-
-    // For development testing - simulate response after delay
-    // In production, this would happen when your API responds
-    setTimeout(() => {
-      // Get current state to find the latest AI message
-      const state = store.getState();
-      const currentMessages = state.chat.messages;
-      // Find last AI message
-      const aiMessages = currentMessages.filter((msg) => msg.sender === "ai");
-      const lastAiMessage = aiMessages[aiMessages.length - 1];
-
-      if (lastAiMessage) {
-        dispatch(
-          updateMessage({
-            id: lastAiMessage.id,
-            content: `I've analyzed your request about "${message}" and generated several business optimization options. The analysis is complete and you can view the results in the dashboard below.`,
-          })
-        );
-      }
-    }, 3000);
   };
 
   return (
