@@ -46,11 +46,12 @@ const BusinessFlowSection: React.FC<BusinessFlowSectionProps> = ({
             operational costs.
           </p>
         </div>
-        <div className="h-64 border border-dark-border bg-dark-elevated rounded-lg overflow-hidden w-full shadow-neo-inset">
+        <div className="h-64 border border-dark-border rounded-lg bg-white overflow-hidden w-full shadow-neo-inset">
           <FlowVisualization
             nodes={currentBusinessFlow.nodes}
             edges={currentBusinessFlow.edges}
             fitView={true}
+            zoomOnResize={true}
           />
         </div>
       </CardContent>

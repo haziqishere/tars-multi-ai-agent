@@ -107,7 +107,7 @@ const AlternativeOptionsDisplay: React.FC<AlternativeOptionsDisplayProps> = ({
                   </div>
 
                   {/* Flow visualization section - now full width and taller */}
-                  <div className="w-full h-64 border-t border-dark-border bg-dark-elevated mt-2 shadow-neo-inset">
+                  <div className="w-full h-64 border-t border-dark-border bg-white mt-2 shadow-neo-inset">
                     <FlowVisualization
                       nodes={option.nodes}
                       edges={option.edges}
