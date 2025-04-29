@@ -40,10 +40,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest }) => {
 
       <div className={`max-w-[75%]`}>
         <div
-          className={`p-3 rounded-lg shadow-subtle relative ${
+          className={`p-3 rounded-lg shadow-subtle relative corner-highlights ${
             isUser
-              ? "bg-accent-orange text-white rounded-br-none corner-highlights"
-              : "bg-dark-elevated border border-dark-border text-text-primary rounded-bl-none corner-highlights"
+              ? "bg-accent-orange text-white rounded-br-none"
+              : "bg-dark-elevated border border-dark-border text-text-primary rounded-bl-none"
           }`}
         >
           {isLoading && isLatest ? (
