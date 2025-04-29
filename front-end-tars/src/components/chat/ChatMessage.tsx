@@ -32,18 +32,18 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest }) => {
     >
       {!isUser && (
         <div className="flex-shrink-0 mr-3 mt-1">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-            <Bot className="h-4 w-4 text-blue-700" />
+          <div className="w-8 h-8 rounded-full bg-accent-green bg-opacity-20 flex items-center justify-center shadow-neo-dark">
+            <Bot className="h-4 w-4 text-accent-green" />
           </div>
         </div>
       )}
 
       <div className={`max-w-[75%]`}>
         <div
-          className={`p-3 rounded-lg shadow-sm ${
+          className={`p-3 rounded-lg shadow-subtle relative ${
             isUser
-              ? "bg-blue-600 text-white rounded-br-none"
-              : "bg-white border border-gray-100 text-gray-800 rounded-bl-none"
+              ? "bg-accent-orange text-white rounded-br-none corner-highlights"
+              : "bg-dark-elevated border border-dark-border text-text-primary rounded-bl-none corner-highlights"
           }`}
         >
           {isLoading && isLatest ? (
@@ -72,16 +72,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest }) => {
         </div>
 
         <div
-          className={`text-xs text-gray-500 mt-1 flex items-center ${
+          className={`text-xs text-text-muted mt-1 flex items-center ${
             isUser ? "justify-end" : "justify-start"
           }`}
         >
           {formatTime(message.timestamp)}
-          
+
           {/* Additional metadata could be added here */}
           {!isUser && !isLoading && isLatest && (
-            <span className="ml-2 text-blue-600 font-medium flex items-center">
-              <span className="h-1 w-1 rounded-full bg-blue-600 mr-1"></span>
+            <span className="ml-2 text-accent-green font-medium flex items-center">
+              <span className="h-1 w-1 rounded-full bg-accent-green mr-1"></span>
               TARS
             </span>
           )}
@@ -90,7 +90,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLatest }) => {
 
       {isUser && (
         <div className="flex-shrink-0 ml-3 mt-1">
-          <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-accent-orange text-white flex items-center justify-center shadow-neo-dark">
             <UserIcon className="h-4 w-4" />
           </div>
         </div>

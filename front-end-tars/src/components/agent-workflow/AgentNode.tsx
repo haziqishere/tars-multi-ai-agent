@@ -3,8 +3,6 @@
 
 import { motion } from "framer-motion";
 import { Agent } from "@/store/slices/agentSlice";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Clock, ActivityIcon } from "lucide-react";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 
@@ -44,41 +42,41 @@ const AgentNode: React.FC<AgentNodeProps> = ({
     switch (agent.status) {
       case "idle":
         return {
-          color: "bg-gray-100",
-          textColor: "text-gray-500",
-          borderColor: "border-gray-200",
+          color: "bg-dark-elevated",
+          textColor: "text-text-muted",
+          borderColor: "border-dark-border",
           icon: <Clock className="h-3.5 w-3.5" />,
           label: "Waiting",
         };
       case "working":
         return {
-          color: "bg-blue-50",
-          textColor: "text-blue-600",
-          borderColor: "border-blue-200",
-          icon: <ActivityIcon className="h-3.5 w-3.5 text-blue-500" />,
+          color: "bg-accent-orange bg-opacity-10",
+          textColor: "text-accent-orange",
+          borderColor: "border-accent-orange border-opacity-20",
+          icon: <ActivityIcon className="h-3.5 w-3.5 text-accent-orange" />,
           label: "Processing",
         };
       case "completed":
         return {
-          color: "bg-green-50",
-          textColor: "text-green-600",
-          borderColor: "border-green-200",
-          icon: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />,
+          color: "bg-accent-green bg-opacity-10",
+          textColor: "text-accent-green",
+          borderColor: "border-accent-green border-opacity-20",
+          icon: <CheckCircle2 className="h-3.5 w-3.5 text-accent-green" />,
           label: "Completed",
         };
       case "error":
         return {
-          color: "bg-red-50",
-          textColor: "text-red-600",
-          borderColor: "border-red-200",
-          icon: <AlertCircle className="h-3.5 w-3.5 text-red-500" />,
+          color: "bg-red-900 bg-opacity-20",
+          textColor: "text-red-400",
+          borderColor: "border-red-900 border-opacity-30",
+          icon: <AlertCircle className="h-3.5 w-3.5 text-red-400" />,
           label: "Error",
         };
       default:
         return {
-          color: "bg-gray-100",
-          textColor: "text-gray-500",
-          borderColor: "border-gray-200",
+          color: "bg-dark-elevated",
+          textColor: "text-text-muted",
+          borderColor: "border-dark-border",
           icon: <Clock className="h-3.5 w-3.5" />,
           label: "Waiting",
         };
@@ -100,8 +98,10 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           {/* Status dot with agent number */}
           <div
             className={`w-6 h-6 rounded-full flex items-center justify-center ${
-              agent.status === "working" ? statusConfig.color : "bg-gray-100"
-            } ${statusConfig.textColor}`}
+              agent.status === "working"
+                ? statusConfig.color
+                : "bg-dark-elevated"
+            } ${statusConfig.textColor} shadow-neo-dark`}
           >
             <span className="text-xs font-medium">{getAgentNumber()}</span>
           </div>
@@ -109,28 +109,27 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           {/* Agent details */}
           <div className="ml-2 flex-1">
             <div className="flex items-center">
-              <p className="text-xs font-medium truncate max-w-[120px]">
+              <p className="text-xs font-medium truncate max-w-[120px] text-text-primary">
                 {agent.name}
               </p>
               {agent.status !== "idle" && (
                 <>
                   {agent.status === "working" ? (
-                    <div className="ml-1.5 flex items-center text-blue-600">
+                    <div className="ml-1.5 flex items-center text-accent-orange">
                       <LoadingSpinner className="h-3 w-3" />
                     </div>
                   ) : (
-                    <Badge
-                      variant="outline"
-                      className={`ml-1.5 text-[10px] py-0 px-1.5 h-4 ${statusConfig.color} ${statusConfig.textColor}`}
+                    <span
+                      className={`ml-1.5 text-[10px] py-0 px-1.5 h-4 rounded-sm ${statusConfig.color} ${statusConfig.textColor}`}
                     >
                       {statusConfig.label}
-                    </Badge>
+                    </span>
                   )}
                 </>
               )}
             </div>
             {agent.status === "working" && agent.message && (
-              <div className="text-[10px] text-gray-500 mt-0.5 max-w-full">
+              <div className="text-[10px] text-text-secondary mt-0.5 max-w-full">
                 <TypingAnimation
                   className="text-[10px] leading-tight"
                   duration={50}
@@ -146,14 +145,14 @@ const AgentNode: React.FC<AgentNodeProps> = ({
   }
 
   return (
-    <Card
-      className={`overflow-hidden transition-all duration-300 mb-2 ${
+    <div
+      className={`overflow-hidden transition-all duration-300 mb-2 rounded-lg border shadow-subtle ${
         isActive
-          ? `bg-blue-50 border-blue-200`
+          ? `bg-dark-surface border-accent-orange border-opacity-30`
           : agent.status === "completed"
-          ? "bg-green-50 border-green-100"
-          : "bg-white border-gray-200"
-      }`}
+          ? "bg-dark-surface border-accent-green border-opacity-30"
+          : "bg-dark-surface border-dark-border"
+      } relative corner-highlights`}
     >
       <div className="p-3">
         <div className="flex items-center">
@@ -161,13 +160,13 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           <motion.div
             className={`w-8 h-8 rounded-full flex items-center justify-center mr-2 ${
               agent.status === "working"
-                ? "bg-blue-500"
+                ? "bg-accent-orange"
                 : agent.status === "completed"
-                ? "bg-green-500"
+                ? "bg-accent-green"
                 : agent.status === "error"
                 ? "bg-red-500"
-                : "bg-gray-300"
-            }`}
+                : "bg-dark-border"
+            } shadow-neo-dark`}
             animate={{
               scale: isActive && agent.status === "working" ? [1, 1.05, 1] : 1,
             }}
@@ -184,24 +183,25 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           {/* Agent name and status */}
           <div className="flex-1">
             <div className="flex items-center">
-              <h3 className="text-sm font-medium">{agent.name}</h3>
+              <h3 className="text-sm font-medium text-text-primary">
+                {agent.name}
+              </h3>
               {agent.status === "working" ? (
-                <div className="ml-2 flex items-center text-blue-600">
+                <div className="ml-2 flex items-center text-accent-orange">
                   <LoadingSpinner className="h-4 w-4" />
                 </div>
               ) : (
-                <Badge
-                  variant="outline"
-                  className={`ml-1.5 text-[10px] py-0 px-1.5 ${statusConfig.color} ${statusConfig.textColor} border-0`}
+                <span
+                  className={`ml-1.5 text-[10px] py-0 px-1.5 rounded-sm ${statusConfig.color} ${statusConfig.textColor} border-0`}
                 >
                   <span className="flex items-center">
                     {statusConfig.icon}
                     <span className="ml-1">{statusConfig.label}</span>
                   </span>
-                </Badge>
+                </span>
               )}
             </div>
-            <p className="text-xs text-gray-600 mt-0.5">{agent.role}</p>
+            <p className="text-xs text-text-secondary mt-0.5">{agent.role}</p>
           </div>
         </div>
 
@@ -211,13 +211,13 @@ const AgentNode: React.FC<AgentNodeProps> = ({
             <div
               className={`text-xs p-1.5 rounded ${
                 agent.status === "working"
-                  ? "bg-blue-50 text-blue-800"
+                  ? "bg-accent-orange bg-opacity-10 text-accent-orange"
                   : agent.status === "completed"
-                  ? "bg-green-50 text-green-800"
+                  ? "bg-accent-green bg-opacity-10 text-accent-green"
                   : agent.status === "error"
-                  ? "bg-red-50 text-red-800"
-                  : "bg-gray-50 text-gray-700"
-              }`}
+                  ? "bg-red-800 bg-opacity-20 text-red-400"
+                  : "bg-dark-elevated text-text-secondary"
+              } shadow-neo-inset`}
             >
               {agent.status === "working" ? (
                 <TypingAnimation
@@ -233,7 +233,7 @@ const AgentNode: React.FC<AgentNodeProps> = ({
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 };
 

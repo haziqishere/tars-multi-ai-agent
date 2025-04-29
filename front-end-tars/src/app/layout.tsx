@@ -41,8 +41,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
-      <body className="h-full overflow-hidden bg-[#f8fafc]">
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+    >
+      <body className="h-full overflow-hidden bg-dark-base text-text-primary">
         <Providers>{children}</Providers>
       </body>
     </html>
