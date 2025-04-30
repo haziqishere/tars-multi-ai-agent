@@ -1,0 +1,33 @@
+[
+    {
+      "dept": "Operations",
+      "lead": "Alice Tan",
+      "email": "alice.tan@contoso.com",
+      "description": "Oversees fab and logistics operations"
+    },
+    {
+      "dept": "Finance",
+      "lead": "Jeff Ng",
+      "email": "jeff.ng@contoso.com",
+      "description": "Budgeting, cost forecasts"
+    },
+    {
+      "dept": "Procurement",
+      "lead": "Rahul Mehta",
+      "email": "rahul.mehta@contoso.com",
+      "description": "Supplier contracts, sourcing"
+    },
+    {
+      "dept": "Legal & Compliance",
+      "lead": "Maria Gomez",
+      "email": "maria.gomez@contoso.com",
+      "description": "Regulatory and trade-compliance review"
+    },
+    {
+      "dept": "HR",
+      "lead": "Chee Wei Lim",
+      "email": "cheewei.lim@contoso.com",
+      "description": "Employee relations, relocations"
+    }
+  ]
+  

@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile  # Updated to use the main Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - .env:/app/.env  # Mount the .env file directly
+    environment:
+      - PORT=8000
+      - PYTHONPATH=/app
+    restart: always  # Changed to always restart for better reliability in production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:  # Added deployment constraints for better resource management
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+    logging:  # Added proper logging configuration
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # You can add agent services here if you want to containerize each agent separately
+  # For example:
+  # agent1:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8001:8001"
+  #   environment:
+  #     - PORT=8001
+  #     - AGENT_ID=agent1
+  #   volumes:
+  #     - ./logs:/app/logs
+  #     - .env:/app/.env
+  #   depends_on:
+  #     - api

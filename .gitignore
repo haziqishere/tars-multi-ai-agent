@@ -3,6 +3,20 @@
 /.pnp
 .pnp.js
 /front-end-tars/node_modules
+/back-end-tars/node_modules
+
+# Python specific
+/back-end-tars/__pycache__/
+/back-end-tars/*/__pycache__/
+/back-end-tars/*/*/__pycache__/
+/back-end-tars/*/*/*/__pycache__/
+/back-end-tars/venv/
+/back-end-tars/.venv/
+/back-end-tars/*.py[cod]
+/back-end-tars/*$py.class
+/back-end-tars/.pytest_cache/
+/back-end-tars/.coverage
+/back-end-tars/htmlcov/
 
 # Testing
 /coverage
@@ -17,6 +31,7 @@
 # Misc
 .DS_Store
 *.pem
+**/.DS_Store
 
 # Debug
 npm-debug.log*
@@ -26,6 +41,7 @@ yarn-error.log*
 # Local env files
 .env*.local
 .env
+/back-end-tars/.env
 
 # Vercel
 .vercel
@@ -37,3 +53,7 @@ next-env.d.ts
 # IDE
 .idea
 .vscode
+
+# Project specific
+/back-end-tars/.archive.do_not_enter/
+.DS_Store

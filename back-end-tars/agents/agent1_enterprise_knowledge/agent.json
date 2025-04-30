@@ -1,0 +1,18 @@
+{
+    "name": "Enterprise Knowledge Agent",
+    "description": "Retrieves and answers from internal company documents (e.g., policies, procurement, finance). Routes context to other agents if needed.",
+    "base_url": "http://localhost:8001",
+    "auth": {
+      "type": "none"
+    },
+    "skills": [
+      {
+        "task_type": "enterprise.doc.qa",
+        "description": "Answers questions about company documents."
+      },
+      {
+        "task_type": "enterprise.doc.extract",
+        "description": "Extracts key data or summaries from documents."
+      }
+    ]
+  }

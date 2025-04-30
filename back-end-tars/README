@@ -1,0 +1,205 @@
+<div align="center">
+
+# S.A.N.T.AI
+
+> Strategic Autonomous Network for Tactical AI
+
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Azure](https://img.shields.io/badge/azure-ready-blue)](https://azure.microsoft.com)
+[![Documentation](https://img.shields.io/badge/docs-latest-green.svg)](docs/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+*An enterprise-grade multi-agent AI system for strategic business intelligence*
+
+[Quick Start](#quick-start) • [Documentation](#documentation) • [API Reference](#api-reference) • [Contributing](#contributing)
+
+</div>
+
+## 📑 Overview
+S.A.N.T.AI empowers C-suite leaders with AI-driven decision making by combining:
+- 🔍 Internal knowledge analysis
+- 🌍 Global market intelligence
+- 🎯 Strategic outcome prediction
+- ⚡ Automated task dispatching
+
+---
+
+## ⚡ Quick Start
+```bash
+git clone https://github.com/yourusername/santai.git
+cd santai
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python run_all.py
+```
+
+---
+
+## System Architecture
+
+### Agent 1: Enterprise Knowledge Base
+- **Port:** `8001`
+- **Endpoint:** `/a2a/v1/tasks/send`
+- **Role:** Internal document analysis and QA
+- **Input Format:**
+  ```json
+  { "task_type": "enterprise.doc.qa", 
+    "input": { "parts": [ {"type": "text", "text": "your question here"} ] } }
+  ```
+- **Features:**
+  - Utilizes NVIDIA NIM embeddings for optimized document processing
+  - Vector database for fast document retrieval
+  - Processes diverse internal documents (finance, operations, governance)
+
+### Agent 2: Global Intelligence
+- **Port:** `8002`
+- **Endpoint:** `/a2a/v1/tasks/send`
+- **Role:** External data gathering and analysis
+- **Features:**
+  - Integrates multiple search providers (`Search1API`, `BraveSearch`)
+  - Real-time acquisition of news and market data
+  - Customizable configurations via `MCP.json`
+
+### Agent 3: Strategic Consultant (Main Entry Point)
+- **Port:** `8003`
+- **Endpoint:** `/a2a/v1/tasks/send`
+- **Role:** Orchestrates inter-agent communication, synthesizes final strategic insights
+- **Features:**
+  - Initial strategic question analysis
+  - Comprehensive context evaluation
+  - Coordination of queries between internal (Agent 1) and external (Agent 2) resources
+  - Synthesizes final strategic advice
+
+### Agent 4: Outcome Predictor
+- **Port:** `8004`
+- **Endpoint:** `/a2a/v1/tasks/send`
+- **Role:** Predicts outcomes of strategic decisions
+- **Features:**
+  - Generates and evaluates three distinct strategic scenarios (branches A/B/C)
+  - Performs detailed cost-benefit analysis and risk assessments
+  - Provides timeline predictions for strategic actions
+
+### Agent 5: Task Dispatcher
+- **Port:** `8080`
+- **Endpoint:** `/a2a/v1/tasks/send`
+- **Role:** Allocates actionable tasks and generates communications
+- **Features:**
+  - Maps tasks to appropriate departments
+  - Auto-generates email drafts for task communication
+  - Prioritizes and tracks action items
+
+---
+
+## 🛠️ API Reference
+
+<details>
+<summary><b>Agent Endpoints</b></summary>
+
+| Agent | Port | Endpoint |
+|-------|------|----------|
+| Enterprise Knowledge | 8001 | `/a2a/v1/tasks/send` |
+| Global Intelligence | 8002 | `/a2a/v1/tasks/send` |
+| Strategic Consultant | 8003 | `/a2a/v1/tasks/send` |
+| Outcome Predictor | 8004 | `/a2a/v1/tasks/send` |
+| Task Dispatcher | 8080 | `/a2a/v1/tasks/send` |
+
+</details>
+
+---
+
+## Standardized API Response Formats
+
+**Successful Response:**
+```json
+{
+  "status": "completed",
+  "output": {
+    "artifacts": [
+      { "type": "text", "text": "response content here" }
+    ]
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Error description here",
+  "status": "failed",
+  "code": "ERROR_CODE"
+}
+```
+
+---
+
+## 🔧 Configuration
+
+<details>
+<summary><b>Environment Setup</b></summary>
+
+```bash
+# Required Environment Variables
+AZURE_CONN_STRING=<your-connection-string>
+AGENT{1..5}_ID=<your-agent-ids>
+SEARCH1API_KEY=<your-key>
+```
+
+</details>
+
+---
+
+## Agent Communication Flow
+1. **Initial Question Received** by Agent 3
+2. **Context Evaluation and Initial Response Generation** by Agent 3
+3. **Querying Internal Context** (Agent 1) if required
+4. **Querying External Data** (Agent 2) if required
+5. **Enhanced Response Generation** by Agent 3
+6. **Strategic Analysis** (Outcome prediction) by Agent 4
+7. **Actionable Task Dispatching** by Agent 5
+
+---
+
+## Testing
+Utilize sample test questions provided in `todo.txt` for comprehensive agent validation:
+- Mixed context scenarios
+- Internal-only queries
+- External-only queries
+- Strategic & workforce-related questions
+- Policy risk assessments
+
+---
+
+## Project Directory Structure
+```
+project/
+├── agents/
+│   ├── agent1_enterprise_knowledge/
+│   ├── agent2_global_intel/
+│   ├── agent3_consultant/
+│   ├── agent4_outcome_predictor/
+│   └── agent5_task_dispatcher/
+├── prompts/
+│   ├── evaluation.txt
+│   ├── formulate_search.txt
+│   └── formulate_internal.txt
+├── run_scripts/
+│   └── run_all.py
+├── shared/
+│   └── departments.json
+├── .env
+└── MCP.json
+```
+
+---
+
+## 🤝 Contributing
+We welcome contributions! See our [Contributing Guidelines](CONTRIBUTING.md).
+
+---
+
+## 📜 License
+MIT License - see [LICENSE](LICENSE)
+
+<div align="center">
+<sub>Built with ❤️ by the S.A.N.T.AI Team</sub>
+</div>

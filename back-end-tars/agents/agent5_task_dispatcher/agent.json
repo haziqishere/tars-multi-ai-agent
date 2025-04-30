@@ -1,0 +1,11 @@
+{
+  "id": "agent5_task_dispatcher",
+  "entryPoint": "handler.py",
+  "routes": [
+    {
+      "path": "/a2a/v1/tasks/send",
+      "method": "POST",
+      "handler": "handler.handle_request"
+    }
+  ]
+}
