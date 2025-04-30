@@ -56,3 +56,4 @@ next-env.d.ts
 
 # Project specific
 /back-end-tars/.archive.do_not_enter/
+.DS_Store
