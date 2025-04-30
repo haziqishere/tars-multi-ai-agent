@@ -11,20 +11,21 @@ import FlowVisualization from "./FlowVisualization";
 
 const SummaryCard: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { summaryCardData, summaryCardVisible, selectedOptionId, options } = useAppSelector(
-    (state) => state.output
-  );
+  const { summaryCardData, summaryCardVisible, selectedOptionId, options } =
+    useAppSelector((state) => state.output);
 
   if (!summaryCardVisible || !summaryCardData) return null;
 
   // Find the selected option to display its flow visualization
-  const selectedOption = options.find(opt => opt.id === selectedOptionId);
+  const selectedOption = options.find((opt) => opt.id === selectedOptionId);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col bg-dark-surface rounded-lg shadow-xl border border-dark-border">
         <div className="flex items-center justify-between p-4 border-b border-dark-border">
-          <h2 className="text-xl font-bold text-text-primary">Implementation Summary</h2>
+          <h2 className="text-xl font-bold text-text-primary">
+            Implementation Summary
+          </h2>
           <Button
             variant="ghost"
             size="icon"
@@ -41,10 +42,12 @@ const SummaryCard: React.FC = () => {
           {selectedOption && (
             <Card className="overflow-hidden border border-dark-border bg-white">
               <div className="p-4 bg-dark-elevated border-b border-dark-border">
-                <h3 className="font-medium text-text-primary">Selected Implementation: {selectedOption.title}</h3>
+                <h3 className="font-medium text-text-primary">
+                  Selected Implementation: {selectedOption.title}
+                </h3>
               </div>
               <div className="h-64 w-full">
-                <FlowVisualization 
+                <FlowVisualization
                   nodes={selectedOption.nodes}
                   edges={selectedOption.edges}
                   fitView={true}

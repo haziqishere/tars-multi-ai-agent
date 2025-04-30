@@ -46,7 +46,7 @@ const DepartmentSummary: React.FC<DepartmentSummaryProps> = ({
       <div className="divide-y divide-dark-border max-h-[400px] overflow-y-auto flex-grow">
         {departments.map((dept) => {
           const isSelected = selectedDepartmentId === dept.id;
-          
+
           return (
             <div
               key={dept.id}
@@ -73,12 +73,12 @@ const DepartmentSummary: React.FC<DepartmentSummaryProps> = ({
             >
               {/* Orange left border for selected department - now using an absolutely positioned element for better visibility */}
               {isSelected && (
-                <div 
-                  className="absolute left-0 top-0 bottom-0 w-1" 
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-1"
                   style={{ backgroundColor: "#f97316", width: "4px" }}
                 ></div>
               )}
-              
+
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-medium text-text-primary">
                   {dept.department}
@@ -87,7 +87,8 @@ const DepartmentSummary: React.FC<DepartmentSummaryProps> = ({
                   variant="outline"
                   className="bg-dark-surface text-text-primary border-dark-border"
                 >
-                  {dept.tasks.length} {dept.tasks.length === 1 ? "Task" : "Tasks"}
+                  {dept.tasks.length}{" "}
+                  {dept.tasks.length === 1 ? "Task" : "Tasks"}
                 </Badge>
               </div>
 

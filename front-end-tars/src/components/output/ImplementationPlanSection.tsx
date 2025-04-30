@@ -182,11 +182,6 @@ const ImplementationPlanSection: React.FC<ImplementationPlanSectionProps> = ({
           <DownloadIcon className="h-3.5 w-3.5 mr-1 text-text-secondary" />
           Export Plan
         </button>
-        {selectedOptionId && (
-          <button className="btn-accent-green h-8 px-3 text-xs">
-            Approve Implementation
-          </button>
-        )}
       </CardFooter>
     </Card>
   );
