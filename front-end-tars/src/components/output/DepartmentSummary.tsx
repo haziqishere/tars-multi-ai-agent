@@ -44,88 +44,99 @@ const DepartmentSummary: React.FC<DepartmentSummaryProps> = ({
       </div>
 
       <div className="divide-y divide-dark-border max-h-[400px] overflow-y-auto flex-grow">
-        {departments.map((dept) => (
-          <div
-            key={dept.id}
-            onClick={() => {
-              if (!sendingEmails && !emailsSent) {
-                dispatch(setSelectedDepartment(dept.id));
-              }
-            }}
-            className={`p-4 cursor-pointer transition-colors ${
-              selectedDepartmentId === dept.id
-                ? "bg-dark-hover border-l-4 border-l-accent-orange"
-                : "hover:bg-dark-hover border-l-4 border-l-transparent"
-            }`}
-            role="button"
-            tabIndex={0}
-            aria-selected={selectedDepartmentId === dept.id}
-            aria-label={`Select ${dept.department} department`}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
+        {departments.map((dept) => {
+          const isSelected = selectedDepartmentId === dept.id;
+          
+          return (
+            <div
+              key={dept.id}
+              onClick={() => {
                 if (!sendingEmails && !emailsSent) {
                   dispatch(setSelectedDepartment(dept.id));
                 }
-              }
-            }}
-          >
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-medium text-text-primary">
-                {dept.department}
-              </h4>
-              <Badge
-                variant="outline"
-                className="bg-dark-surface text-text-primary border-dark-border"
-              >
-                {dept.tasks.length} {dept.tasks.length === 1 ? "Task" : "Tasks"}
-              </Badge>
-            </div>
+              }}
+              className={`
+                p-4 cursor-pointer transition-colors relative
+                ${isSelected ? "bg-dark-hover" : "hover:bg-dark-hover"}
+              `}
+              role="button"
+              tabIndex={0}
+              aria-selected={isSelected}
+              aria-label={`Select ${dept.department} department`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  if (!sendingEmails && !emailsSent) {
+                    dispatch(setSelectedDepartment(dept.id));
+                  }
+                }
+              }}
+            >
+              {/* Orange left border for selected department - now using an absolutely positioned element for better visibility */}
+              {isSelected && (
+                <div 
+                  className="absolute left-0 top-0 bottom-0 w-1" 
+                  style={{ backgroundColor: "#f97316", width: "4px" }}
+                ></div>
+              )}
+              
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-text-primary">
+                  {dept.department}
+                </h4>
+                <Badge
+                  variant="outline"
+                  className="bg-dark-surface text-text-primary border-dark-border"
+                >
+                  {dept.tasks.length} {dept.tasks.length === 1 ? "Task" : "Tasks"}
+                </Badge>
+              </div>
 
-            <p className="text-sm text-text-secondary mb-2">
-              Manager: {dept.manager}
-            </p>
+              <p className="text-sm text-text-secondary mb-2">
+                Manager: {dept.manager}
+              </p>
 
-            {/* Show first 2 tasks (with truncation if needed) */}
-            <div className="mt-3 space-y-2">
-              {dept.tasks.slice(0, 2).map((task) => (
-                <div key={task.id} className="flex items-start text-sm">
-                  <span
-                    className={`w-2 h-2 rounded-full mt-1.5 mr-2 ${
-                      getPriorityColor(task.priority).split(" ")[0]
-                    }`}
-                  ></span>
-                  <div>
-                    <span className="text-text-primary">
-                      {task.description}
-                    </span>
-                    <div className="flex items-center mt-1">
-                      <span
-                        className={`text-xs px-1.5 py-0.5 rounded ${getPriorityColor(
-                          task.priority
-                        )}`}
-                      >
-                        {task.priority}
+              {/* Show first 2 tasks (with truncation if needed) */}
+              <div className="mt-3 space-y-2">
+                {dept.tasks.slice(0, 2).map((task) => (
+                  <div key={task.id} className="flex items-start text-sm">
+                    <span
+                      className={`w-2 h-2 rounded-full mt-1.5 mr-2 ${
+                        getPriorityColor(task.priority).split(" ")[0]
+                      }`}
+                    ></span>
+                    <div>
+                      <span className="text-text-primary">
+                        {task.description}
                       </span>
-                      <span className="text-xs text-text-secondary ml-2">
-                        Due:{" "}
-                        {new Date(task.deadline).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
+                      <div className="flex items-center mt-1">
+                        <span
+                          className={`text-xs px-1.5 py-0.5 rounded ${getPriorityColor(
+                            task.priority
+                          )}`}
+                        >
+                          {task.priority}
+                        </span>
+                        <span className="text-xs text-text-secondary ml-2">
+                          Due:{" "}
+                          {new Date(task.deadline).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {dept.tasks.length > 2 && (
-                <div className="text-xs text-text-secondary italic pl-4 mt-1">
-                  + {dept.tasks.length - 2} more tasks
-                </div>
-              )}
+                ))}
+                {dept.tasks.length > 2 && (
+                  <div className="text-xs text-text-secondary italic pl-4 mt-1">
+                    + {dept.tasks.length - 2} more tasks
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );

@@ -113,6 +113,31 @@ export const fetchSummaryCardData = async (optionId: string): Promise<SummaryCar
   // For now, simulate a delay and return mock data
   await new Promise(resolve => setTimeout(resolve, 1000));
   
+  // Get user information from localStorage (set during login)
+  // In a real app, this would come from an auth context or service
+  let userName = "J. Doe";
+  let userTitle = "Head of Operations";
+  
+  // Try to get the logged in user from localStorage
+  try {
+    const userIdFromLocalStorage = localStorage.getItem('selectedUser');
+    if (userIdFromLocalStorage === 'jdoe') {
+      userName = "J. Doe";
+      userTitle = "Head of Operations";
+    } else if (userIdFromLocalStorage === 'asmith') {
+      userName = "A. Smith";
+      userTitle = "CEO";
+    }
+  } catch (error) {
+    console.error("Error getting user from localStorage:", error);
+    // Fall back to default user if there's an error
+  }
+  
+  const emailSignature = `
+Best regards,
+TARS System
+Ran By ${userName}, ${userTitle}`;
+  
   return {
     businessOperationsFlow: {
       summary: "Optimized 5-step procurement process with automated vendor validation",
@@ -167,9 +192,7 @@ Key tasks for the Procurement team:
 The expected outcomes include a 30% reduction in processing time and 15% cost savings.
 
 Please review the attached implementation schedule and confirm your team's availability for the kickoff meeting next Monday at 10:00 AM.
-
-Best regards,
-TARS System`
+${emailSignature}`
         }
       },
       {
@@ -207,9 +230,7 @@ Key tasks for the Vendor Relations team:
 This new system will help reduce vendor selection time by 40% and improve quality scoring by 25%.
 
 Let's connect this week to discuss the implementation details further.
-
-Best regards,
-TARS System`
+${emailSignature}`
         }
       },
       {
@@ -254,9 +275,7 @@ Key tasks for the Legal team:
 These changes will help reduce contract review time by 35% while maintaining our high legal standards.
 
 Please review and let me know if you have any questions about the implementation timeline.
-
-Best regards,
-TARS System`
+${emailSignature}`
         }
       },
       {
@@ -301,9 +320,7 @@ Key tasks for the Finance team:
 These changes are expected to reduce payment processing time by 60% and improve cash flow forecasting accuracy by 25%.
 
 I've attached detailed specifications for both components. Please review them and let me know if you need any clarification.
-
-Best regards,
-TARS System`
+${emailSignature}`
         }
       }
     ]

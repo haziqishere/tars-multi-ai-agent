@@ -36,6 +36,10 @@ export default function LoginPage() {
 
   // Handle login action (no actual auth, just navigation)
   const handleLogin = () => {
+    // Save selected user to localStorage for use in other components
+    if (selectedUser) {
+      localStorage.setItem('selectedUser', selectedUser);
+    }
     router.push("/datasource");
   };
 
