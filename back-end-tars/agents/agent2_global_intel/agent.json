@@ -1,0 +1,19 @@
+{
+    "name": "Global Intelligence Agent",
+    "description": "Monitors global news and events, and routes key information to summarization or strategy agents.",
+    "base_url": "http://localhost:8002",  
+    "auth": {
+      "type": "none"
+    },
+    "skills": [
+      {
+        "task_type": "global.news.search",
+        "description": "Search and retrieve global news information via external APIs."
+      },
+      {
+        "task_type": "global.news.summarize",
+        "description": "Route global news to other agents for summarization and further analysis."
+      }
+    ]
+  }
+  

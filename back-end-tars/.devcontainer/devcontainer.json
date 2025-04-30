@@ -1,0 +1,35 @@
+{
+    "name": "AI Agents API",
+    "dockerFile": "../Dockerfile",
+    "context": "..",
+    "runArgs": [
+        "--network=host"
+    ],
+    "mounts": [
+        "source=${localEnv:HOME}/.azure,target=/home/vscode/.azure,type=bind,consistency=cached"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "redhat.vscode-yaml",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.formatting.provider": "black",
+                "editor.formatOnSave": true,
+                "python.formatting.blackArgs": [
+                    "--line-length",
+                    "100"
+                ]
+            }
+        }
+    },
+    "forwardPorts": [
+        8000
+    ],
+    "postCreateCommand": "pip install -r requirements.txt"
+}

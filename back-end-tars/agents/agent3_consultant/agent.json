@@ -1,0 +1,15 @@
+{
+    "name": "Consultant Agent",
+    "description": "Summarizes long-form global news into concise reports for strategic analysis.",
+    "base_url": "http://localhost:8003",
+    "auth": {
+      "type": "none"
+    },
+    "skills": [
+      {
+        "task_type": "global.news.summarize",
+        "description": "Summarizes raw news content into a short, digestible report."
+      }
+    ]
+  }
+  

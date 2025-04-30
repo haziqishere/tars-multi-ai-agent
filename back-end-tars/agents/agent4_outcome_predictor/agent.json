@@ -1,0 +1,18 @@
+{
+    "name": "4_Outcome_Predictor",
+    "entrypoint": "handler.py",
+    "description": "Predicts cost/benefit/risk for each strategic action",
+    "base_url": "http://localhost:8004",
+    "inputs": {
+      "type": "application/json",
+      "schema": {
+        "properties": {
+          "actions": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["actions"]
+      }
+    },
+    "outputs": { "type": "application/json" },
+    "timeout": 300
+  }
+  
