@@ -1,0 +1,509 @@
+# Revised Implementation Plan: Summary Card with Side-by-Side Layout
+
+This revised implementation plan creates a more streamlined interface with a high-level overview of department tasks and dynamically loaded emails side-by-side.
+
+## Updated UI Design
+
+Instead of tabs for different content sections, the UI will now feature:
+
+1. **Business Flow Summary** at the top
+2. **Side-by-side layout** below:
+   - **Left panel**: Department selector and task summary
+   - **Right panel**: Email preview for the selected department
+
+## Implementation Steps
+
+### 1. Update the Data Structure and Types
+
+The data structure will remain similar, but with tighter connections between departments and their corresponding emails:
+
+```typescript
+// src/types/output.ts
+export interface Department {
+  id: string;
+  department: string;
+  manager: string;
+  email: string;
+  tasks: DepartmentTask[];
+  emailTemplate: Email;  // The email to be sent to this department's head
+}
+
+export interface OutputState {
+  // Other properties...
+  summaryCardVisible: boolean;
+  summaryCardData: SummaryCardData | null;
+  selectedDepartmentId: string | null;
+  editedEmails: Record<string, Email>; // Map department ID to edited email
+  sendingEmails: boolean;
+  emailsSent: boolean;
+}
+```
+
+### 2. Update Redux Store
+
+```typescript
+// src/store/slices/outputSlice.ts
+
+const initialState: OutputState = {
+  // Other properties...
+  summaryCardVisible: false,
+  summaryCardData: null,
+  selectedDepartmentId: null,
+  editedEmails: {},
+  sendingEmails: false,
+  emailsSent: false,
+};
+
+const outputSlice = createSlice({
+  name: 'output',
+  initialState,
+  reducers: {
+    // Other reducers...
+    setSummaryCardData: (state, action: PayloadAction<SummaryCardData>) => {
+      state.summaryCardData = action.payload;
+      
+      // Initialize editedEmails with the original email templates
+      const emailMap: Record<string, Email> = {};
+      action.payload.departments.forEach(dept => {
+        emailMap[dept.id] = { ...dept.emailTemplate };
+      });
+      state.editedEmails = emailMap;
+      
+      // Set the initially selected department
+      if (action.payload.departments.length > 0) {
+        state.selectedDepartmentId = action.payload.departments[0].id;
+      }
+    },
+    setSelectedDepartment: (state, action: PayloadAction<string>) => {
+      state.selectedDepartmentId = action.payload;
+    },
+    updateEditedEmail: (state, action: PayloadAction<{
+      departmentId: string;
+      field: keyof Email;
+      value: string;
+    }>) => {
+      const { departmentId, field, value } = action.payload;
+      if (state.editedEmails && state.editedEmails[departmentId]) {
+        state.editedEmails[departmentId] = {
+          ...state.editedEmails[departmentId],
+          [field]: value
+        };
+      }
+    },
+    // Other actions remain similar...
+  },
+});
+```
+
+### 3. Update Mock API Response
+
+```typescript
+// lib/api.ts
+export const getMockOutputData = async () => {
+  // Simulating API call delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  return {
+    // Other properties...
+    summaryCard: {
+      businessOperationsFlow: {
+        summary: "Optimized 5-step procurement process with automated vendor validation",
+        steps: [
+          { id: "step1", description: "Automated requisition approval", department: "Procurement" },
+          // Other steps...
+        ]
+      },
+      departments: [
+        {
+          id: "dept-1",
+          department: "Procurement",
+          manager: "Alex Johnson",
+          email: "alex.johnson@company.com",
+          tasks: [
+            {
+              id: "task1",
+              description: "Update requisition form with new validation fields",
+              priority: "high",
+              deadline: "2025-05-15",
+            },
+            // Other tasks...
+          ],
+          emailTemplate: {
+            to: "alex.johnson@company.com",
+            recipient: "Alex Johnson",
+            department: "Procurement",
+            subject: "Action Required: Procurement Process Optimization Implementation",
+            body: `Dear Alex,
+
+I'm reaching out regarding the recently approved procurement process optimization. The analysis has identified key areas where your department will play a critical role in implementation.
+
+Key tasks for the Procurement team:
+1. Update requisition form with new validation fields (High Priority, Due: May 15, 2025)
+2. Configure automated PO generation rules (Medium Priority, Due: May 30, 2025)
+
+The expected outcomes include a 30% reduction in processing time and 15% cost savings.
+
+Please review the attached implementation schedule and confirm your team's availability for the kickoff meeting next Monday at 10:00 AM.
+
+Best regards,
+TARS System`
+          }
+        },
+        // Other departments with their email templates...
+      ]
+    }
+  };
+};
+```
+
+### 4. Create New Summary Card Component
+
+The revised SummaryCard component will have a simpler, more focused layout:
+
+```tsx
+// src/components/output/SummaryCard.tsx
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { hideSummaryCard } from '@/store/slices/outputSlice';
+import BusinessFlowSummary from './BusinessFlowSummary';
+import DepartmentSummary from './DepartmentSummary';
+import EmailPreview from './EmailPreview';
+
+const SummaryCard: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { summaryCardData } = useAppSelector(state => state.output);
+  
+  if (!summaryCardData) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col bg-white rounded-lg shadow-xl">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-xl font-bold">Implementation Summary</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => dispatch(hideSummaryCard())}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        <div className="flex-1 overflow-auto p-4 space-y-6">
+          {/* Business Flow Summary at the top */}
+          <BusinessFlowSummary 
+            flowSummary={summaryCardData.businessOperationsFlow.summary}
+            steps={summaryCardData.businessOperationsFlow.steps}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Department Summary on the left */}
+            <DepartmentSummary departments={summaryCardData.departments} />
+            
+            {/* Email Preview on the right */}
+            <EmailPreview />
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+export default SummaryCard;
+```
+
+### 5. Create Department Summary Component
+
+This component will provide a high-level overview of departments and tasks, with the ability to select a department:
+
+```tsx
+// src/components/output/DepartmentSummary.tsx
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Department } from '@/types/output';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setSelectedDepartment } from '@/store/slices/outputSlice';
+
+interface DepartmentSummaryProps {
+  departments: Department[];
+}
+
+const DepartmentSummary: React.FC<DepartmentSummaryProps> = ({ departments }) => {
+  const dispatch = useAppDispatch();
+  const { selectedDepartmentId, sendingEmails, emailsSent } = useAppSelector(state => state.output);
+  
+  // Helper function to get priority color
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  return (
+    <Card className="overflow-hidden">
+      <div className="p-4 bg-gray-50 border-b">
+        <h3 className="font-semibold">Department Tasks</h3>
+        <p className="text-sm text-gray-500">Select a department to view details</p>
+      </div>
+      
+      <div className="divide-y max-h-[400px] overflow-y-auto">
+        {departments.map((dept) => (
+          <div 
+            key={dept.id}
+            className={`p-4 cursor-pointer transition-colors ${
+              selectedDepartmentId === dept.id ? 'bg-blue-50' : 'hover:bg-gray-50'
+            }`}
+            onClick={() => {
+              if (!sendingEmails && !emailsSent) {
+                dispatch(setSelectedDepartment(dept.id));
+              }
+            }}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="font-medium">{dept.department}</h4>
+              <Badge variant="outline" className="bg-primary/10">
+                {dept.tasks.length} {dept.tasks.length === 1 ? 'Task' : 'Tasks'}
+              </Badge>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-1">Manager: {dept.manager}</p>
+            
+            {/* Show first 2 tasks (with truncation if needed) */}
+            <div className="mt-2 space-y-1">
+              {dept.tasks.slice(0, 2).map((task) => (
+                <div key={task.id} className="flex items-center text-sm">
+                  <span className={`w-2 h-2 rounded-full mr-2 ${
+                    getPriorityColor(task.priority).split(' ')[0]
+                  }`}></span>
+                  <span className="truncate">{task.description}</span>
+                </div>
+              ))}
+              {dept.tasks.length > 2 && (
+                <div className="text-xs text-gray-500 italic">
+                  + {dept.tasks.length - 2} more tasks
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+};
+
+export default DepartmentSummary;
+```
+
+### 6. Create Email Preview Component
+
+This component will dynamically show and allow editing of the email for the selected department:
+
+```tsx
+// src/components/output/EmailPreview.tsx
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { Send, Loader2, CheckCircle, Mail } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { 
+  updateEditedEmail,
+  setSendingEmails,
+  setEmailsSent
+} from '@/store/slices/outputSlice';
+
+const EmailPreview: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { 
+    summaryCardData, 
+    selectedDepartmentId, 
+    editedEmails,
+    sendingEmails,
+    emailsSent
+  } = useAppSelector(state => state.output);
+  
+  if (!summaryCardData || !selectedDepartmentId || !editedEmails) {
+    return (
+      <Card className="flex items-center justify-center h-full p-6 text-gray-500">
+        <p>Select a department to view email</p>
+      </Card>
+    );
+  }
+  
+  const selectedDepartment = summaryCardData.departments.find(
+    d => d.id === selectedDepartmentId
+  );
+  
+  if (!selectedDepartment) {
+    return (
+      <Card className="flex items-center justify-center h-full p-6 text-gray-500">
+        <p>Department not found</p>
+      </Card>
+    );
+  }
+  
+  const currentEmail = editedEmails[selectedDepartmentId];
+  
+  const handleInputChange = (
+    field: 'to' | 'subject' | 'body',
+    value: string
+  ) => {
+    dispatch(updateEditedEmail({
+      departmentId: selectedDepartmentId,
+      field,
+      value
+    }));
+  };
+  
+  const handleSendEmails = async () => {
+    dispatch(setSendingEmails(true));
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    dispatch(setSendingEmails(false));
+    dispatch(setEmailsSent(true));
+  };
+  
+  return (
+    <Card className="flex flex-col h-full">
+      <div className="p-4 bg-gray-50 border-b flex items-center">
+        <Mail className="h-5 w-5 mr-2 text-primary" />
+        <h3 className="font-semibold">Email to {selectedDepartment.department} Manager</h3>
+      </div>
+      
+      <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+        <div>
+          <Label htmlFor="recipient">To</Label>
+          <Input
+            id="recipient"
+            value={currentEmail.to}
+            onChange={(e) => handleInputChange('to', e.target.value)}
+            className="mt-1"
+            disabled={sendingEmails || emailsSent}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Recipient: {currentEmail.recipient}
+          </p>
+        </div>
+        
+        <div>
+          <Label htmlFor="subject">Subject</Label>
+          <Input
+            id="subject"
+            value={currentEmail.subject}
+            onChange={(e) => handleInputChange('subject', e.target.value)}
+            className="mt-1"
+            disabled={sendingEmails || emailsSent}
+          />
+        </div>
+        
+        <div className="flex-1">
+          <Label htmlFor="body">Email Body</Label>
+          <Textarea
+            id="body"
+            value={currentEmail.body}
+            onChange={(e) => handleInputChange('body', e.target.value)}
+            className="mt-1 min-h-[200px] font-mono text-sm"
+            disabled={sendingEmails || emailsSent}
+          />
+        </div>
+      </div>
+      
+      <Separator />
+      
+      <div className="p-4 bg-gray-50">
+        {emailsSent ? (
+          <div className="flex items-center justify-center text-green-600 bg-green-50 p-2 rounded-md">
+            <CheckCircle className="h-5 w-5 mr-2" />
+            All emails sent successfully!
+          </div>
+        ) : (
+          <Button 
+            onClick={handleSendEmails}
+            disabled={sendingEmails}
+            className="w-full justify-center"
+          >
+            {sendingEmails ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Sending all emails...
+              </>
+            ) : (
+              <>
+                <Send className="h-5 w-5 mr-2" />
+                Confirm and Send All Emails
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+};
+
+export default EmailPreview;
+```
+
+## Component Relationships
+
+Here's how the components will interact:
+
+1. When the user clicks "Approve" in the OutputInterface:
+   - Fetch summaryCardData via API
+   - Initialize editedEmails with all department email templates
+   - Select the first department by default
+   - Show the SummaryCard modal
+
+2. Within the SummaryCard:
+   - BusinessFlowSummary shows at the top
+   - DepartmentSummary shows on the left
+   - EmailPreview shows on the right
+
+3. When the user clicks a department in DepartmentSummary:
+   - Update selectedDepartmentId in Redux
+   - EmailPreview automatically updates to show the email for that department
+
+4. When the user edits an email in EmailPreview:
+   - Only that department's email is updated in the editedEmails map
+   - Other department emails remain unchanged
+
+5. When the user clicks "Confirm and Send All Emails":
+   - All emails in the editedEmails map are sent at once
+   - The UI shows a loading state and then a success message
+
+## Visual Design
+
+The visual design will follow these principles:
+
+1. **Clean & Professional**: Use a simple color scheme with plenty of white space
+2. **Clear Hierarchy**: Visual prominence to the business flow summary, followed by department selection and email preview
+3. **Contextual Feedback**: Highlight the selected department and provide clear feedback for actions
+4. **Consistent Styling**: Use the same UI components and styles throughout
+
+## UI Flow
+
+1. User clicks "Approve"
+2. Summary Card appears showing:
+   - Business flow summary at the top
+   - Department list on the left (first department selected by default)
+   - Email preview for selected department on the right
+3. User can browse departments by clicking on them
+4. Each department click updates the email preview
+5. User can edit any department's email by selecting that department
+6. When ready, user clicks "Confirm and Send All Emails" 
+7. System sends all emails and shows success confirmation
+8. User closes the modal
+
+This design provides a higher-level overview while maintaining the ability to see and edit details when needed, all without switching between tabs or modes.
