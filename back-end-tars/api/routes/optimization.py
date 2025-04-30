@@ -1,10 +1,17 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import Dict, Any
+from flask import Blueprint, request, jsonify
 
 from api.models import OptimizationRequest, OptimizationResponse, ErrorResponse
-from api.services.agent_manager import agent_manager
+from api.services.agent_manager import agent_manager, AgentManager
 
 router = APIRouter()
+optimization_bp = Blueprint('optimization', __name__)
+
+@optimization_bp.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for container monitoring"""
+    return jsonify({"status": "healthy"}), 200
 
 @router.post(
     "/optimization", 
@@ -51,4 +58,4 @@ async def optimize_process(request: OptimizationRequest) -> Dict[str, Any]:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process optimization request"
-        ) 
+        )

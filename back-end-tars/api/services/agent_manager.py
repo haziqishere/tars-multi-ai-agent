@@ -70,9 +70,9 @@ class AgentManager:
         try:
             script_path = os.path.join(self.base_dir, f"run_{agent_id}.py")
             
-            # Run the agent process
+            # Run the agent process with explicit "serve" argument
             process = subprocess.Popen(
-                ["python3", "-X", "utf8", script_path],
+                ["python3", "-X", "utf8", script_path, "serve"],
                 cwd=self.base_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
