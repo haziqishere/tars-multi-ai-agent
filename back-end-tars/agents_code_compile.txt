@@ -1,0 +1,1728 @@
+# Microsoft AI Agent Hackathon - Agents Code Compilation
+
+## Agent 1: Enterprise Knowledge
+### Agent Description
+The Enterprise Knowledge Agent (Agent 1) is responsible for retrieving and answering questions from internal company documents. It handles queries about policies, procurement, finance, and other internal matters. It can also route context to other agents when needed. The agent serves as the primary source of internal company knowledge and documentation.
+
+### File Structure
+- agent.json
+- client.py
+- handler.py
+- logic.py
+- __init__.py
+
+### agent.json
+```json
+{
+    "name": "Enterprise Knowledge Agent",
+    "description": "Retrieves and answers from internal company documents (e.g., policies, procurement, finance). Routes context to other agents if needed.",
+    "base_url": "http://localhost:8001",
+    "auth": {
+      "type": "none"
+    },
+    "skills": [
+      {
+        "task_type": "enterprise.doc.qa",
+        "description": "Answers questions about company documents."
+      },
+      {
+        "task_type": "enterprise.doc.extract",
+        "description": "Extracts key data or summaries from documents."
+      }
+    ]
+}
+```
+
+### client.py
+```python
+import requests
+
+def load_agent_card(agent3_base_url: str):
+    url = f"{agent3_base_url}/.well-known/agent.json"
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()
+
+def send_doc_context(agent3_base_url: str, doc_content: str) -> str:
+    payload = {
+        "task_type": "enterprise.doc.extract",
+        "input": {
+            "parts": [
+                {"type": "text", "text": doc_content}
+            ]
+        }
+    }
+    response = requests.post(f"{agent3_base_url}/a2a/v1/tasks/send", json=payload)
+    if response.status_code == 200:
+        return response.json().get("output", {}).get("artifacts", [{}])[0].get("text", "")
+    return f"Error: {response.status_code} {response.text}"
+```
+
+### handler.py
+```python
+from flask import Flask, request, jsonify
+from agents.agent1_enterprise_knowledge.logic import answer_question
+import logging
+
+# Silence Azure AI Foundry debug logs
+logging.getLogger("azure").setLevel(logging.WARNING)
+
+app = Flask(__name__)
+
+@app.route("/a2a/v1/tasks/send", methods=["POST"])
+def receive_task():
+    # 1) Parse incoming payload
+    payload = request.get_json(force=True)
+    caller  = request.headers.get("X-Caller-Agent", "Unknown")
+    print(f"[Agent 1] Received from {caller}: {payload}")
+
+    # 2) Extract the question text
+    question = (
+        payload
+        .get("input", {})
+        .get("parts", [{}])[0]
+        .get("text", "")
+    )
+
+    # 3) Run your core logic
+    try:
+        response_text = answer_question(question, caller)
+    except Exception as e:
+        print(f"[Agent 1] Error processing question: {e}")
+        return jsonify({"error": str(e)}), 500
+
+    # 4) Build and log the response
+    response = {
+        "status": "completed",
+        "output": {
+            "artifacts": [
+                {"type": "text", "text": response_text}
+            ]
+        }
+    }
+    print(f"[Agent 1] Responding to {caller}: {response_text}")
+
+    # 5) Return JSON
+    return jsonify(response), 200
+
+def run_handler(host="0.0.0.0", port=8001):
+    print(f"🧠 Agent 1 A2A Server listening on {host}:{port}")
+    app.run(host=host, port=port)
+
+if __name__ == "__main__":
+    run_handler()
+```
+
+### logic.py
+```python
+import os
+import logging
+import time
+from threading import Lock
+from datetime import datetime
+from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import RunStatus
+from azure.identity import DefaultAzureCredential
+from dotenv import load_dotenv
+
+# ─── LOGGING CONFIG ───────────────────────────────────────────────────
+# 1) Configure root logger to only show INFO+ with your prefix
+logging.basicConfig(level=logging.INFO, format='[AGENT 1] %(message)s')
+
+# 2) Silence all the Azure/HTTP/urllib3 noise at WARNING+
+for noisy in (
+    "azure",
+    "azure.identity",
+    "azure.ai",
+    "azure.core.pipeline.policies.http_logging_policy",
+    "urllib3",
+):
+    logging.getLogger(noisy).setLevel(logging.WARNING)
+# ──────────────────────────────────────────────────────────────────────
+
+# Basic setup
+load_dotenv()
+
+# Config
+CONN_STR    = os.getenv("AZURE_CONN_STRING")
+AGENT_ID    = os.getenv("AGENT1_ID")
+MAX_RETRIES = 3
+TIMEOUT_S   = 25  # shorter timeout
+
+class Agent1:
+    def __init__(self):
+        self.lock = Lock()
+        self.setup_client()
+
+    def setup_client(self):
+        """Create fresh client connection"""
+        self.client = AIProjectClient.from_connection_string(
+            credential=DefaultAzureCredential(),
+            conn_str=CONN_STR
+        )
+        self.agent = self.client.agents.get_agent(AGENT_ID)
+        logging.info("Created fresh client connection")
+
+    def process_request(self, question: str, caller: str) -> str:
+        with self.lock:
+            thread = None
+            try:
+                self.setup_client()
+                thread = self.client.agents.create_thread()
+                logging.info(f"Created thread {thread.id}")
+                self.client.agents.create_message(thread.id, role="user", content=question)
+                run = self.client.agents.create_and_process_run(thread.id, agent_id=self.agent.id)
+
+                waited = 0
+                while waited < TIMEOUT_S:
+                    run = self.client.agents.get_run(thread_id=thread.id, run_id=run.id)
+                    logging.info(f"Status: {run.status}")
+                    if run.status == RunStatus.COMPLETED:
+                        msgs = list(self.client.agents.list_messages(thread.id).data)
+                        resp = self._extract_message(msgs)
+                        return resp or RuntimeError("Empty response")
+                    if run.status in (RunStatus.FAILED, RunStatus.CANCELLED, RunStatus.EXPIRED):
+                        raise RuntimeError(f"Run failed: {run.status}")
+                    time.sleep(1)
+                    waited += 1
+
+                raise RuntimeError(f"Timeout after {TIMEOUT_S}s")
+
+            except Exception as e:
+                logging.error(f"Error processing request: {e}")
+                return f"Error: {e}"
+
+            finally:
+                if thread:
+                    try:
+                        self.client.agents.delete_thread(thread.id)
+                        logging.info(f"Cleaned up thread {thread.id}")
+                    except:
+                        pass
+                self.client = None
+                self.agent = None
+
+    def _extract_message(self, messages: list) -> str:
+        for msg in reversed(messages):
+            if msg.get("role") == "assistant":
+                content = msg.get("content", [])
+                if content and isinstance(content, list):
+                    return content[0].get("text", {}).get("value", "").strip()
+        return ""
+
+# Single instance (now quiet on import)
+_agent = Agent1()
+
+def answer_question(question: str, caller: str = "Agent1") -> str:
+    logging.info(f"📥 Received from {caller}: {question}")
+    return _agent.process_request(question, caller)
+
+## Agent 2: Global Intel
+### Agent Description
+The Global Intelligence Agent (Agent 2) monitors global news and events, providing real-time information about market trends, geopolitical developments, and industry news. It can search and retrieve information from external sources and route key information to other agents for summarization or strategic analysis. This agent serves as the system's window to the external world.
+
+### File Structure
+- agent.json
+- client.py
+- handler.py
+- logic.py
+- search.py
+- __init__.py
+
+### agent.json
+```json
+{
+    "name": "Global Intelligence Agent",
+    "description": "Monitors global news and events, and routes key information to summarization or strategy agents.",
+    "base_url": "http://localhost:8002",  
+    "auth": {
+      "type": "none"
+    },
+    "skills": [
+      {
+        "task_type": "global.news.search",
+        "description": "Search and retrieve global news information via external APIs."
+      },
+      {
+        "task_type": "global.news.summarize",
+        "description": "Route global news to other agents for summarization and further analysis."
+      }
+    ]
+}
+```
+
+### client.py
+```python
+import requests
+import json
+
+def load_agent_card(agent3_base_url: str):
+    """
+    Fetches the agent card of Agent 3 (Consultant).
+    """
+    url = f"{agent3_base_url}/.well-known/agent.json"
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()
+
+def send_summarization_task(agent3_base_url: str, content_to_summarize: str) -> str:
+    """
+    Sends a summarization task to Agent 3 and returns the summary.
+    """
+    # You could load Agent 3's card if needed:
+    # agent_card = load_agent_card(agent3_base_url)
+    task_type = "global.news.summarize"  # must match Agent 3's card
+
+    payload = {
+        "task_type": task_type,
+        "input": {
+            "parts": [
+                {
+                    "type": "text",
+                    "text": content_to_summarize
+                }
+            ]
+        }
+    }
+
+    task_url = f"{agent3_base_url}/a2a/v1/tasks/send"
+    print(f"📤 Sending summarization task to: {task_url}")
+    response = requests.post(task_url, json=payload)
+    
+    if response.status_code == 200:
+        resp_json = response.json()
+        # Extract the summary text from the response
+        summary = resp_json.get("output", {}).get("artifacts", [{}])[0].get("text", "")
+        return summary
+    else:
+        return f"Error: {response.status_code} {response.text}"
+```
+
+### handler.py
+```python
+from flask import Flask, request, jsonify
+import logging
+from agents.agent2_global_intel.logic import handle_global_query
+
+# Silence noisy logs from HTTP libraries if desired
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+app = Flask(__name__)
+
+@app.route("/a2a/v1/tasks/send", methods=["POST"])
+def receive_task():
+    try:
+        # 1) Parse and log the incoming task
+        payload = request.get_json(force=True)
+        print(f"[Agent 2] Received payload: {payload}")
+
+        # 2) Extract the query text
+        query = (
+            payload
+            .get("input", {})
+            .get("parts", [{}])[0]
+            .get("text", "")
+        )
+        print(f"[Agent 2] Extracted query: {query}")
+
+        # 3) Delegate to your core logic
+        response_text = handle_global_query(query)
+        print(f"[Agent 2] Response text:\n{response_text}\n")
+
+        # 4) Build and return the standard A2A response
+        response = {
+            "status": "completed",
+            "output": {
+                "artifacts": [
+                    {"type": "text", "text": response_text}
+                ]
+            }
+        }
+        return jsonify(response), 200
+
+    except Exception as e:
+        # 5) Log and surface any errors
+        print(f"[Agent 2] Error during handling: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/.well-known/agent.json", methods=["GET"])
+def serve_agent_card():
+    try:
+        with open("agents/agent2_global_intel/agent.json", "r") as f:
+            card = f.read()
+        return card, 200, {"Content-Type": "application/json"}
+    except Exception as e:
+        print(f"[Agent 2] Error serving agent.json: {e}")
+        return jsonify({"error": str(e)}), 500
+
+def run_handler(host="0.0.0.0", port=8002):
+    print(f"🧠 Agent 2 A2A Server listening on {host}:{port}")
+    app.run(host=host, port=port)
+
+if __name__ == "__main__":
+    run_handler()
+```
+
+### logic.py
+```python
+# === File: logic.py ===
+# Azure AI Foundry orchestration and high-level logic
+import json
+import time
+import os
+from azure.ai.projects import AIProjectClient
+from azure.identity import DefaultAzureCredential
+from dotenv import load_dotenv
+from .search import run_search_tools
+
+# Load Azure credentials
+load_dotenv()
+connection_string = os.getenv('AZURE_CONN_STRING')
+agent_id = os.getenv('AGENT2_ID')
+
+# Initialize client and agent
+project_client = AIProjectClient.from_connection_string(
+    credential=DefaultAzureCredential(),
+    conn_str=connection_string
+)
+agent = project_client.agents.get_agent(agent_id)
+AGENT2_THREAD = project_client.agents.create_thread().id
+print(f"🔵 [Agent 2] Initialized with thread: {AGENT2_THREAD}")
+
+# Send a prompt to a fresh thread and return assistant reply
+def analyze_with_new_thread(prompt: str, timeout: int = 120) -> str:
+    thread = project_client.agents.create_thread().id
+    project_client.agents.create_message(thread_id=thread, role='user', content=prompt)
+    run = project_client.agents.create_and_process_run(thread_id=thread, agent_id=agent.id)
+    start = time.time()
+    while run.status.name not in ('COMPLETED','FAILED'):
+        if time.time() - start > timeout:
+            raise TimeoutError('Analysis timed out')
+        time.sleep(2)
+        run = project_client.agents.get_run(thread, run.id)
+    # extract assistant message
+    for msg in reversed(project_client.agents.list_messages(thread_id=thread).data):
+        if msg.role.lower() == 'assistant':
+            return ''.join(txt.text.value for txt in getattr(msg,'text_messages',[]))
+    raise RuntimeError('No assistant message found')
+
+# Summarize search results JSON via Azure
+def filter_search_results(raw_json: dict) -> str:
+    if not raw_json.get('results'):
+        return 'No results found'
+    prompt = (
+        f"Analyze these search results and summarize each entry:\n{json.dumps(raw_json)}"
+    )
+    return analyze_with_new_thread(prompt)
+
+# Main entrypoint
+def handle_global_query(query: str) -> str:
+    # run_search_tools returns a list; wrap it so filter_search_results can .get('results')
+    raw_list = run_search_tools(query)
+    raw = { 'results': raw_list }
+    return filter_search_results(raw)
+```
+
+### search.py
+```python
+# === File: search.py ===
+# Combines config and search functions (Search1API, Brave, Firecrawl)
+import os
+import re
+import json
+import requests
+import asyncio
+import warnings
+import random
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from dotenv import load_dotenv
+
+# Disable TLS verification for local/dev; remove or adjust in production
+os.environ["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
+warnings.filterwarnings("ignore", category=ResourceWarning)
+
+# Load environment variables (API keys, etc.)
+load_dotenv()
+# print("[DEBUG] FIRECRAWL_API_KEY =", os.getenv("FIRECRAWL_API_KEY"), flush=True)
+
+# Load MCP config for stdio-based servers
+with open("MCP.json", "r") as f:
+    mcp_config = json.load(f)
+
+# Extract clean query from user message
+def extract_search_query(message: str) -> str:
+    m = re.match(r'^(search(?: for)?\s+)(.*)$', message, re.IGNORECASE)
+    q = m.group(2).strip() if m else message.strip()
+    return re.sub(r'\s+', ' ', q)
+
+# 0) REST-based Search1API fallback
+def run_search1api(query: str, max_results: int = 3) -> list:
+    print("🔎 [Agent 2] Invoking run_search1api() (fallback)", flush=True)
+    api_key = os.getenv('SEARCH1API_KEY')
+    if not api_key:
+        raise RuntimeError('SEARCH1API_KEY not set')
+    url = 'https://api.search1api.com/search'
+    headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
+    payload = {'query': query, 'search_service': 'google', 'max_results': max_results}
+    # disable verify in dev environment; set verify to True or specify CA bundle in prod
+    resp = requests.post(url, json=payload, headers=headers, timeout=30, verify=False)
+    resp.raise_for_status()
+    data = resp.json()
+    # assume results list in data['results'] or return full body
+    return data.get('results', data)
+
+# 1) BRAVESEARCH
+async def _brave_call(query: str, count: int) -> list[dict]:
+    cfg = mcp_config['mcpServers']['brave-search']
+    sp = StdioServerParameters(
+        command=cfg['command'],
+        args=cfg['args'],
+        env={**cfg.get('env', {}), **os.environ},
+    )
+
+    async with stdio_client(sp) as (r, w):
+        async with ClientSession(r, w) as session:
+            await session.initialize()
+            resp = await session.call_tool(
+                'brave_web_search',
+                arguments={'query': query, 'count': count}
+            )
+
+    # 1) Gather all text frames into one string
+    pieces = []
+    for frame in resp.content or []:
+        if hasattr(frame, 'text'):
+            pieces.append(getattr(frame.text, "value", frame.text))
+    raw   = "\n".join(pieces).strip()
+    if not raw:
+        return []
+
+    # 2) Split on blank lines to isolate each result
+    blocks = re.split(r"\n\s*\n", raw)
+    results = []
+    for block in blocks:
+        title = ""
+        desc  = ""
+        url   = ""
+        for line in block.splitlines():
+            if line.startswith("Title:"):
+                title = line[len("Title:"):].strip()
+            elif line.startswith("Description:"):
+                desc = line[len("Description:"):].strip()
+            elif line.startswith("URL:"):
+                url  = line[len("URL:"):].strip()
+        # only include if any field is non‐empty
+        if title or desc or url:
+            results.append({
+                "title": title,
+                "description": desc,
+                "url": url,
+            })
+
+    return results
+
+def run_bravesearch(query: str) -> list[dict]:
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        out = loop.run_until_complete(_brave_call(query, count=3))
+        return out or []
+    except Exception as e:
+        print(f"❌ Error in run_bravesearch: {e}", flush=True)
+        return []
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
+
+# 2) FIRECRAWL
+async def _firecrawl_call(query: str, limit=3, lang='en', country='us') -> list[dict]:
+    cfg = mcp_config['mcpServers']['firecrawl-mcp']
+    sp  = StdioServerParameters(
+        command=cfg['command'],
+        args=cfg['args'],
+        env={**cfg.get('env', {}), **os.environ},
+    )
+
+    async with stdio_client(sp) as (r, w):
+        async with ClientSession(r, w) as session:
+            await session.initialize()
+            print("[DEBUG] spawning Firecrawl sidecar:", sp.command, sp.args, flush=True)
+            resp = await session.call_tool(
+                'firecrawl_search',
+                arguments={'query': query, 'limit': limit, 'lang': lang, 'country': country}
+            )
+            print("[DEBUG] Firecrawl raw frames:", resp.content, flush=True)
+
+    # 1) Gather all text frames
+    pieces = []
+    for frame in resp.content or []:
+        if hasattr(frame, 'text'):
+            pieces.append(getattr(frame.text, "value", frame.text))
+    raw = "\n".join(pieces).strip()
+    if not raw:
+        return []
+
+    # 2) Split into blocks
+    blocks = re.split(r"\n\s*\n", raw)
+    results = []
+
+    for block in blocks:
+        title = ""
+        snippet = ""
+        url = ""
+        for line in block.splitlines():
+            if line.startswith("Title:"):
+                title = line[len("Title:"):].strip()
+            elif line.startswith("Description:"):
+                snippet = line[len("Description:"):].strip()
+            elif line.startswith("URL:"):
+                url = line[len("URL:"):].strip()
+        # only include if we got anything
+        if title or snippet or url:
+            results.append({
+                "title": title,
+                "snippet": snippet,
+                "url": url,
+                # optional: pull a date field if Firecrawl gives one
+                "published_date": ""
+            })
+
+    return results
+
+def run_firecrawl(query: str, limit: int = 3, lang: str = 'en', country: str = 'us') -> list:
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        out = loop.run_until_complete(_firecrawl_call(query, limit, lang, country))
+        return out or []
+    except Exception as e:
+        print(f"❌ Error in run_firecrawl: {e}", flush=True)
+        return []
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
+
+# Dispatcher: firecrawl only for now
+def run_search_tools(user_query: str) -> list:
+    q = extract_search_query(user_query)
+    
+    print("🔍 [Agent 2] forcing Firecrawl…", flush=True)
+    # Directly call Firecrawl
+    try:
+        results = run_firecrawl(q)
+        print(f"✅ [Agent 2] firecrawl returned {len(results)} items", flush=True)
+        if results:
+            return results
+        else:
+            print("⚠️ [Agent 2] firecrawl returned no results", flush=True)
+    except Exception as e:
+        print(f"❌ [Agent 2] firecrawl error: {e}", flush=True)
+    
+    # Fallback to Search1API
+    print("🔍 [Agent 2] falling back to Search1API", flush=True)
+    return run_search1api(q)
+```
+
+## Agent 3: Consultant
+### Agent Description
+The Consultant Agent (Agent 3) specializes in summarizing long-form global news and information into concise, actionable reports for strategic analysis. It works closely with both the Enterprise Knowledge Agent and Global Intelligence Agent to provide comprehensive insights. The agent is designed to deliver executive-level summaries that are clear, concise, and focused on strategic implications.
+
+### File Structure
+- agent.json
+- client.py
+- handler.py
+- interactive.py
+- logic.py
+- __init__.py
+
+### agent.json
+```json
+{
+    "name": "Consultant Agent",
+    "description": "Summarizes long-form global news into concise reports for strategic analysis.",
+    "base_url": "http://localhost:8003",
+    "auth": {
+      "type": "none"
+    },
+    "skills": [
+      {
+        "task_type": "global.news.summarize",
+        "description": "Summarizes raw news content into a short, digestible report."
+      }
+    ]
+}
+```
+
+### client.py
+```python
+import requests
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# URLs for Agent 1 and Agent 2 (local deployment)
+AGENT1_BASE_URL = "http://localhost:8001"
+AGENT2_BASE_URL = "http://localhost:8002"
+AGENT4_BASE_URL = "http://localhost:8004"
+
+
+# --- AGENT 1 REQUESTS (Internal Docs) ---
+def request_internal_docs(question: str, caller: str = "Agent3") -> str:
+    """
+    Ask Agent 1's /tasks/send for internal-doc QA.
+    The X-Caller-Agent header tells Agent 1 who's asking.
+    """
+    payload = {
+        "task_type": "enterprise.doc.qa",
+        "input": {"parts": [{"type": "text", "text": question}]}
+    }
+    headers = {"X-Caller-Agent": caller}
+    url = f"{AGENT1_BASE_URL}/a2a/v1/tasks/send"
+
+    try:
+        resp = requests.post(url, json=payload, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("output", {}) \
+                      .get("artifacts", [{}])[0] \
+                      .get("text", "")
+    except Exception as e:
+        return f"[Error Agent 1: {e}]"
+
+# --- AGENT 2 REQUESTS (Global Intel) ---
+def request_global_intel(query: str) -> str:
+    payload = {
+        "task_type": "global.news.search",
+        "input": {
+            "parts": [
+                {"type": "text", "text": query}
+            ]
+        }
+    }
+    url = f"{AGENT2_BASE_URL}/a2a/v1/tasks/send"
+    response = requests.post(url, json=payload, verify=False, timeout=30)
+    if response.status_code == 200:
+        return response.json().get("output", {}).get("artifacts", [{}])[0].get("text", "")
+    else:
+        return f"[Error Agent 2: {response.status_code}] {response.text}"
+
+def request_outcome_predictions(full_context: str) -> list[dict]:
+    """
+    Call Agent 4's /a2a/v1/tasks/send endpoint (or a dedicated one)
+    passing the entire strategic analysis text.
+    """
+    payload = {"actions": [full_context]}
+    url = f"{AGENT4_BASE_URL}/a2a/v1/tasks/send"
+    try:
+        resp = requests.post(url, json=payload, timeout=60)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        return {"error": f"[Error Agent 4: {e}]"}
+```
+
+### handler.py
+```python
+from flask import Flask, request, jsonify
+from agents.agent3_consultant.logic import ask_agent
+
+app = Flask(__name__)
+
+@app.route("/a2a/v1/tasks/send", methods=["POST"])
+def handle_task():
+    task = request.json
+    task_type = task.get("task_type")
+    if task_type != "global.news.summarize":
+        return jsonify({"error": f"Unsupported task_type: {task_type}"}), 400
+
+    parts = task.get("input", {}).get("parts", [])
+    text_input = ""
+    for part in parts:
+        if part.get("type") == "text":
+            text_input += part.get("text", "") + "\n"
+
+    print("📥 Received summarization request:")
+    print(text_input.strip())
+
+    summary = ask_agent(text_input.strip())
+
+    print("🧪 Summary generated:", summary)
+
+    response = {
+        "status": "completed",
+        "output": {
+            "artifacts": [
+                {
+                    "type": "text",
+                    "text": summary
+                }
+            ]
+        }
+    }
+    return jsonify(response), 200
+
+@app.route("/.well-known/agent.json", methods=["GET"])
+def serve_agent_card():
+    try:
+        with open("agents/agent3_consultant/agent.json", "r") as f:
+            card = f.read()
+        return card, 200, {"Content-Type": "application/json"}
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def run_handler():
+    app.run(host="0.0.0.0", port=8003)
+```
+
+### interactive.py
+```python
+from agents.agent3_consultant.logic import ask_agent
+
+def chat_loop():
+    print("💬 Welcome to Strategic Consultant Agent (Agent 3)")
+    print("Type your question (or 'exit' to quit):\n")
+
+    while True:
+        user_input = input("🧑‍💼 You: ").strip()
+        # Exit on explicit commands
+        if user_input.lower() in ["exit", "quit"]:
+            print("👋 Ending chat. Goodbye.")
+            break
+        # Skip empty lines
+        if not user_input:
+            continue
+
+        print("🧠 Thinking...")
+        response = ask_agent(user_input)
+        print("\n🤖 Agent 3:\n")
+        print(response)
+        print("\n---\n")
+```
+
+### logic.py
+```python
+from azure.ai.projects import AIProjectClient
+from azure.identity import DefaultAzureCredential
+import os
+import re
+from agents.agent3_consultant.client import request_internal_docs, request_global_intel, request_outcome_predictions
+from shared.utils import extract_latest_assistant_message, formulate_from_template
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Azure AI Foundry setup
+connection_string = os.getenv("AZURE_CONN_STRING")
+agent_id = os.getenv("AGENT3_ID")
+
+project_client = AIProjectClient.from_connection_string(
+    credential=DefaultAzureCredential(),
+    conn_str=connection_string
+)
+agent = project_client.agents.get_agent(agent_id)
+
+def remove_consecutive_duplicates(text: str) -> str:
+    chunks = re.split(r'(\. |\! |\? |\n)', text)
+    deduped, prev = [], None
+    for chunk in chunks:
+        if chunk and chunk != prev:
+            deduped.append(chunk)
+        prev = chunk
+    return ''.join(deduped).strip()
+
+def evaluate_context_need(question: str, initial_answer: str) -> str:
+    thread = project_client.agents.create_thread()
+    with open("prompts/evaluation.txt", "r", encoding="utf-8") as f:
+        eval_prompt = f.read().format(question=question, initial_answer=initial_answer)
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=eval_prompt)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    evaluation = extract_latest_assistant_message(messages).lower().strip()
+    print(f"🔍 [Agent 3] Context Evaluation Result: {evaluation}")
+    return evaluation
+
+def formulate_internal_questions(original_question: str) -> str:
+    prompt_path = "prompts/formulate_internal.txt"
+    print(f"🔍 [Agent 3] Generating internal questions…")
+    q = formulate_from_template(
+        project_client,
+        agent.id,
+        prompt_path,
+        original_question=original_question
+    )
+    print(f"🔍 [Agent 3] Generated internal question: {q}")
+    return q
+
+def formulate_search_questions(original_question: str) -> str:
+    thread = project_client.agents.create_thread()
+    with open("prompts/formulate_search.txt", "r", encoding="utf-8") as f:
+        prompt_template = f.read()
+    prompt = prompt_template.format(original_question=original_question)
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=prompt)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    search_query = extract_latest_assistant_message(messages)
+    print(f"🔍 [Agent 3] Generated search query: {search_query}")
+    return search_query
+
+def ask_agent(question: str) -> str:
+    print("\n" + "="*50)
+    print(f"📥 [Agent 3] RECEIVED QUESTION: \"{question}\"")
+    print("="*50 + "\n")
+
+    print("🤔 [Agent 3] Attempting initial response...")
+    thread = project_client.agents.create_thread()
+    prompt_initial = f"You are a strategic consultant. Answer clearly and directly:\n\n{question}"
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=prompt_initial)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    answer = extract_latest_assistant_message(messages)
+
+    print("\n📤 [Agent 3] INITIAL RESPONSE:")
+    print("-"*30)
+    print(answer)
+    print("-"*30 + "\n")
+
+    # Evaluate if context is needed
+    context_need = evaluate_context_need(question, answer)
+    if "sufficient" in context_need:
+        print("✅ [Agent 3] Initial answer sufficient - no additional context needed")
+        return answer
+
+    print("⚠️ [Agent 3] Additional context required - querying relevant agents...")
+    internal_context = ""
+    global_context = ""
+
+    if "internal" in context_need:
+        internal_q1 = formulate_internal_questions(question)
+        internal_context = request_internal_docs(internal_q1)
+        if internal_context.count("###") < 3:
+            print("⚠️ [Agent 3] Not all sub-questions were answered by Agent 1.")
+        print(f"\n📥 [Agent 1 → Agent 3] RECEIVED INTERNAL CONTEXT:\n{'-'*30}\n{internal_context}\n{'-'*30}")
+
+    if "external" in context_need:
+        global_q1 = formulate_search_questions(question)
+        global_context = request_global_intel(global_q1)
+        print(f"\n📥 [Agent 2 → Agent 3] RECEIVED GLOBAL CONTEXT:\n{'-'*30}\n{global_context}\n{'-'*30}")
+
+    # Load final RAG response prompt
+    thread = project_client.agents.create_thread()
+    with open("prompts/combiNASHUN.txt", "r", encoding="utf-8") as f:
+        prompt_template = f.read()
+
+    enhanced_prompt = prompt_template.format(
+        question=question,
+        internal_context=internal_context,
+        global_context=global_context,
+        initial_answer=answer
+    )
+
+    print(f"[DEBUG] Global context length: {len(global_context.strip())}")
+
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=enhanced_prompt)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    enhanced_answer = remove_consecutive_duplicates(extract_latest_assistant_message(messages))
+
+    # ─── FINAL ANSWER FOR THE C-SUITE ────────────────────────────────
+    print("\n📤 [Agent 3] FINAL RESPONSE:")
+    print("-"*30)
+    print(enhanced_answer)
+    print("-"*30)
+
+    # ─── HAND-OFF TO AGENT 4 (SYNCHRONOUS) ───────────────────────────
+    print("🔗 [Agent 3] Forwarding analysis to Agent 4 for outcome prediction…")
+    try:
+        result = request_outcome_predictions(enhanced_answer)
+        print(f"[Agent 3] Agent 4 processing complete: {result}")
+    except Exception as e:
+        print(f"[Agent 3] Agent 4 hand-off error: {e}")
+
+    return enhanced_answer or "[No clear answer generated even after context enrichment.]"
+```
+
+## Agent 4: Outcome Predictor
+### Agent Description
+The Outcome Predictor Agent (Agent 4) analyzes strategic decisions and predicts potential outcomes and risks. It synthesizes information from other agents to provide comprehensive predictions about the potential impacts of strategic decisions. The agent can evaluate different scenarios and provide risk assessments, helping decision-makers understand the potential consequences of their choices.
+
+### File Structure
+- agent.json
+- client.py
+- handler.py
+- interactive.py
+- logic.py
+- __init__.py
+
+### agent.json
+```json
+{
+    "name": "Outcome Predictor Agent",
+    "description": "Predicts potential outcomes and risks based on strategic analysis.",
+    "base_url": "http://localhost:8004",
+    "auth": {
+      "type": "none"
+    },
+    "skills": [
+      {
+        "task_type": "strategy.outcome.predict",
+        "description": "Analyzes strategic decisions and predicts potential outcomes and risks."
+      }
+    ]
+}
+```
+
+### client.py
+```python
+import requests
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# URLs for other agents (local deployment)
+AGENT1_BASE_URL = "http://localhost:8001"
+AGENT2_BASE_URL = "http://localhost:8002"
+AGENT3_BASE_URL = "http://localhost:8003"
+
+def request_internal_docs(question: str, caller: str = "Agent4") -> str:
+    """
+    Ask Agent 1's /tasks/send for internal-doc QA.
+    The X-Caller-Agent header tells Agent 1 who's asking.
+    """
+    payload = {
+        "task_type": "enterprise.doc.qa",
+        "input": {"parts": [{"type": "text", "text": question}]}
+    }
+    headers = {"X-Caller-Agent": caller}
+    url = f"{AGENT1_BASE_URL}/a2a/v1/tasks/send"
+
+    try:
+        resp = requests.post(url, json=payload, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("output", {}) \
+                      .get("artifacts", [{}])[0] \
+                      .get("text", "")
+    except Exception as e:
+        return f"[Error Agent 1: {e}]"
+
+def request_global_intel(query: str) -> str:
+    payload = {
+        "task_type": "global.news.search",
+        "input": {
+            "parts": [
+                {"type": "text", "text": query}
+            ]
+        }
+    }
+    url = f"{AGENT2_BASE_URL}/a2a/v1/tasks/send"
+    response = requests.post(url, json=payload, verify=False, timeout=30)
+    if response.status_code == 200:
+        return response.json().get("output", {}).get("artifacts", [{}])[0].get("text", "")
+    else:
+        return f"[Error Agent 2: {response.status_code}] {response.text}"
+
+def request_consultant_analysis(question: str) -> str:
+    payload = {
+        "task_type": "global.news.summarize",
+        "input": {
+            "parts": [
+                {"type": "text", "text": question}
+            ]
+        }
+    }
+    url = f"{AGENT3_BASE_URL}/a2a/v1/tasks/send"
+    response = requests.post(url, json=payload, verify=False, timeout=30)
+    if response.status_code == 200:
+        return response.json().get("output", {}).get("artifacts", [{}])[0].get("text", "")
+    else:
+        return f"[Error Agent 3: {response.status_code}] {response.text}"
+```
+
+### handler.py
+```python
+from flask import Flask, request, jsonify
+from agents.agent4_outcome_predictor.logic import predict_outcomes
+
+app = Flask(__name__)
+
+@app.route("/a2a/v1/tasks/send", methods=["POST"])
+def handle_task():
+    task = request.json
+    task_type = task.get("task_type")
+    if task_type != "strategy.outcome.predict":
+        return jsonify({"error": f"Unsupported task_type: {task_type}"}), 400
+
+    parts = task.get("input", {}).get("parts", [])
+    text_input = ""
+    for part in parts:
+        if part.get("type") == "text":
+            text_input += part.get("text", "") + "\n"
+
+    print("📥 Received prediction request:")
+    print(text_input.strip())
+
+    predictions = predict_outcomes(text_input.strip())
+
+    print("🧪 Predictions generated:", predictions)
+
+    response = {
+        "status": "completed",
+        "output": {
+            "artifacts": [
+                {
+                    "type": "text",
+                    "text": predictions
+                }
+            ]
+        }
+    }
+    return jsonify(response), 200
+
+@app.route("/.well-known/agent.json", methods=["GET"])
+def serve_agent_card():
+    try:
+        with open("agents/agent4_outcome_predictor/agent.json", "r") as f:
+            card = f.read()
+        return card, 200, {"Content-Type": "application/json"}
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def run_handler():
+    app.run(host="0.0.0.0", port=8004)
+```
+
+### interactive.py
+```python
+from agents.agent4_outcome_predictor.logic import predict_outcomes
+
+def chat_loop():
+    print("💬 Welcome to Outcome Predictor Agent (Agent 4)")
+    print("Type your strategic analysis (or 'exit' to quit):\n")
+
+    while True:
+        user_input = input("🧑‍💼 You: ").strip()
+        # Exit on explicit commands
+        if user_input.lower() in ["exit", "quit"]:
+            print("👋 Ending chat. Goodbye.")
+            break
+        # Skip empty lines
+        if not user_input:
+            continue
+
+        print("🧠 Analyzing potential outcomes...")
+        response = predict_outcomes(user_input)
+        print("\n🤖 Agent 4:\n")
+        print(response)
+        print("\n---\n")
+```
+
+### logic.py
+```python
+from azure.ai.projects import AIProjectClient
+from azure.identity import DefaultAzureCredential
+import os
+from agents.agent4_outcome_predictor.client import request_internal_docs, request_global_intel, request_consultant_analysis
+from shared.utils import extract_latest_assistant_message, formulate_from_template
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Azure AI Foundry setup
+connection_string = os.getenv("AZURE_CONN_STRING")
+agent_id = os.getenv("AGENT4_ID")
+
+project_client = AIProjectClient.from_connection_string(
+    credential=DefaultAzureCredential(),
+    conn_str=connection_string
+)
+agent = project_client.agents.get_agent(agent_id)
+
+def analyze_risks(strategy: str) -> str:
+    thread = project_client.agents.create_thread()
+    with open("prompts/risk_analysis.txt", "r", encoding="utf-8") as f:
+        risk_prompt = f.read().format(strategy=strategy)
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=risk_prompt)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    risk_analysis = extract_latest_assistant_message(messages)
+    print(f"🔍 [Agent 4] Risk Analysis Complete")
+    return risk_analysis
+
+def analyze_opportunities(strategy: str) -> str:
+    thread = project_client.agents.create_thread()
+    with open("prompts/opportunity_analysis.txt", "r", encoding="utf-8") as f:
+        opportunity_prompt = f.read().format(strategy=strategy)
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=opportunity_prompt)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    opportunity_analysis = extract_latest_assistant_message(messages)
+    print(f"🔍 [Agent 4] Opportunity Analysis Complete")
+    return opportunity_analysis
+
+def predict_outcomes(strategy: str) -> str:
+    print("\n" + "="*50)
+    print(f"📥 [Agent 4] RECEIVED STRATEGY: \"{strategy}\"")
+    print("="*50 + "\n")
+
+    # Get additional context if needed
+    print("🤔 [Agent 4] Gathering additional context...")
+    internal_context = request_internal_docs(strategy)
+    global_context = request_global_intel(strategy)
+    consultant_analysis = request_consultant_analysis(strategy)
+
+    # Analyze risks and opportunities
+    print("🔍 [Agent 4] Analyzing risks...")
+    risk_analysis = analyze_risks(strategy)
+    
+    print("🔍 [Agent 4] Analyzing opportunities...")
+    opportunity_analysis = analyze_opportunities(strategy)
+
+    # Generate final prediction
+    thread = project_client.agents.create_thread()
+    with open("prompts/prediction.txt", "r", encoding="utf-8") as f:
+        prediction_prompt = f.read().format(
+            strategy=strategy,
+            internal_context=internal_context,
+            global_context=global_context,
+            consultant_analysis=consultant_analysis,
+            risk_analysis=risk_analysis,
+            opportunity_analysis=opportunity_analysis
+        )
+    
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=prediction_prompt)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    final_prediction = extract_latest_assistant_message(messages)
+
+    print("\n📤 [Agent 4] FINAL PREDICTION:")
+    print("-"*30)
+    print(final_prediction)
+    print("-"*30)
+
+    return final_prediction
+```
+
+## Agent 5: Task Dispatcher
+### Agent Description
+The Task Dispatcher Agent (Agent 5) serves as the orchestrator of the system, parsing strategic decisions and routing them to the appropriate agents for execution. It coordinates the flow of information between agents and ensures that tasks are properly distributed and executed. The agent is responsible for maintaining the overall workflow and ensuring that all components work together effectively.
+
+### File Structure
+- agent.json
+- client.py
+- handler.py
+- interactive.py
+- logic.py
+- __init__.py
+
+### agent.json
+```json
+{
+    "name": "Task Dispatcher Agent",
+    "description": "Parses and routes strategic decisions to appropriate agents for execution.",
+    "base_url": "http://localhost:8005",
+    "auth": {
+      "type": "none"
+    },
+    "skills": [
+      {
+        "task_type": "strategy.task.dispatch",
+        "description": "Parses strategic decisions and routes them to appropriate agents."
+      }
+    ]
+}
+```
+
+### client.py
+```python
+import requests
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# URLs for other agents (local deployment)
+AGENT1_BASE_URL = "http://localhost:8001"
+AGENT2_BASE_URL = "http://localhost:8002"
+AGENT3_BASE_URL = "http://localhost:8003"
+AGENT4_BASE_URL = "http://localhost:8004"
+
+def request_internal_docs(question: str, caller: str = "Agent5") -> str:
+    """
+    Ask Agent 1's /tasks/send for internal-doc QA.
+    The X-Caller-Agent header tells Agent 1 who's asking.
+    """
+    payload = {
+        "task_type": "enterprise.doc.qa",
+        "input": {"parts": [{"type": "text", "text": question}]}
+    }
+    headers = {"X-Caller-Agent": caller}
+    url = f"{AGENT1_BASE_URL}/a2a/v1/tasks/send"
+
+    try:
+        resp = requests.post(url, json=payload, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("output", {}) \
+                      .get("artifacts", [{}])[0] \
+                      .get("text", "")
+    except Exception as e:
+        return f"[Error Agent 1: {e}]"
+
+def request_global_intel(query: str) -> str:
+    payload = {
+        "task_type": "global.news.search",
+        "input": {
+            "parts": [
+                {"type": "text", "text": query}
+            ]
+        }
+    }
+    url = f"{AGENT2_BASE_URL}/a2a/v1/tasks/send"
+    response = requests.post(url, json=payload, verify=False, timeout=30)
+    if response.status_code == 200:
+        return response.json().get("output", {}).get("artifacts", [{}])[0].get("text", "")
+    else:
+        return f"[Error Agent 2: {response.status_code}] {response.text}"
+
+def request_consultant_analysis(question: str) -> str:
+    payload = {
+        "task_type": "global.news.summarize",
+        "input": {
+            "parts": [
+                {"type": "text", "text": question}
+            ]
+        }
+    }
+    url = f"{AGENT3_BASE_URL}/a2a/v1/tasks/send"
+    response = requests.post(url, json=payload, verify=False, timeout=30)
+    if response.status_code == 200:
+        return response.json().get("output", {}).get("artifacts", [{}])[0].get("text", "")
+    else:
+        return f"[Error Agent 3: {response.status_code}] {response.text}"
+
+def request_outcome_predictions(strategy: str) -> str:
+    payload = {
+        "task_type": "strategy.outcome.predict",
+        "input": {
+            "parts": [
+                {"type": "text", "text": strategy}
+            ]
+        }
+    }
+    url = f"{AGENT4_BASE_URL}/a2a/v1/tasks/send"
+    response = requests.post(url, json=payload, verify=False, timeout=30)
+    if response.status_code == 200:
+        return response.json().get("output", {}).get("artifacts", [{}])[0].get("text", "")
+    else:
+        return f"[Error Agent 4: {response.status_code}] {response.text}"
+```
+
+### handler.py
+```python
+from flask import Flask, request, jsonify
+from agents.agent5_task_dispatcher.logic import dispatch_task
+
+app = Flask(__name__)
+
+@app.route("/a2a/v1/tasks/send", methods=["POST"])
+def handle_task():
+    task = request.json
+    task_type = task.get("task_type")
+    if task_type != "strategy.task.dispatch":
+        return jsonify({"error": f"Unsupported task_type: {task_type}"}), 400
+
+    parts = task.get("input", {}).get("parts", [])
+    text_input = ""
+    for part in parts:
+        if part.get("type") == "text":
+            text_input += part.get("text", "") + "\n"
+
+    print("📥 Received dispatch request:")
+    print(text_input.strip())
+
+    dispatch_result = dispatch_task(text_input.strip())
+
+    print("🧪 Task dispatched:", dispatch_result)
+
+    response = {
+        "status": "completed",
+        "output": {
+            "artifacts": [
+                {
+                    "type": "text",
+                    "text": dispatch_result
+                }
+            ]
+        }
+    }
+    return jsonify(response), 200
+
+@app.route("/.well-known/agent.json", methods=["GET"])
+def serve_agent_card():
+    try:
+        with open("agents/agent5_task_dispatcher/agent.json", "r") as f:
+            card = f.read()
+        return card, 200, {"Content-Type": "application/json"}
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def run_handler():
+    app.run(host="0.0.0.0", port=8005)
+```
+
+### interactive.py
+```python
+from agents.agent5_task_dispatcher.logic import dispatch_task
+
+def chat_loop():
+    print("💬 Welcome to Task Dispatcher Agent (Agent 5)")
+    print("Type your strategic decision (or 'exit' to quit):\n")
+
+    while True:
+        user_input = input("🧑‍💼 You: ").strip()
+        # Exit on explicit commands
+        if user_input.lower() in ["exit", "quit"]:
+            print("👋 Ending chat. Goodbye.")
+            break
+        # Skip empty lines
+        if not user_input:
+            continue
+
+        print("🧠 Dispatching task...")
+        response = dispatch_task(user_input)
+        print("\n🤖 Agent 5:\n")
+        print(response)
+        print("\n---\n")
+```
+
+### logic.py
+```python
+from azure.ai.projects import AIProjectClient
+from azure.identity import DefaultAzureCredential
+import os
+import json
+from agents.agent5_task_dispatcher.client import (
+    request_internal_docs,
+    request_global_intel,
+    request_consultant_analysis,
+    request_outcome_predictions
+)
+from shared.utils import extract_latest_assistant_message, formulate_from_template
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Azure AI Foundry setup
+connection_string = os.getenv("AZURE_CONN_STRING")
+agent_id = os.getenv("AGENT5_ID")
+
+project_client = AIProjectClient.from_connection_string(
+    credential=DefaultAzureCredential(),
+    conn_str=connection_string
+)
+agent = project_client.agents.get_agent(agent_id)
+
+def parse_strategic_input(raw_input: str) -> dict:
+    """
+    Parse the strategic input using Agent 5's prompt template.
+    """
+    thread = project_client.agents.create_thread()
+    with open("prompts/agent5_parse_input.txt", "r", encoding="utf-8") as f:
+        prompt_template = f.read()
+    prompt = prompt_template.format(raw_input=raw_input)
+    
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=prompt)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    parsed_output = extract_latest_assistant_message(messages)
+    
+    try:
+        return json.loads(parsed_output)
+    except json.JSONDecodeError:
+        return {
+            "branch": "Unknown",
+            "action": "Unknown",
+            "actionItems": []
+        }
+
+def dispatch_task(strategic_input: str) -> str:
+    print("\n" + "="*50)
+    print(f"📥 [Agent 5] RECEIVED STRATEGIC INPUT: \"{strategic_input}\"")
+    print("="*50 + "\n")
+
+    # Parse the input
+    print("🔍 [Agent 5] Parsing strategic input...")
+    parsed_input = parse_strategic_input(strategic_input)
+    print(f"📋 [Agent 5] Parsed input: {parsed_input}")
+
+    # Get additional context
+    print("🤔 [Agent 5] Gathering context...")
+    internal_context = request_internal_docs(strategic_input)
+    global_context = request_global_intel(strategic_input)
+    consultant_analysis = request_consultant_analysis(strategic_input)
+
+    # Get outcome predictions
+    print("🔮 [Agent 5] Requesting outcome predictions...")
+    outcome_predictions = request_outcome_predictions(strategic_input)
+
+    # Generate final dispatch plan
+    thread = project_client.agents.create_thread()
+    with open("prompts/agent4_branches.txt", "r", encoding="utf-8") as f:
+        prompt_template = f.read()
+    
+    prompt = prompt_template.format(
+        brief=strategic_input,
+        facts=internal_context
+    )
+    
+    project_client.agents.create_message(thread_id=thread.id, role="user", content=prompt)
+    project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+    messages = list(project_client.agents.list_messages(thread_id=thread.id).data)
+    dispatch_plan = extract_latest_assistant_message(messages)
+
+    print("\n📤 [Agent 5] FINAL DISPATCH PLAN:")
+    print("-"*30)
+    print(dispatch_plan)
+    print("-"*30)
+
+    return dispatch_plan
+```
+
+## Appendix: Prompt Files
+
+### evaluation.txt
+```
+You are a strategic consultant reviewing your own initial answer to a C-suite question.
+
+You'll receive:
+1. The original question
+2. Your answer
+
+Assess whether it is fully sufficient, or if more information is needed from other agents.
+
+Respond with one of:
+- "Sufficient"
+- "Needs more internal context"
+- "Needs more external context"
+- "Needs both internal and external context"
+
+Be objective. Only reply with one of the four options.
+If the question involves global markets, trade policy, geopolitical events, or anything that depends on current (2025) data that you likely don't have — you must include external context.
+
+Original Question:
+{question}
+
+Initial Answer:
+{initial_answer}
+```
+
+### formulate_internal.txt
+```
+You are a strategic consultant working with Agent 1, who retrieves answers from internal company documents only.
+
+Your job is to turn high-level C-suite questions into up to 3 clear, document-based questions that Agent 1 can answer using files from the following folders:
+
+1. Finance — Annual report, Capex/Opex, Project logs  
+2. Operations — Facility capacity, Skills matrix  
+3. Governance — Continuity plan, Ethics policy, Disruption responses  
+4. Procurement — Strategy, Orders, Suppliers, Contracts, Compliance  
+5. Sales — Projections, Top 50 customers  
+6. Strategy — Process map, Priorities, Workforce
+
+Rules:
+1. Ask up to 3 maximum clear questions according to your needs.
+2. Focus on the most critical internal aspect first.
+3. Make each question specific, actionable, and document-retrievable.
+4. Do not speculate or ask questions that require opinions or external context.
+5. If the question has multiple angles (e.g., finance + operations), your 3 questions should cover those perspectives.
+
+Original Question:
+"{original_question}"
+
+Response Format:
+List your questions like this:
+1. ...
+2. ...
+3. ...
+
+Examples:
+
+Input: "We're planning to relocate some production. What do we need to check?"  
+Output:  
+1. What is the current utilization and capacity of our global manufacturing facilities by region?  
+2. What does the business continuity playbook say about past manufacturing relocations?  
+3. What are the skill and competency gaps in the regions being considered?
+
+Input: "Should we review our top customers for next quarter?"
+Output:
+1. Who are our top 50 customers by revenue and region?
+2. What does the sales and order book projection show for next quarter?
+3. What strategic priorities mention changes in key account focus?
+
+Now generate your questions and respond with **only** the questions, no headings, no "Input/Output" labels,
+no copy of the original question. Return each on its own line, numbered "1.",
+"2.", "3." — nothing else.
+```
+
+### formulate_search.txt
+```
+You are a strategic consultant generating search queries for Agent 2 to gather external intelligence.
+
+Agent 2 uses real-time sources (e.g., news, economic reports, policy updates) to find current global insights.
+
+Your task: Turn the C-suite's question into **one clear, specific search query** for data not found in internal documents.
+
+Original Question:
+"{original_question}"
+
+Instructions:
+- Focus only on current/global topics (2025)
+- Output ONE search query
+- Target factual, measurable results
+- Include the year 2025 in the query
+- Avoid vague or speculative terms
+- Do NOT duplicate Agent 1's role (internal info)
+
+Examples:
+
+Input: "We're considering shifting supply chains away from China."  
+Output: "Impact of US-China tariffs on semiconductor supply chain 2025"
+
+Input: "Should we explore the Indian market this year?"  
+Output: "2025 market growth forecast for India consumer electronics"
+
+Input: "What's the global stance on AI regulation?"  
+Output: "AI regulatory updates by region 2025 tech policy"
+
+Now generate your search query.
+```
+
+### agent4_branches.txt
+```
+You are Contoso's Outcome-Prediction Agent.
+
+INPUT BRIEF (from Agent 3):
+{brief}
+
+EXTRA FACTS (from Agent 1):
+{facts}
+
+Task:
+1. Synthesize both inputs.
+2. Propose exactly three branches:
+   • A Soft
+   • B Balanced
+   • C Aggressive
+   For each branch list:
+     - One-sentence Summary
+     - Pros (2 bullets)
+     - Cons (2 bullets)
+     - CostUSD (int)
+     - TimeMonths (int)
+     - OverallScore (0-10)
+     - **ActionItems**: 2-3 concrete tasks
+3. Finish with:
+   Recommendation: <A/B/C> – reason
+   Sources: INTERNAL
+
+Format exactly as instructed. No additional text.
+```
+
+### agent4_doc_inventory.txt
+```
+You are Contoso's Outcome Predictor.
+
+Agent 1 can answer questions by searching these internal collections:
+
+1) Finance – Annual financial report; Capex/Opex scenario; Project assignment log  
+2) Operations & Manufacturing – Facility capacity/utilization; Skill & competency matrix  
+3) Policy, Governance & Risk – Continuity playbook; Policy & ethics guidelines; Disruption case log  
+4) Procurement & Supply Chain – Strategy overview; Purchase orders; Supplier performance; Vendor list; Supplier contract terms; Export compliance  
+5) Sales & Demand – Sales/order projections; Top 50 customers by revenue  
+6) Strategic Context – Business process map; Strategic priorities; Workforce distribution  
+
+For the **Action** below, write **exactly three** finance / operations
+questions that Agent 1 can answer from the listed collections.
+
+• Format them exactly like:
+  1. first question text
+  2. second question text
+  3. third question text
+• No headings, no blank lines, no extra commentary.
+
+Action: {action}
+```
+
+### agent5_parse_input.txt
+```
+You are Task Dispatcher.  You will take any C-suite output (free text or JSON) and pull from it:
+
+- branch (e.g. "A", "B", ...)
+- action (the high-level strategic action)
+- actionItems (an array of task descriptions)
+
+Return strictly valid JSON like:
+
+{
+  "branch": "…",
+  "action": "…",
+  "actionItems": [
+    "…",
+    "…"
+  ]
+}
+
+Input:
+{raw_input}
+```
+
+### combiNASHUN.txt
+```
+You are a senior strategy consultant answering C-level questions using three inputs:
+
+1️⃣  Original Question  
+2️⃣  Internal Company Data (Agent 1)  
+3️⃣  External Intelligence (Agent 2)
+
+Your task: synthesise these into a concise, actionable executive brief.
+
+╭──────────────────────────────────────────────────────────╮
+QUESTION:  
+"{question}"
+
+INTERNAL CONTEXT:  
+{internal_context}
+
+EXTERNAL CONTEXT:  
+{global_context}
+
+INITIAL RESPONSE:  
+{initial_answer}
+╰──────────────────────────────────────────────────────────╯
+
+✦ Final-Answer Rules ✦  
+• Do **not** repeat or quote the inputs.  
+• Rely on the two context blocks; add outside knowledge *only* if it is widely-accepted, clearly relevant, and not fabricated.  
+• Organise insights into the sections below – bullet points, short sentences, no fluff.  
+• Include specific numbers, dates, names when available.  
+
+### Strategic Implications  
+- …
+
+### Financial Considerations  
+- …
+
+### Operational Impact  
+- …
+
+### Risks & Mitigations  
+- …
+
+### Actionable Recommendations:  
+1. <First concrete step>  
+2. <Second concrete step>  
+3. …
+
+Output **only** the sections above. Nothing else.
+```

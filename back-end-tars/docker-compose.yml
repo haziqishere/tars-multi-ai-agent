@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - PORT=8000
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # Allow the container to write logs
+    user: root
+
+  # You can add agent services here if you want to containerize each agent separately
+  # For example:
+  # agent1:
+  #   build:
+  #     context: .
+  #     dockerfile: .devcontainer/agent.Dockerfile
+  #   ports:
+  #     - "8001:8001"
+  #   environment:
+  #     - PORT=8001
+  #     - AGENT_ID=agent1
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     - api

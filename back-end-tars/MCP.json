@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {}
+    },
+    "firecrawl-mcp": {
+      "command": "firecrawl-mcp",
+      "args": [],
+      "env": {}
+    },
+    "graph": {
+      "sendMailEndpoint": "https://graph.microsoft.com/v1.0/me/sendMail",
+      "scopes": ["https://graph.microsoft.com/.default"]
+    }
+  }
+}

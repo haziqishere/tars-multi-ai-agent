@@ -2,7 +2,6 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import uvicorn
 import os
 from dotenv import load_dotenv
 
@@ -83,12 +82,11 @@ async def health_check():
 # Agent status endpoint
 @app.get("/api/agent-status", tags=["Diagnostics"])
 async def agent_status():
-    return {"agents": agent_manager.agent_statuses}
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app", 
-        host="0.0.0.0", 
-        port=int(os.getenv("PORT", 8000)),
-        reload=True
-    ) 
+    statuses = {
+        agent_id: {
+            "running": status,
+            "uptime_seconds": agent_manager.get_agent_uptime(agent_id) if hasattr(agent_manager, "get_agent_uptime") else 0
+        }
+        for agent_id, status in agent_manager.agent_statuses.items()
+    }
+    return {"agents": statuses}

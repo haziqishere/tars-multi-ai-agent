@@ -1,86 +1,49 @@
-# TARS Multi-Agent System API Solution
+# TARS Multi-Agent System API - Local Setup
 
-This document contains a complete solution for implementing a REST API backend for the TARS Multi-Agent System, including Docker configuration, abstraction layer implementation, and deployment guides.
+This document contains a complete solution for implementing a REST API backend for the TARS Multi-Agent System using a local Conda environment.
 
 ## Table of Contents
 
-1. [Docker Configuration](#docker-configuration)
+1. [Conda Environment Setup](#conda-environment-setup)
 2. [Project Structure](#project-structure)
 3. [API Models](#api-models)
 4. [Agent Manager Service (Abstraction Layer)](#agent-manager-service-abstraction-layer)
 5. [API Routes](#api-routes)
 6. [Main FastAPI Application](#main-fastapi-application)
 7. [Package Initialization Files](#package-initialization-files)
-8. [Deployment Guide](#deployment-guide)
-9. [Implementation Plan](#implementation-plan)
-10. [Developer Guide](#developer-guide)
-11. [Docker Run Script](#docker-run-script)
-12. [Requirements File](#requirements-file)
+8. [Run Script](#run-script)
+9. [Requirements File](#requirements-file)
+10. [Implementation Plan](#implementation-plan)
+11. [Developer Guide](#developer-guide)
 
 ---
 
-## Docker Configuration
+## Conda Environment Setup
 
-### Dockerfile
+### Create and Configure Conda Environment
 
-```dockerfile
-FROM python:3.9-slim
+```bash
+# Create a new conda environment
+conda create -n tars-api python=3.9
 
-WORKDIR /app
+# Activate the environment
+conda activate tars-api
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first to leverage Docker cache
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-# Expose port for the API
-EXPOSE 8000
-
-# Command to run the API server
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Install required packages
+pip install -r requirements.txt
 ```
 
-### .devcontainer/devcontainer.json
+### requirements.txt
 
-```json
-{
-    "name": "AI Agents API",
-    "dockerFile": "../Dockerfile",
-    "context": "..",
-    "runArgs": [
-        "--network=host"
-    ],
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-python.python",
-                "ms-python.vscode-pylance",
-                "redhat.vscode-yaml",
-                "ms-azuretools.vscode-docker"
-            ],
-            "settings": {
-                "python.linting.enabled": true,
-                "python.linting.pylintEnabled": true,
-                "python.formatting.provider": "black",
-                "editor.formatOnSave": true,
-                "python.formatting.blackArgs": [
-                    "--line-length",
-                    "100"
-                ]
-            }
-        }
-    },
-    "forwardPorts": [8000],
-    "postCreateCommand": "pip install -r requirements.txt"
-}
+```
+fastapi==0.104.1
+uvicorn==0.23.2
+pydantic==2.4.2
+python-dotenv==1.0.0
+httpx==0.25.0
+python-multipart==0.0.6
+azure-identity==1.15.0
+azure-ai-projects==1.0.0b1
 ```
 
 ---
@@ -88,9 +51,7 @@ CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ## Project Structure
 
 ```
-project/
-├── .devcontainer/
-│   └── devcontainer.json
+tars-api/
 ├── api/
 │   ├── __init__.py
 │   ├── main.py              # Main FastAPI application
@@ -102,9 +63,8 @@ project/
 │       ├── __init__.py
 │       └── agent_manager.py # Abstraction layer
 ├── agents/                  # Your existing agents
-├── Dockerfile
-├── README.md
-└── requirements.txt
+├── requirements.txt         # Python dependencies
+└── run.py                   # Script to run the API
 ```
 
 ---
@@ -272,6 +232,7 @@ import logging
 import subprocess
 import threading
 import time
+import sys
 from typing import Dict, Any, List, Optional, Tuple
 
 # Configure logging
@@ -294,7 +255,8 @@ class AgentManager:
         Args:
             base_dir: Base directory where agent code is located
         """
-        self.base_dir = base_dir or os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+        # If base_dir is not provided, use the current directory
+        self.base_dir = base_dir or os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         self.agent_processes = {}
         self.agent_statuses = {
             "agent1": False,
@@ -303,6 +265,8 @@ class AgentManager:
             "agent4": False,
             "agent5": False
         }
+        # Store process start times for uptime tracking
+        self.agent_start_times = {}
         logger.info(f"AgentManager initialized with base_dir: {self.base_dir}")
         
     def start_agents(self) -> Dict[str, bool]:
@@ -337,18 +301,32 @@ class AgentManager:
         try:
             script_path = os.path.join(self.base_dir, f"run_{agent_id}.py")
             
+            # Ensure the script exists
+            if not os.path.exists(script_path):
+                logger.error(f"Agent script not found: {script_path}")
+                return False
+            
+            # Set up environment with proper Python path
+            env = os.environ.copy()
+            env["PYTHONPATH"] = self.base_dir
+            
+            # Use 'python' or 'python3' depending on the system
+            python_executable = sys.executable
+            
             # Run the agent process
             process = subprocess.Popen(
-                ["python3", "-X", "utf8", script_path],
+                [python_executable, "-X", "utf8", script_path],
                 cwd=self.base_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=1
+                bufsize=1,
+                env=env
             )
             
             self.agent_processes[agent_id] = process
             self.agent_statuses[agent_id] = True
+            self.agent_start_times[agent_id] = time.time()
             
             # Start a thread to monitor the process output
             threading.Thread(
@@ -378,7 +356,27 @@ class AgentManager:
             
         # If we get here, the process has ended
         self.agent_statuses[agent_id] = False
+        if agent_id in self.agent_start_times:
+            del self.agent_start_times[agent_id]
         logger.info(f"Agent {agent_id} has stopped")
+        
+        # Also check stderr for any errors
+        for line in process.stderr:
+            logger.error(f"[{agent_id}] {line.strip()}")
+    
+    def get_agent_uptime(self, agent_id: str) -> int:
+        """
+        Get the uptime of an agent in seconds.
+        
+        Args:
+            agent_id: Identifier for the agent
+            
+        Returns:
+            Uptime in seconds or 0 if agent is not running
+        """
+        if agent_id in self.agent_start_times:
+            return int(time.time() - self.agent_start_times[agent_id])
+        return 0
     
     def stop_agents(self) -> Dict[str, bool]:
         """
@@ -396,6 +394,8 @@ class AgentManager:
                     process.kill()
                 
                 self.agent_statuses[agent_id] = False
+                if agent_id in self.agent_start_times:
+                    del self.agent_start_times[agent_id]
                 logger.info(f"Stopped agent {agent_id}")
         
         return self.agent_statuses
@@ -700,7 +700,6 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import uvicorn
 import os
 from dotenv import load_dotenv
 
@@ -713,7 +712,11 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("api.log"),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger("api")
 
@@ -781,15 +784,14 @@ async def health_check():
 # Agent status endpoint
 @app.get("/api/agent-status", tags=["Diagnostics"])
 async def agent_status():
-    return {"agents": agent_manager.agent_statuses}
-
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app", 
-        host="0.0.0.0", 
-        port=int(os.getenv("PORT", 8000)),
-        reload=True
-    )
+    statuses = {
+        agent_id: {
+            "running": status,
+            "uptime_seconds": agent_manager.get_agent_uptime(agent_id)
+        }
+        for agent_id, status in agent_manager.agent_statuses.items()
+    }
+    return {"agents": statuses}
 ```
 
 ---
@@ -816,169 +818,29 @@ if __name__ == "__main__":
 
 ---
 
-## Deployment Guide
+## Run Script
 
-```markdown
-# TARS Multi-Agent System Deployment Guide
+### run.py
 
-This guide provides detailed steps for deploying the TARS Multi-Agent System API with Docker.
+```python
+import uvicorn
+import os
+from dotenv import load_dotenv
 
-## Step 1: Prepare Your Environment
+# Load environment variables from .env file
+load_dotenv()
 
-1. Ensure you have Docker installed:
-   ```bash
-   docker --version
-   ```
-   If Docker is not installed, follow the [official Docker installation guide](https://docs.docker.com/get-docker/).
-
-2. Ensure you have Git installed:
-   ```bash
-   git --version
-   ```
-   If Git is not installed, follow the [official Git installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
-
-## Step 2: Clone the Repository
-
-1. Clone the repository containing the AI Agents and the API code:
-   ```bash
-   git clone <repository-url>
-   cd tars-multi-agent-api
-   ```
-
-## Step 3: Configure Environment Variables
-
-1. Create a `.env` file in the project root:
-   ```bash
-   touch .env
-   ```
-
-2. Add required environment variables to the `.env` file:
-   ```
-   PORT=8000
-   AZURE_CONN_STRING=<your-azure-connection-string>
-   AGENT1_ID=<your-agent1-id>
-   AGENT2_ID=<your-agent2-id>
-   AGENT3_ID=<your-agent3-id>
-   AGENT4_ID=<your-agent4-id>
-   AGENT5_ID=<your-agent5-id>
-   ```
-
-## Step 4: Build the Docker Image
-
-1. Build the Docker image:
-   ```bash
-   docker build -t tars-multi-agent-api .
-   ```
-
-2. Verify the image was created:
-   ```bash
-   docker images
-   ```
-   You should see `tars-multi-agent-api` in the list.
-
-## Step 5: Run the Docker Container
-
-1. Start the container:
-   ```bash
-   docker run -d -p 8000:8000 --name tars-api-container tars-multi-agent-api
-   ```
-
-2. Verify the container is running:
-   ```bash
-   docker ps
-   ```
-   You should see `tars-api-container` with the status "Up".
-
-## Step 6: Test the API
-
-1. Test the API health endpoint:
-   ```bash
-   curl http://localhost:8000/health
-   ```
-   Expected response: `{"status":"healthy"}`
-
-2. Test the agent status endpoint:
-   ```bash
-   curl http://localhost:8000/api/agent-status
-   ```
-   Expected response: A JSON object showing the status of each agent.
-
-3. Test the optimization endpoint:
-   ```bash
-   curl -X POST -H "Content-Type: application/json" -d '{"query":"Analyze our manufacturing process"}' http://localhost:8000/api/optimization
-   ```
-
-## Step 7: View API Documentation
-
-1. Open the Swagger UI in your browser:
-   ```
-   http://localhost:8000/docs
-   ```
-
-2. Explore the available endpoints and test them through the UI.
-
-## Step 8: Monitor the Application
-
-1. View container logs:
-   ```bash
-   docker logs -f tars-api-container
-   ```
-
-2. Check the status of the agents:
-   ```bash
-   curl http://localhost:8000/api/agent-status
-   ```
-
-## Step 9: Stop the Container
-
-1. Stop the container:
-   ```bash
-   docker stop tars-api-container
-   ```
-
-2. Remove the container when no longer needed:
-   ```bash
-   docker rm tars-api-container
-   ```
-
-## Troubleshooting
-
-### Problem: Container fails to start
-
-1. Check the logs:
-   ```bash
-   docker logs tars-api-container
-   ```
-
-2. Verify the environment variables are correctly set:
-   ```bash
-   docker exec -it tars-api-container env
-   ```
-
-3. Check if the ports are already in use:
-   ```bash
-   sudo lsof -i :8000
-   ```
-
-### Problem: Agents fail to start
-
-1. Check the agent logs through the container logs:
-   ```bash
-   docker logs tars-api-container | grep "Agent"
-   ```
-
-2. Verify the agent processes:
-   ```bash
-   docker exec -it tars-api-container ps aux
-   ```
-
-## Next Steps
-
-After successful deployment, you can:
-
-1. Configure your front-end application to use the API
-2. Set up monitoring and alerts
-3. Implement a CI/CD pipeline for automated deployment
+if __name__ == "__main__":
+    # Get port from environment variable or use default
+    port = int(os.getenv("PORT", 8000))
+    
+    # Run the FastAPI application
+    uvicorn.run(
+        "api.main:app",
+        host="0.0.0.0",  # Bind to all interfaces
+        port=port,
+        reload=True      # Enable auto-reload for development
+    )
 ```
 
 ---
@@ -1454,6 +1316,28 @@ Always test your changes with:
    - Use async where appropriate
    - Consider timeout handling
 
+## Conda Environment Management
+
+When working with conda environments:
+
+1. **Environment Activation**:
+   - Always ensure you're in the correct environment before running or modifying code: `conda activate tars-api`
+   - If running from a script, consider adding environment activation: `conda run -n tars-api python run.py`
+
+2. **Package Management**:
+   - Keep `requirements.txt` updated if you add new dependencies
+   - Use `pip freeze > requirements.txt` to update the file
+   - Consider using `conda list --export > environment.yml` for conda-specific dependencies
+
+3. **Environment Variables**:
+   - Store environment variables in a `.env` file
+   - Consider using different `.env` files for different environments (dev, test, prod)
+   - Keep sensitive information out of version control
+
+4. **Python Path**:
+   - If you encounter import errors, ensure your PYTHONPATH includes your project directory
+   - Use absolute imports (`from api.models import...`) rather than relative imports
+
 ## Next Steps for Improvements
 
 1. **Message Queue Integration**:
@@ -1471,38 +1355,47 @@ Always test your changes with:
    - Implement role-based access control
    - Add rate limiting for API users
 
-## Contribution Guidelines
+## Local Development Tips
 
-1. Follow the existing code style
-2. Add appropriate error handling
-3. Write tests for new functionality
-4. Update documentation with changes
-5. Use meaningful commit messages
+1. **Running Agents**:
+   - If an agent fails to start, check that its ports are not in use: `netstat -tulpn | grep 800`
+   - Kill any zombie processes: `pkill -f run_agent`
+   - Check log files for error messages
+
+2. **Debugging**:
+   - Use `pdb` for Python debugging: `import pdb; pdb.set_trace()`
+   - Add more detailed logging with `logger.debug()` statements
+   - Consider using VSCode's debugging features with the Python extension
+
+3. **Testing HTTP Endpoints**:
+   - Use the FastAPI Swagger UI at `http://localhost:8000/docs`
+   - Try tools like cURL, Postman, or HTTPie for API testing
+   - Create a simple test script to automate API testing
 ```
 
----
+## Setup Instructions
 
-## Docker Run Script
+To get started with the TARS Multi-Agent System API on your local machine:
 
-### run.sh
+### 1. Create and Configure the Conda Environment
 
 ```bash
-#!/bin/bash
+# Create a new conda environment
+conda create -n tars-api python=3.9
 
-# Build the Docker image
-docker build -t tars-multi-agent-api .
+# Activate the environment
+conda activate tars-api
 
-# Run the container
-docker run -p 8000:8000 --name tars-api-container tars-multi-agent-api
-```
+# Clone the repository (if it exists) or create the directory structure
+# git clone <repository-url>
+# OR
+mkdir -p tars-api/api/routes tars-api/api/services
 
----
+# Navigate to the project directory
+cd tars-api
 
-## Requirements File
-
-### requirements.txt
-
-```
+# Create requirements.txt file
+cat > requirements.txt << EOL
 fastapi==0.104.1
 uvicorn==0.23.2
 pydantic==2.4.2
@@ -1511,166 +1404,56 @@ httpx==0.25.0
 python-multipart==0.0.6
 azure-identity==1.15.0
 azure-ai-projects==1.0.0b1
+EOL
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
----
+### 2. Create the Project Files
 
-## README.md
+Create each of the files described in this document:
+- api/__init__.py
+- api/routes/__init__.py
+- api/services/__init__.py
+- api/models.py
+- api/routes/optimization.py
+- api/services/agent_manager.py
+- api/main.py
+- run.py
 
-```markdown
-# TARS Multi-Agent System API
-
-This repository contains the API server for the TARS Multi-Agent System, a collection of AI agents that work together to analyze business processes and provide optimization recommendations.
-
-## System Architecture
-
-The system is built with the following components:
-
-- **FastAPI Backend**: Provides REST API endpoints for the front-end to communicate with
-- **AI Agent System**: A collection of five specialized AI agents that work together to process business queries
-- **Docker Container**: Packages the entire system for easy deployment
-
-The architecture follows this flow:
-1. Front-end sends a query to the REST API endpoint
-2. The API server processes the request and forwards it to the AI Agent system
-3. The AI Agents analyze the query and generate recommendations
-4. The API server compiles the response and sends it back to the front-end
-
-## Getting Started
-
-### Prerequisites
-
-- Docker
-- Git
-- Python 3.9+ (for local development outside Docker)
-
-### Setup Instructions
-
-1. **Clone the repository**:
+### 3. Create a .env File
 
 ```bash
-git clone <repository-url>
-cd tars-multi-agent-api
+# Create a .env file with necessary environment variables
+cat > .env << EOL
+PORT=8000
+# Add any additional environment variables needed by your agents
+EOL
 ```
 
-2. **Build and run the Docker container**:
+### 4. Run the Application
 
 ```bash
-# Make the run script executable
-chmod +x run.sh
+# Make sure you're in the project directory
+cd tars-api
 
-# Build and run
-./run.sh
+# Run the FastAPI application
+python run.py
 ```
 
-Alternatively, you can build and run manually:
+### 5. Verify the Application is Running
+
+Open your browser and navigate to:
+- http://localhost:8000/ - Should show a status message
+- http://localhost:8000/docs - Should show the Swagger UI with API documentation
+
+### 6. Test the API
+
+Make a POST request to the API endpoint:
 
 ```bash
-# Build the Docker image
-docker build -t tars-multi-agent-api .
-
-# Run the container
-docker run -p 8000:8000 --name tars-api-container tars-multi-agent-api
+curl -X POST -H "Content-Type: application/json" -d '{"query":"Analyze our manufacturing process"}' http://localhost:8000/api/optimization
 ```
 
-3. **Verify the API is running**:
-
-Visit `http://localhost:8000/docs` in your browser to see the Swagger documentation.
-
-### Development Environment
-
-For development with Visual Studio Code, you can use the included DevContainer configuration:
-
-1. Open the project folder in VS Code
-2. When prompted, select "Reopen in Container"
-3. VS Code will build the container and provide a development environment
-
-## API Documentation
-
-### Endpoints
-
-#### `POST /api/optimization`
-
-Process a business optimization request.
-
-**Request Body**:
-```json
-{
-  "query": "Analyze and optimize our manufacturing supply chain process"
-}
-```
-
-**Response**: The response follows the structure documented in the API Documentation.
-
-## Project Structure
-
-```
-project/
-├── .devcontainer/
-│   └── devcontainer.json      # VS Code Dev Container configuration
-├── api/
-│   ├── main.py                # Main FastAPI application
-│   ├── models.py              # Pydantic models for request/response
-│   ├── routes/
-│   │   └── optimization.py    # Endpoint handlers
-│   └── services/
-│       └── agent_manager.py   # Abstraction layer for AI Agents
-├── agents/                    # AI Agent code
-├── Dockerfile                 # Docker configuration
-├── requirements.txt           # Python dependencies
-└── README.md                  # This file
-```
-
-## Integration with Front-end
-
-To integrate with the front-end, make API requests to the endpoint:
-
-```javascript
-// Example using fetch
-const response = await fetch('http://localhost:8000/api/optimization', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    query: 'Analyze and optimize our manufacturing supply chain process'
-  }),
-});
-
-const data = await response.json();
-// Process the response data
-```
-
-## Environment Variables
-
-The application uses the following environment variables:
-
-- `PORT`: Port for the API server (default: 8000)
-- Additional environment variables may be required by the AI Agents
-
-## Troubleshooting
-
-### Agent Status Checking
-
-You can check the status of the AI Agents by visiting:
-```
-http://localhost:8000/api/agent-status
-```
-
-### Logs
-
-To view container logs:
-```bash
-docker logs tars-api-container
-```
-
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Submit a pull request
-
-## License
-
-[Specify your license here]
-```
+This setup provides you with a local development environment using Conda without relying on Docker, making it easier to develop and test the API on your local machine.

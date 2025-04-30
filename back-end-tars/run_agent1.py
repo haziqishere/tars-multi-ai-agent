@@ -1,15 +1,9 @@
 from agents.agent1_enterprise_knowledge.handler import run_handler
-import argparse
-import sys
 
 # Add to run_agent1.py, run_agent2.py, and run_agent3.py
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=8001, help="Port to run the agent on")
-    args = parser.parse_args()
-    
-    print(f"🧠 Agent 1 (Enterprise Knowledge) A2A Server is starting on port {args.port}...")
-    run_handler(port=args.port)
+    print("🧠 Agent 1 (Enterprise Knowledge) A2A Server is starting...")
+    run_handler()

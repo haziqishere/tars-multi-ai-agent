@@ -7,10 +7,6 @@ logging.getLogger("azure").setLevel(logging.WARNING)
 
 app = Flask(__name__)
 
-@app.route("/health", methods=["GET"])
-def health_check():
-    return jsonify({"status": "healthy"}), 200
-
 @app.route("/a2a/v1/tasks/send", methods=["POST"])
 def receive_task():
     # 1) Parse incoming payload

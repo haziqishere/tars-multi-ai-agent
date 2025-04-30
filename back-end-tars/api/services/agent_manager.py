@@ -4,7 +4,6 @@ import logging
 import subprocess
 import threading
 import time
-import socket
 from typing import Dict, Any, List, Optional, Tuple
 
 # Configure logging
@@ -28,13 +27,7 @@ class AgentManager:
             base_dir: Base directory where agent code is located
         """
         self.base_dir = base_dir or os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-        self.agent_ports = {
-            "agent1": 8001,
-            "agent2": 8002,
-            "agent3": 8003,
-            "agent4": 8004,
-            "agent5": 8005
-        }
+        self.agent_processes = {}
         self.agent_statuses = {
             "agent1": False,
             "agent2": False,
@@ -42,32 +35,22 @@ class AgentManager:
             "agent4": False,
             "agent5": False
         }
+        self.agent_start_times = {}
         logger.info(f"AgentManager initialized with base_dir: {self.base_dir}")
         
-    def _check_port(self, port: int) -> bool:
-        """Check if a port is in use"""
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(1)  # Set a timeout
-                result = s.connect_ex(('localhost', port))
-                return result == 0  # If result is 0, port is in use
-        except Exception as e:
-            logger.error(f"Error checking port {port}: {e}")
-            return False
-
     def start_agents(self) -> Dict[str, bool]:
         """
-        Check if all AI agent processes are running.
+        Start all AI agent processes if they're not already running.
         
         Returns:
             Dictionary of agent names and their running status
         """
-        for agent_id, port in self.agent_ports.items():
-            self.agent_statuses[agent_id] = self._check_port(port)
-            if self.agent_statuses[agent_id]:
-                logger.info(f"Agent {agent_id} is running on port {port}")
-            else:
-                logger.warning(f"Agent {agent_id} is not running on port {port}")
+        for agent_id in self.agent_statuses.keys():
+            if not self.agent_statuses[agent_id]:
+                self._start_agent(agent_id)
+                
+        # Allow time for agents to fully initialize
+        time.sleep(5)
         return self.agent_statuses
     
     def _start_agent(self, agent_id: str) -> bool:
@@ -99,6 +82,7 @@ class AgentManager:
             
             self.agent_processes[agent_id] = process
             self.agent_statuses[agent_id] = True
+            self.agent_start_times[agent_id] = time.time()
             
             # Start a thread to monitor the process output
             threading.Thread(
@@ -128,7 +112,23 @@ class AgentManager:
             
         # If we get here, the process has ended
         self.agent_statuses[agent_id] = False
+        if agent_id in self.agent_start_times:
+            del self.agent_start_times[agent_id]
         logger.info(f"Agent {agent_id} has stopped")
+    
+    def get_agent_uptime(self, agent_id: str) -> int:
+        """
+        Get the uptime of an agent in seconds.
+        
+        Args:
+            agent_id: Identifier for the agent
+            
+        Returns:
+            Uptime in seconds or 0 if agent is not running
+        """
+        if agent_id in self.agent_start_times:
+            return int(time.time() - self.agent_start_times[agent_id])
+        return 0
     
     def stop_agents(self) -> Dict[str, bool]:
         """
@@ -146,6 +146,8 @@ class AgentManager:
                     process.kill()
                 
                 self.agent_statuses[agent_id] = False
+                if agent_id in self.agent_start_times:
+                    del self.agent_start_times[agent_id]
                 logger.info(f"Stopped agent {agent_id}")
         
         return self.agent_statuses
@@ -366,4 +368,4 @@ class AgentManager:
         }
 
 # Create a singleton instance
-agent_manager = AgentManager() 
+agent_manager = AgentManager()
