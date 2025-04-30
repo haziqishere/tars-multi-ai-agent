@@ -45,7 +45,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
-      <body className="h-full overflow-hidden bg-dark-base text-text-primary">
+      <body className="h-full bg-dark-base text-text-primary">
         <Providers>{children}</Providers>
       </body>
     </html>

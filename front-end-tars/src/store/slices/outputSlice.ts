@@ -45,8 +45,8 @@ export const outputSlice = createSlice({
       state.options = action.payload;
     },
     selectOption: (state, action: PayloadAction<string>) => {
-      state.selectedOptionId = action.payload;
-    },
+              state.selectedOptionId = action.payload;
+            },
     setOutputVisible: (state, action: PayloadAction<boolean>) => {
       state.isVisible = action.payload;
     },
@@ -102,8 +102,8 @@ export const outputSlice = createSlice({
     },
     setEmailsSent: (state, action: PayloadAction<boolean>) => {
       state.emailsSent = action.payload;
-    }
-  },
+          }
+      },
 });
 
 export const {
@@ -119,6 +119,6 @@ export const {
   updateEditedEmail,
   setSendingEmails,
   setEmailsSent,
-} = outputSlice.actions;
+  } = outputSlice.actions;
 
 export default outputSlice.reducer;
