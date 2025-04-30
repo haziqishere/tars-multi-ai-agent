@@ -1,41 +1,18 @@
 // src/store/slices/outputSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export interface Node {
-  id: string;
-  label: string;
-  type?: string;
-  position?: { x: number; y: number };
-  data?: any;
-}
-
-export interface Edge {
-  id: string;
-  source: string;
-  target: string;
-  label?: string;
-  type?: string;
-  data?: any;
-}
-
-export interface Option {
-  id: string;
-  title: string;
-  description: string;
-  timeToImplement: string;
-  costReduction: string;
-  nodes: Node[];
-  edges: Edge[];
-}
+import { Node, Edge, Option, SummaryCardData, Email, FlowData } from '@/types/output';
 
 interface OutputState {
-  currentBusinessFlow: {
-    nodes: Node[];
-    edges: Edge[];
-  };
+  currentBusinessFlow: FlowData;
   options: Option[];
   selectedOptionId: string | null;
   isVisible: boolean;
+  summaryCardVisible: boolean;
+  summaryCardData: SummaryCardData | null;
+  selectedDepartmentId: string | null;
+  editedEmails: Record<string, Email>;
+  sendingEmails: boolean;
+  emailsSent: boolean;
 }
 
 const initialState: OutputState = {
@@ -46,6 +23,12 @@ const initialState: OutputState = {
   options: [],
   selectedOptionId: null,
   isVisible: false,
+  summaryCardVisible: false,
+  summaryCardData: null,
+  selectedDepartmentId: null,
+  editedEmails: {},
+  sendingEmails: false,
+  emailsSent: false,
 };
 
 export const outputSlice = createSlice({
@@ -62,8 +45,8 @@ export const outputSlice = createSlice({
       state.options = action.payload;
     },
     selectOption: (state, action: PayloadAction<string>) => {
-      state.selectedOptionId = action.payload;
-    },
+              state.selectedOptionId = action.payload;
+            },
     setOutputVisible: (state, action: PayloadAction<boolean>) => {
       state.isVisible = action.payload;
     },
@@ -72,8 +55,55 @@ export const outputSlice = createSlice({
       state.options = [];
       state.selectedOptionId = null;
       state.isVisible = false;
+      state.summaryCardVisible = false;
+      state.summaryCardData = null;
+      state.selectedDepartmentId = null;
+      state.editedEmails = {};
+      state.sendingEmails = false;
+      state.emailsSent = false;
     },
-  },
+    setSummaryCardData: (state, action: PayloadAction<SummaryCardData>) => {
+      state.summaryCardData = action.payload;
+      
+      const emailMap: Record<string, Email> = {};
+      action.payload.departments.forEach(dept => {
+        emailMap[dept.id] = { ...dept.emailTemplate };
+      });
+      state.editedEmails = emailMap;
+      
+      if (action.payload.departments.length > 0) {
+        state.selectedDepartmentId = action.payload.departments[0].id;
+      }
+    },
+    showSummaryCard: (state) => {
+      state.summaryCardVisible = true;
+    },
+    hideSummaryCard: (state) => {
+      state.summaryCardVisible = false;
+    },
+    setSelectedDepartment: (state, action: PayloadAction<string>) => {
+      state.selectedDepartmentId = action.payload;
+    },
+    updateEditedEmail: (state, action: PayloadAction<{
+      departmentId: string;
+      field: keyof Email;
+      value: string;
+    }>) => {
+      const { departmentId, field, value } = action.payload;
+      if (state.editedEmails && state.editedEmails[departmentId]) {
+        state.editedEmails[departmentId] = {
+          ...state.editedEmails[departmentId],
+          [field]: value
+        };
+      }
+    },
+    setSendingEmails: (state, action: PayloadAction<boolean>) => {
+      state.sendingEmails = action.payload;
+    },
+    setEmailsSent: (state, action: PayloadAction<boolean>) => {
+      state.emailsSent = action.payload;
+          }
+      },
 });
 
 export const {
@@ -82,6 +112,13 @@ export const {
   selectOption,
   setOutputVisible,
   resetOutput,
-} = outputSlice.actions;
+  setSummaryCardData,
+  showSummaryCard,
+  hideSummaryCard,
+  setSelectedDepartment,
+  updateEditedEmail,
+  setSendingEmails,
+  setEmailsSent,
+  } = outputSlice.actions;
 
 export default outputSlice.reducer;

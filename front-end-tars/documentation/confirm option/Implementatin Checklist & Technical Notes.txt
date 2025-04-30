@@ -1,0 +1,266 @@
+# Implementation Checklist & Technical Notes
+
+## Overview
+
+This guide provides a comprehensive checklist for implementing the Summary Card feature with the side-by-side layout for department tasks and email composition. The implementation follows the revised design where:
+
+1. Department tasks and email preview are shown side-by-side
+2. Selecting a department dynamically loads the corresponding email
+3. A single "Confirm and Send All" button sends all emails at once
+
+## Files to Create/Modify
+
+### 1. Type Definitions
+
+- [x] Update `src/types/output.ts` with new interfaces:
+  - `BusinessFlowStep`
+  - `Department` (with `emailTemplate` property)
+  - `DepartmentTask`
+  - `Email`
+  - `SummaryCardData`
+  - Extended `OutputState` interface
+
+### 2. Redux State Management
+
+- [x] Update `src/store/slices/outputSlice.ts` with new state and actions:
+  - `summaryCardVisible`
+  - `summaryCardData`
+  - `selectedDepartmentId`
+  - `editedEmails` (as a map/record)
+  - `sendingEmails`
+  - `emailsSent`
+  - Actions:
+    - `setSummaryCardData`
+    - `showSummaryCard`
+    - `hideSummaryCard`
+    - `setSelectedDepartment`
+    - `updateEditedEmail`
+    - `setSendingEmails`
+    - `setEmailsSent`
+
+### 3. API Mock Data
+
+- [x] Update `src/lib/api.ts` with mock data structure for:
+  - Business flow summary and steps
+  - Departments with managers and tasks
+  - Email templates for each department
+
+### 4. UI Components
+
+- [x] Create `src/components/output/SummaryCard.tsx`:
+  - Main modal container
+  - Business flow at top
+  - Side-by-side layout for departments and email
+
+- [x] Create `src/components/output/BusinessFlowSummary.tsx`:
+  - Display summary text
+  - Visualization of implementation steps
+
+- [x] Create `src/components/output/DepartmentSummary.tsx`:
+  - List of departments with task counts
+  - Selection state for current department
+  - Brief overview of tasks per department
+
+- [x] Create `src/components/output/EmailPreview.tsx`:
+  - Dynamic email preview based on selected department
+  - Editable email fields
+  - "Confirm and Send All" button
+
+- [x] Update `src/components/output/OutputInterface.tsx`:
+  - Add "Approve" button
+  - Add SummaryCard component integration
+
+### 5. Supporting UI Components
+
+- [x] Ensure all required UI components exist:
+  - Button
+  - Card
+  - Badge
+  - Input
+  - Textarea
+  - Separator
+
+## Implementation Technical Notes
+
+### Handling Department Selection
+
+When a department is selected:
+
+```typescript
+// Inside DepartmentSummary.tsx
+const handleDepartmentSelect = (departmentId: string) => {
+  if (!sendingEmails && !emailsSent) {
+    dispatch(setSelectedDepartment(departmentId));
+  }
+};
+```
+
+This updates the Redux state, which triggers the EmailPreview component to display the corresponding email:
+
+```typescript
+// Inside EmailPreview.tsx
+const selectedDepartment = summaryCardData.departments.find(
+  d => d.id === selectedDepartmentId
+);
+const currentEmail = editedEmails[selectedDepartmentId];
+```
+
+### Handling Email Edits
+
+When an email is edited:
+
+```typescript
+// Inside EmailPreview.tsx
+const handleInputChange = (field: keyof Email, value: string) => {
+  dispatch(updateEditedEmail({
+    departmentId: selectedDepartmentId,
+    field,
+    value
+  }));
+};
+```
+
+This updates only the selected department's email in the `editedEmails` map, leaving other emails unchanged.
+
+### Sending All Emails
+
+When the "Confirm and Send All" button is clicked:
+
+```typescript
+// Inside EmailPreview.tsx
+const handleSendEmails = async () => {
+  dispatch(setSendingEmails(true));
+  
+  try {
+    // In a real app, you would make an API call here
+    // with all the edited emails from the editedEmails object
+    await sendEmailsToAPI(Object.values(editedEmails));
+    
+    dispatch(setEmailsSent(true));
+  } catch (error) {
+    // Handle error
+  } finally {
+    dispatch(setSendingEmails(false));
+  }
+};
+```
+
+## Visual Layout Notes
+
+### Business Flow Visualization
+
+The business flow should be visualized as a node and edges (React Flow).
+Use the existing graph that we picked
+
+### Department Card Layout
+
+Each department card in the list should include:
+- Department name (prominent)
+- Manager name (secondary text)
+- Task count badge
+- Visual indicators for task priorities
+- First 1-2 tasks with color-coded priority indicators
+
+### Email Preview Layout
+
+The email preview should include:
+- Clear header showing which department's email is being edited
+- Standard email fields (To, Subject, Body)
+- Nice formatting for the email body
+- Prominent "Confirm and Send All" button at the bottom
+
+## Testing Notes
+
+Test the implementation by:
+
+1. **Data Flow**: Verify Redux state updates correctly when:
+   - Summary card opens
+   - Department is selected
+   - Email is edited
+   - Emails are sent
+
+2. **UI Interactions**:
+   - Department selection updates email preview
+   - Email fields are editable before sending
+   - Email fields become read-only after sending
+   - "Confirm and Send" button shows loading state
+   - Success message appears after sending
+
+3. **Edge Cases**:
+   - No departments available
+   - Empty email fields
+   - Sending fails
+   - Mobile layout scaling
+
+## Performance Considerations
+
+1. **Memoization**: Use React.memo and useMemo for components that don't need frequent re-renders:
+   ```typescript
+   const DepartmentSummary = React.memo(({ departments }: DepartmentSummaryProps) => {
+     // Component code...
+   });
+   ```
+
+2. **Selective Rendering**: Use the selectedDepartmentId to avoid re-rendering all department cards:
+   ```typescript
+   {departments.map((dept) => (
+     <DepartmentCard 
+       key={dept.id}
+       department={dept}
+       isSelected={selectedDepartmentId === dept.id}
+       onSelect={handleDepartmentSelect}
+       disabled={sendingEmails || emailsSent}
+     />
+   ))}
+   ```
+
+3. **Form State**: For complex forms with many fields, consider using a form library like react-hook-form.
+
+## Accessibility Notes
+
+1. **Keyboard Navigation**: Ensure users can navigate the department list and email form using keyboard:
+   ```typescript
+   // Inside DepartmentSummary.tsx
+   const handleKeyDown = (e: React.KeyboardEvent, departmentId: string) => {
+     if (e.key === 'Enter' || e.key === ' ') {
+       handleDepartmentSelect(departmentId);
+     }
+   };
+   ```
+
+2. **ARIA Attributes**: Add proper ARIA attributes for better screen reader support:
+   ```html
+   <div 
+     role="button"
+     tabIndex={0}
+     aria-selected={isSelected}
+     aria-label={`Select ${department.name} department`}
+     onClick={() => onSelect(department.id)}
+     onKeyDown={(e) => handleKeyDown(e, department.id)}
+   >
+     <!-- Department card content -->
+   </div>
+   ```
+
+3. **Focus Management**: Manage focus properly when the modal opens and closes.
+
+## Mobile Responsiveness
+
+1. **Stack Layout**: On smaller screens, stack the department list and email preview:
+   ```css
+   .grid-cols-1 md:grid-cols-2
+   ```
+
+2. **Compact Business Flow**: Make the business flow visualization horizontally scrollable on small screens.
+
+3. **Touch-Friendly Targets**: Ensure all interactive elements have sufficient size for touch inputs.
+
+## Final Steps
+
+Before considering the implementation complete:
+
+1. **Code Review**: Have another developer review the implementation
+2. **Usability Testing**: Test with actual users if possible
+3. **Documentation**: Update any relevant documentation
+4. **Browser Testing**: Test in different browsers
+5. **Accessibility Testing**: Run accessibility checks

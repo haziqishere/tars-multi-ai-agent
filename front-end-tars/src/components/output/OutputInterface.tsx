@@ -7,11 +7,18 @@ import {
   setCurrentBusinessFlow,
   setOptions,
   selectOption,
-  Option,
+  setSummaryCardData,
+  showSummaryCard,
 } from "@/store/slices/outputSlice";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusSquare, BarChart3, FileText, CheckCircle } from "lucide-react";
+import {
+  PlusSquare,
+  BarChart3,
+  FileText,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 // Import modular components
 import AlternativeOptionsDisplay from "./AlternativeOptionsDisplay";
@@ -20,9 +27,10 @@ import NewsAndImpactSection from "./NewsAndImpactSection";
 import BusinessFlowSection from "./BusinessFlowSection";
 import FinancialImpactSection from "./FinancialImpactSection";
 import ImplementationPlanSection from "./ImplementationPlanSection";
+import SummaryCard from "./SummaryCard";
 
 // Import API functions and types - directly use your existing types
-import { fetchOptimizationData } from "@/lib/api";
+import { fetchOptimizationData, fetchSummaryCardData } from "@/lib/api";
 // Import the specific types from your API
 import type {
   AnalyticsData,
@@ -39,6 +47,7 @@ const OutputInterface: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("analysis");
+  const [approvingOption, setApprovingOption] = useState(false);
 
   // State for analytics data
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
@@ -134,6 +143,23 @@ const OutputInterface: React.FC = () => {
 
   const handleSelectOption = (optionId: string) => {
     dispatch(selectOption(optionId));
+  };
+
+  // Handle approve button click
+  const handleApproveOption = async () => {
+    if (!selectedOptionId) return;
+
+    setApprovingOption(true);
+    try {
+      const summaryData = await fetchSummaryCardData(selectedOptionId);
+      dispatch(setSummaryCardData(summaryData));
+      dispatch(showSummaryCard());
+    } catch (error) {
+      console.error("Failed to load summary data:", error);
+      // Show error message to user
+    } finally {
+      setApprovingOption(false);
+    }
   };
 
   if (loading) {
@@ -387,15 +413,28 @@ const OutputInterface: React.FC = () => {
             {/* Approve Button - Bottom of the Recommendation Tab */}
             <div className="flex justify-end mt-6">
               <button
-                disabled={!selectedOptionId}
+                disabled={!selectedOptionId || approvingOption}
                 className="bg-accent-green text-white px-6 py-2 rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed shadow-neo-dark hover:bg-accent-green-muted transition-colors"
+                onClick={handleApproveOption}
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Approve Selected Option
+                {approvingOption ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve Selected Option
+                  </>
+                )}
               </button>
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Summary Card Modal */}
+        <SummaryCard />
       </div>
     </div>
   );

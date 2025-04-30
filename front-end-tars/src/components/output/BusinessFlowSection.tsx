@@ -5,7 +5,6 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import FlowVisualization from "./FlowVisualization";
-import { Option } from "@/store/slices/outputSlice";
 
 interface BusinessFlowSectionProps {
   currentBusinessFlow: {

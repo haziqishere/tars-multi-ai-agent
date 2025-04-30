@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, FormEvent, KeyboardEvent } from "react";
-import { Send, PlusIcon, MicIcon, ImageIcon, FileTextIcon } from "lucide-react";
+import { Send, ImageIcon, FileTextIcon } from "lucide-react";
 import TextareaAutosize from "react-textarea-autosize";
 
 interface ChatInputProps {
@@ -103,17 +103,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </button>
         </div>
       </div>
-
-      {!minimized && (
-        <div className="absolute left-2 -top-9 flex space-x-1">
-          <button
-            type="button"
-            className="h-7 w-7 bg-dark-elevated text-text-secondary hover:text-text-primary border border-dark-border rounded-full flex items-center justify-center shadow-neo-dark hover:bg-dark-hover transition-colors duration-200"
-          >
-            <MicIcon className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
     </form>
   );
 };

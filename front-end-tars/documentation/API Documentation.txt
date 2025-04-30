@@ -56,6 +56,7 @@ The response is a comprehensive JSON object containing:
 1. Analysis data (business flow, analytics, news and impact)
 2. Recommendations (optimization options)
 3. A chat response message
+4. Summary Card data for implementation (when an option is approved)
 
 ```json
 {
@@ -73,7 +74,8 @@ The response is a comprehensive JSON object containing:
   "recommendations": {
     "options": Array<Option>
   },
-  "chatResponse": string
+  "chatResponse": string,
+  "summaryCard": SummaryCardData
 }
 ```
 
@@ -185,6 +187,39 @@ The response is a comprehensive JSON object containing:
   task: string;
   duration: string;
   status: "pending" | "in-progress" | "completed";
+}
+```
+
+#### SummaryCardData (for implementation)
+```typescript
+{
+  businessOperationsFlow: {
+    summary: string;
+    steps: Array<{
+      id: string;
+      description: string;
+      department: string;
+    }>;
+  };
+  departments: Array<{
+    id: string;
+    department: string;
+    manager: string;
+    email: string;
+    tasks: Array<{
+      id: string;
+      description: string;
+      priority: "high" | "medium" | "low";
+      deadline: string; // ISO date format
+    }>;
+    emailTemplate: {
+      to: string;
+      recipient: string;
+      department: string;
+      subject: string;
+      body: string;
+    };
+  }>;
 }
 ```
 
@@ -328,7 +363,82 @@ The response is a comprehensive JSON object containing:
       }
     ]
   },
-  "chatResponse": "I've analyzed your request about \"Analyze and optimize our manufacturing supply chain process\" and generated optimization options. You can review the detailed business flow analysis, along with two alternative optimization strategies: Process Automation Strategy (22% cost reduction) and Supply Chain Restructuring (18% cost reduction). Each option includes financial impacts and an implementation plan."
+  "chatResponse": "I've analyzed your request about \"Analyze and optimize our manufacturing supply chain process\" and generated optimization options. You can review the detailed business flow analysis, along with two alternative optimization strategies: Process Automation Strategy (22% cost reduction) and Supply Chain Restructuring (18% cost reduction). Each option includes financial impacts and an implementation plan.",
+  
+  "summaryCard": {
+    "businessOperationsFlow": {
+      "summary": "Optimized 5-step procurement process with automated vendor validation",
+      "steps": [
+        { "id": "step1", "description": "Automated requisition approval", "department": "Procurement" },
+        { "id": "step2", "description": "AI-powered vendor selection", "department": "Vendor Relations" },
+        { "id": "step3", "description": "Contract negotiation assistance", "department": "Legal" },
+        { "id": "step4", "description": "Digital invoice processing", "department": "Finance" },
+        { "id": "step5", "description": "Payment automation", "department": "Finance" }
+      ]
+    },
+    "departments": [
+      {
+        "id": "dept-1",
+        "department": "Procurement",
+        "manager": "Alex Johnson",
+        "email": "alex.johnson@company.com",
+        "tasks": [
+          {
+            "id": "task1-1",
+            "description": "Update requisition form with new validation fields",
+            "priority": "high",
+            "deadline": "2025-05-15"
+          },
+          {
+            "id": "task1-2",
+            "description": "Configure automated PO generation rules",
+            "priority": "medium",
+            "deadline": "2025-05-30"
+          },
+          {
+            "id": "task1-3",
+            "description": "Train team on new system",
+            "priority": "medium",
+            "deadline": "2025-06-15"
+          }
+        ],
+        "emailTemplate": {
+          "to": "alex.johnson@company.com",
+          "recipient": "Alex Johnson",
+          "department": "Procurement",
+          "subject": "Action Required: Procurement Process Optimization Implementation",
+          "body": "Dear Alex,\n\nI'm reaching out regarding the recently approved procurement process optimization. The analysis has identified key areas where your department will play a critical role in implementation.\n\nKey tasks for the Procurement team:\n1. Update requisition form with new validation fields (High Priority, Due: May 15, 2025)\n2. Configure automated PO generation rules (Medium Priority, Due: May 30, 2025)\n3. Train team on new system (Medium Priority, Due: June 15, 2025)\n\nThe expected outcomes include a 30% reduction in processing time and 15% cost savings.\n\nPlease review the attached implementation schedule and confirm your team's availability for the kickoff meeting next Monday at 10:00 AM.\n\nBest regards,\nTARS System\nRan By J. Doe, Head of Operations"
+        }
+      },
+      {
+        "id": "dept-2",
+        "department": "Vendor Relations",
+        "manager": "Sarah Miller",
+        "email": "sarah.miller@company.com",
+        "tasks": [
+          {
+            "id": "task2-1",
+            "description": "Create vendor scoring criteria",
+            "priority": "high",
+            "deadline": "2025-05-20"
+          },
+          {
+            "id": "task2-2",
+            "description": "Update vendor database with new fields",
+            "priority": "medium",
+            "deadline": "2025-06-05"
+          }
+        ],
+        "emailTemplate": {
+          "to": "sarah.miller@company.com",
+          "recipient": "Sarah Miller",
+          "department": "Vendor Relations",
+          "subject": "Action Required: Vendor Selection Process Updates",
+          "body": "Dear Sarah,\n\nFollowing our recent process optimization approval, we need your team's expertise to implement the new AI-powered vendor selection system.\n\nKey tasks for the Vendor Relations team:\n1. Create vendor scoring criteria (High Priority, Due: May 20, 2025)\n2. Update vendor database with new fields (Medium Priority, Due: June 5, 2025)\n\nThis new system will help reduce vendor selection time by 40% and improve quality scoring by 25%.\n\nLet's connect this week to discuss the implementation details further.\n\nBest regards,\nTARS System\nRan By J. Doe, Head of Operations"
+        }
+      }
+    ]
+  }
 }
 ```
 
@@ -364,6 +474,7 @@ The response is a comprehensive JSON object containing:
    - Retrieve real-time business data from databases
    - Generate custom optimization options based on the specific query
    - Use machine learning models for projections and impact analysis
+   - Create detailed implementation plans with department tasks and email templates
 3. The current implementation uses static mock data to demonstrate the structure
 
 ## API Types

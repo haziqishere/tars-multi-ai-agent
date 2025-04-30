@@ -7,7 +7,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Clock, CircleDot, Check } from "lucide-react";
 import FlowVisualization from "./FlowVisualization";
-import { Option } from "@/store/slices/outputSlice";
+
+export interface Option {
+  id: string;
+  title: string;
+  description: string;
+  costReduction?: string;
+  timeToImplement?: string;
+  nodes: any[];
+  edges: any[];
+  additionalMetrics?: Array<{
+    label: string;
+    value: string;
+  }>;
+}
 
 interface AlternativeOptionsDisplayProps {
   options: Option[];

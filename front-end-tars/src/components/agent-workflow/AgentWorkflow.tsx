@@ -40,122 +40,11 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
     return match ? parseInt(match[1]) : null;
   };
 
-  // Simulate agent workflow process when isProcessing is true
+  // Immediately trigger workflow when isProcessing becomes true
   useEffect(() => {
     if (isProcessing) {
+      // Start the workflow immediately when isProcessing becomes true
       dispatch(startWorkflow());
-
-      const processAgents = async () => {
-        // Agent 1: Enterprise Knowledge Base Agent
-        dispatch(
-          updateAgentStatus({
-            agentId: "agent1",
-            status: "working",
-            message: "Accessing knowledge base",
-          })
-        );
-
-        // Instead of progress updates, just add a delay to simulate work
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        dispatch(updateAgentStatus({ agentId: "agent1", status: "completed" }));
-
-        // Animate transition to Agent 2
-        setAnimatingFromAgent(1);
-        setAnimatingToAgent(2);
-        setIsAnimating(true);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setIsAnimating(false);
-
-        // Move to Agent 2
-        dispatch(advanceToNextAgent());
-
-        // Agent 2: Global Intelligence
-        dispatch(
-          updateAgentStatus({
-            agentId: "agent2",
-            status: "working",
-            message: "Making timeline of events",
-          })
-        );
-
-        // Instead of progress updates, just add a delay to simulate work
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        dispatch(updateAgentStatus({ agentId: "agent2", status: "completed" }));
-
-        // Animate transition to Agent 3
-        setAnimatingFromAgent(2);
-        setAnimatingToAgent(3);
-        setIsAnimating(true);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setIsAnimating(false);
-
-        // Move to Agent 3
-        dispatch(advanceToNextAgent());
-
-        // Agent 3: Strategic Consultant
-        dispatch(
-          updateAgentStatus({
-            agentId: "agent3",
-            status: "working",
-            message: "Deriving actionable decisions and scenarios",
-          })
-        );
-
-        // Instead of progress updates, just add a delay to simulate work
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        dispatch(updateAgentStatus({ agentId: "agent3", status: "completed" }));
-
-        // Animate transition to Agent 4
-        setAnimatingFromAgent(3);
-        setAnimatingToAgent(4);
-        setIsAnimating(true);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setIsAnimating(false);
-
-        // Move to Agent 4
-        dispatch(advanceToNextAgent());
-
-        // Agent 4: Prediction & ROI
-        dispatch(
-          updateAgentStatus({
-            agentId: "agent4",
-            status: "working",
-            message: "Calculating implementation time and cost",
-          })
-        );
-
-        // Instead of progress updates, just add a delay to simulate work
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        dispatch(updateAgentStatus({ agentId: "agent4", status: "completed" }));
-
-        // Animate transition to Agent 5
-        setAnimatingFromAgent(4);
-        setAnimatingToAgent(5);
-        setIsAnimating(true);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setIsAnimating(false);
-
-        // Move to Agent 5
-        dispatch(advanceToNextAgent());
-
-        // Agent 5: Informant
-        dispatch(
-          updateAgentStatus({
-            agentId: "agent5",
-            status: "working",
-            message: "Preparing information for managers",
-          })
-        );
-
-        // Instead of progress updates, just add a delay to simulate work
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        dispatch(updateAgentStatus({ agentId: "agent5", status: "completed" }));
-
-        // Complete workflow
-        dispatch(advanceToNextAgent());
-      };
-
-      processAgents();
     }
   }, [isProcessing, dispatch]);
 
@@ -172,7 +61,7 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
           </p>
         )}
 
-      {minimized && (
+      {minimized ? (
         <div className="space-y-3 relative py-1">
           {/* Main vertical connection line - now with correct height calculation */}
           <div
@@ -228,6 +117,20 @@ const AgentWorkflow: React.FC<AgentWorkflowProps> = ({
             isAnimating={isAnimating}
             onAnimationComplete={() => setIsAnimating(false)}
           />
+        </div>
+      ) : (
+        // Non-minimized view for agent workflow
+        <div className="space-y-4">
+          {/* Display agents in non-minimized view */}
+          {agents.map((agent, index) => (
+            <div key={agent.id} className="relative z-10 mb-4">
+              <AgentNode
+                agent={agent}
+                isActive={currentAgentId === agent.id}
+                minimized={false}
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>
