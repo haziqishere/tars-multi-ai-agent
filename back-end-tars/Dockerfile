@@ -41,7 +41,7 @@ COPY . .
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Expose the port the app will run on
 EXPOSE 8000
