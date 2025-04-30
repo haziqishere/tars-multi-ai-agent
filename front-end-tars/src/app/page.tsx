@@ -148,19 +148,7 @@ export default function LandingPage() {
       </div>
 
       <nav className="fixed top-0 left-0 right-0 z-50 bg-dark-base/80 backdrop-blur-md border-b border-dark-border/50">
-        <div className="container mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 cursor-pointer">
-            <Image
-              src="/assets/images/TARS LOGO small.png"
-              alt="TARS Logo"
-              width={32}
-              height={32}
-              className="filter brightness-110"
-            />
-            <span className="font-bold text-xl text-text-primary">TARS</span>
-            <span className="text-accent-green text-xl">AI</span>
-          </Link>
-
+        <div className="container mx-auto px-6 py-3 flex items-center justify-end">
           <div className="hidden md:flex items-center gap-6">
             <Link
               href="#problem-section"
@@ -261,7 +249,7 @@ export default function LandingPage() {
             }}
             className="text-4xl md:text-6xl font-bold tracking-tight text-text-primary mb-4"
           >
-            TARS: Multi-Agent Intelligence
+            TARS: Multi-Agent Business Analyst
           </motion.h1>
 
           <motion.p
@@ -291,7 +279,7 @@ export default function LandingPage() {
             }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Link href="#cta-section">
+            <Link href="/login">
               <Button
                 size="lg"
                 className="bg-accent-orange hover:bg-accent-orange-muted text-text-primary shadow-neo-dark w-full sm:w-auto"
