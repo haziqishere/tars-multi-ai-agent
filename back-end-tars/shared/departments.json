@@ -1,33 +1,51 @@
 [
-    {
-      "dept": "Operations",
-      "lead": "Alice Tan",
-      "email": "alice.tan@contoso.com",
-      "description": "Oversees fab and logistics operations"
-    },
-    {
-      "dept": "Finance",
-      "lead": "Jeff Ng",
-      "email": "jeff.ng@contoso.com",
-      "description": "Budgeting, cost forecasts"
-    },
-    {
-      "dept": "Procurement",
-      "lead": "Rahul Mehta",
-      "email": "rahul.mehta@contoso.com",
-      "description": "Supplier contracts, sourcing"
-    },
-    {
-      "dept": "Legal & Compliance",
-      "lead": "Maria Gomez",
-      "email": "maria.gomez@contoso.com",
-      "description": "Regulatory and trade-compliance review"
-    },
-    {
-      "dept": "HR",
-      "lead": "Chee Wei Lim",
-      "email": "cheewei.lim@contoso.com",
-      "description": "Employee relations, relocations"
-    }
-  ]
+  {
+    "department": "IT",
+    "lead": "Alex Johnson",
+    "email": "alex.johnson@contoso.com",
+    "description": "Information Technology department responsible for systems, infrastructure and applications"
+  },
+  {
+    "department": "Operations",
+    "lead": "Sarah Miller",
+    "email": "sarah.miller@contoso.com",
+    "description": "Operations department responsible for core business processes and efficiency"
+  },
+  {
+    "department": "Finance",
+    "lead": "Marcus Chen",
+    "email": "marcus.chen@contoso.com",
+    "description": "Finance department responsible for budget management and financial planning"
+  },
+  {
+    "department": "HR",
+    "lead": "Elena Rodriguez",
+    "email": "elena.rodriguez@contoso.com",
+    "description": "Human Resources department responsible for staffing and training"
+  },
+  {
+    "department": "Legal",
+    "lead": "Joseph Kim",
+    "email": "joseph.kim@contoso.com",
+    "description": "Legal department responsible for compliance and risk management"
+  },
+  {
+    "department": "Marketing",
+    "lead": "Taylor Williams",
+    "email": "taylor.williams@contoso.com",
+    "description": "Marketing department responsible for brand and promotional activities"
+  },
+  {
+    "department": "Sales",
+    "lead": "Jordan Patel",
+    "email": "jordan.patel@contoso.com",
+    "description": "Sales department responsible for client acquisition and revenue growth"
+  },
+  {
+    "department": "R&D",
+    "lead": "Avery Thompson",
+    "email": "avery.thompson@contoso.com",
+    "description": "Research & Development department responsible for innovation and product development"
+  }
+]
   

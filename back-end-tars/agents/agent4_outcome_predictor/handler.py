@@ -27,8 +27,9 @@ def handle_request():
         return jsonify({"error": str(e)}), 500
 
 def run_handler(host="0.0.0.0", port=8004):
-    print(f"🧠 Agent 4 A2A Server listening on {host}:{port}")
-    app.run(host=host, port=port)
+    print(f"🧠 Agent 4 (Outcome Predictor) A2A Server is starting...")
+    # Enable debug mode
+    app.run(host=host, port=port, debug=True)
 
 if __name__ == "__main__":
     run_handler()

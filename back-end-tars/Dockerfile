@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM --platform=linux/amd64 python:3.10-slim
 
 # Set working directory
 WORKDIR /app
@@ -49,7 +49,10 @@ EXPOSE 8000
 # Create a non-root user and switch to it
 RUN adduser --disabled-password --gecos '' appuser
 RUN chown -R appuser:appuser /app
+
 USER appuser
+
+
 
 # Set up a volume for logs and data persistence
 VOLUME ["/app/logs", "/app/data"]

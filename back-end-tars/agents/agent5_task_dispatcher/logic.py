@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import datetime
 from dotenv import load_dotenv
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
@@ -197,3 +198,113 @@ def send_tasks(drafts):
     return [{"department": d["department"], 
              "leadEmail": d["leadEmail"], 
              "status": "drafted"} for d in drafts]
+
+def generate_summary_card(branch, action, drafts):
+    """
+    Generate API-compatible summary card data for email templates.
+    This function transforms the draft emails into the format required by the API.
+    
+    Args:
+        branch: The branch name for the operation
+        action: The action being taken
+        drafts: List of email drafts with department, lead, and content info
+        
+    Returns:
+        A dictionary matching the summaryCard format in the API
+    """
+    # Generate a unique step ID for each department
+    current_date = datetime.datetime.now()
+    
+    # Create business operations flow
+    flow_steps = []
+    step_id = 1
+    
+    for draft in drafts:
+        flow_steps.append({
+            "id": f"step{step_id}",
+            "description": f"{draft['department']} implementation for {action}",
+            "department": draft['department']
+        })
+        step_id += 1
+    
+    # Create summary flow
+    business_flow = {
+        "summary": f"Optimized {len(flow_steps)}-step process for {branch}: {action}",
+        "steps": flow_steps
+    }
+    
+    # Create department tasks and email templates
+    departments = []
+    dept_id = 1
+    
+    for draft in drafts:
+        # Generate tasks with priorities and deadlines
+        tasks = []
+        task_id = 1
+        
+        # Extract tasks from the email body
+        task_matches = re.findall(r'\d+\.\s+(.*?)(?=\n\d+\.|\n\n|$)', draft['body'], re.DOTALL)
+        
+        for i, task_desc in enumerate(task_matches):
+            # Create realistic deadlines (increasing by 15 days)
+            deadline_date = current_date + datetime.timedelta(days=15 * (i + 1))
+            deadline_str = deadline_date.strftime("%Y-%m-%d")
+            
+            # Assign priority based on position (first is high, then medium, then low)
+            priority = "high" if i == 0 else ("medium" if i == 1 else "low")
+            
+            tasks.append({
+                "id": f"task{dept_id}-{task_id}",
+                "description": task_desc.strip(),
+                "priority": priority,
+                "deadline": deadline_str
+            })
+            task_id += 1
+        
+        # Create email template
+        email_template = {
+            "to": draft['leadEmail'],
+            "recipient": draft['leadName'],
+            "department": draft['department'],
+            "subject": draft['subject'],
+            "body": draft['body']
+        }
+        
+        # Create department entry
+        departments.append({
+            "id": f"dept-{dept_id}",
+            "department": draft['department'],
+            "manager": draft['leadName'],
+            "email": draft['leadEmail'],
+            "tasks": tasks,
+            "emailTemplate": email_template
+        })
+        dept_id += 1
+    
+    # Return the complete summary card
+    return {
+        "businessOperationsFlow": business_flow,
+        "departments": departments
+    }
+
+def create_api_response(query, branch, action, drafts):
+    """
+    Create a complete API response with summaryCard based on the agent's output.
+    
+    Args:
+        query: The original user query
+        branch: The branch name for the operation
+        action: The action being taken
+        drafts: List of email drafts with department, lead, and content info
+        
+    Returns:
+        A dictionary matching the complete API response format
+    """
+    # First, generate the summary card
+    summary_card = generate_summary_card(branch, action, drafts)
+    
+    # For now, we'll use a placeholder for the rest of the response
+    # In a real implementation, this would incorporate data from all agents
+    return {
+        "summaryCard": summary_card
+    }

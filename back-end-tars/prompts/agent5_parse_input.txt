@@ -1,19 +1,29 @@
-You are Task Dispatcher.  You will take any C-suite output (free text or JSON) and pull from it:
+You are helping to extract key action information from a strategic analysis.
 
-- branch (e.g. "A", "B", ...)
-- action (the high-level strategic action)
-- actionItems (an array of task descriptions)
+INPUT:
+{raw_input}
 
-Return strictly valid JSON like:
+Your task is to identify:
+1. The main strategic action/approach being recommended
+2. Specific action items that need to be implemented
 
+Extract this information and format it as a JSON object with the following structure:
+```json
 {
-  "branch": "…",
-  "action": "…",
-  "actionItems": [
-    "…",
-    "…"
+  "action": "Brief summary of the main strategic approach (1 sentence)",
+  "action_items": [
+    "First specific action item to implement",
+    "Second specific action item to implement",
+    "Additional action items as needed"
   ]
 }
+```
 
-Input:
-{raw_input}
+Guidelines:
+- The "action" should be a concise summary (no more than 15 words)
+- The "action_items" should be concrete, implementable tasks
+- Extract 3-7 action items from the text
+- Keep each action item short and focused (10-15 words)
+- Focus on items that would need to be assigned to departments
+
+Respond with ONLY the JSON object, no additional text or explanation.

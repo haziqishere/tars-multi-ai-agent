@@ -45,7 +45,8 @@ def receive_task():
 
 def run_handler(host="0.0.0.0", port=8001):
     print(f"🧠 Agent 1 A2A Server listening on {host}:{port}")
-    app.run(host=host, port=port)
+    # Enable debug mode
+    app.run(host=host, port=port, debug=True)
 
 if __name__ == "__main__":
     run_handler()

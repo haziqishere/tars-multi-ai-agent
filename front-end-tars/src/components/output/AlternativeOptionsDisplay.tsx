@@ -14,8 +14,9 @@ export interface Option {
   description: string;
   costReduction?: string;
   timeToImplement?: string;
-  nodes: any[];
-  edges: any[];
+  nodes?: any[];
+  edges?: any[];
+  selected?: boolean;
   additionalMetrics?: Array<{
     label: string;
     value: string;
@@ -122,8 +123,8 @@ const AlternativeOptionsDisplay: React.FC<AlternativeOptionsDisplayProps> = ({
                   {/* Flow visualization section - now full width and taller */}
                   <div className="w-full h-64 border-t border-dark-border bg-white mt-2 shadow-neo-inset">
                     <FlowVisualization
-                      nodes={option.nodes}
-                      edges={option.edges}
+                      nodes={option.nodes || []}
+                      edges={option.edges || []}
                       fitView={true}
                       zoomOnResize={true}
                     />

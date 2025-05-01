@@ -1,6 +1,6 @@
 // src/store/slices/outputSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Node, Edge, Option, SummaryCardData, Email, FlowData } from '@/types/output';
+import { Node, Edge, Option, SummaryCardData, Email, FlowData, SummaryCardResponse } from '@/types/output';
 
 interface OutputState {
   currentBusinessFlow: FlowData;
@@ -9,6 +9,7 @@ interface OutputState {
   isVisible: boolean;
   summaryCardVisible: boolean;
   summaryCardData: SummaryCardData | null;
+  summaryCardResponse: SummaryCardResponse | null;
   selectedDepartmentId: string | null;
   editedEmails: Record<string, Email>;
   sendingEmails: boolean;
@@ -25,6 +26,7 @@ const initialState: OutputState = {
   isVisible: false,
   summaryCardVisible: false,
   summaryCardData: null,
+  summaryCardResponse: null,
   selectedDepartmentId: null,
   editedEmails: {},
   sendingEmails: false,
@@ -46,6 +48,28 @@ export const outputSlice = createSlice({
     },
     selectOption: (state, action: PayloadAction<string>) => {
               state.selectedOptionId = action.payload;
+              
+              // If we have a summaryCardResponse, update the summaryCardData based on the new selection
+              if (state.summaryCardResponse && state.summaryCardResponse.allOptions) {
+                // Find the option letter that corresponds to the selected option ID
+                // This assumes option IDs are like "option-A", "option-B", etc.
+                const optionLetter = action.payload.split('-')[1]; // Gets "A" from "option-A"
+                
+                if (optionLetter && state.summaryCardResponse.allOptions[optionLetter]) {
+                  state.summaryCardData = state.summaryCardResponse.allOptions[optionLetter];
+                  
+                  // Update edited emails
+                  const emailMap: Record<string, Email> = {};
+                  state.summaryCardData.departments.forEach(dept => {
+                    emailMap[dept.id] = { ...dept.emailTemplate };
+                  });
+                  state.editedEmails = emailMap;
+                  
+                  if (state.summaryCardData.departments.length > 0) {
+                    state.selectedDepartmentId = state.summaryCardData.departments[0].id;
+                  }
+                }
+              }
             },
     setOutputVisible: (state, action: PayloadAction<boolean>) => {
       state.isVisible = action.payload;
@@ -57,6 +81,7 @@ export const outputSlice = createSlice({
       state.isVisible = false;
       state.summaryCardVisible = false;
       state.summaryCardData = null;
+      state.summaryCardResponse = null;
       state.selectedDepartmentId = null;
       state.editedEmails = {};
       state.sendingEmails = false;
@@ -73,6 +98,26 @@ export const outputSlice = createSlice({
       
       if (action.payload.departments.length > 0) {
         state.selectedDepartmentId = action.payload.departments[0].id;
+      }
+    },
+    setSummaryCardResponse: (state, action: PayloadAction<SummaryCardResponse>) => {
+      state.summaryCardResponse = action.payload;
+      
+      // Set the active option data to summaryCardData
+      if (action.payload.activeOption && action.payload.allOptions[action.payload.activeOption]) {
+        const activeOptionData = action.payload.allOptions[action.payload.activeOption];
+        state.summaryCardData = activeOptionData;
+        
+        // Update edited emails
+        const emailMap: Record<string, Email> = {};
+        activeOptionData.departments.forEach(dept => {
+          emailMap[dept.id] = { ...dept.emailTemplate };
+        });
+        state.editedEmails = emailMap;
+        
+        if (activeOptionData.departments.length > 0) {
+          state.selectedDepartmentId = activeOptionData.departments[0].id;
+        }
       }
     },
     showSummaryCard: (state) => {
@@ -113,6 +158,7 @@ export const {
   setOutputVisible,
   resetOutput,
   setSummaryCardData,
+  setSummaryCardResponse,
   showSummaryCard,
   hideSummaryCard,
   setSelectedDepartment,

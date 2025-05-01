@@ -129,65 +129,80 @@ def predict_outcomes(analysis: str, facts: str) -> list[dict]:
     # ── Clean & validate JSON ───────────────────────
     try:
         clean = raw.strip('`').lstrip("json").strip()
+        # Handle potential markdown code block fences
+        if clean.startswith("```json"):
+            clean = clean[7:]
+        if clean.endswith("```"):
+            clean = clean[:-3]
+        clean = clean.strip()
+        
         branches = json.loads(clean)
         if not isinstance(branches, list):
             raise ValueError("Response must be a JSON array")
+        # Validate basic structure of each branch
+        for branch in branches:
+            if not all(k in branch for k in ["branch", "summary", "actionItems"]):
+                 raise ValueError(f"Branch missing required keys: {branch.get('branch', 'Unknown')}")
         print(f"[Agent 4] 🎯 Generated outcome branches:\n{json.dumps(branches, indent=2)}")
         return branches
     except (json.JSONDecodeError, ValueError) as e:
         print(f"❌ JSON parse error: {e}\nRaw response:\n{raw}")
         return []
 
-# ── 4) Select a branch ─────────────────────────────
-def select_branch(branches: list[dict]) -> dict:
-    print("\n[Agent 4] 📊 STRATEGIC BRANCHES ANALYSIS")
-    print("="*80)
-    
-    for branch in branches:
-        print(f"\n🔍 BRANCH {branch['branch']}: {branch['summary']}")
-        print("-"*80)
-        print(f"\nDetailed Strategy:")
-        print(branch['details'])
-        
-        print("\n📈 Implementation Metrics:")
-        print(f"• Cost: ${branch['costUSD']:,}")
-        print(f"• Timeline: {branch['timeMonths']} months")
-        print(f"• Tariff Savings: {branch['tariffSavingPercent']}%")
-        print(f"• Risk Levels - Supply: {branch['supplyRisk']}, Compliance: {branch['complianceRisk']}")
-        print(f"• Overall Score: {branch['overallScore']}/10")
-        
-        print("\n📋 Action Items:")
-        for i, item in enumerate(branch['actionItems'], 1):
-            print(f"{i}. {item}")
-            
-        print("\n✅ Key Benefits:")
-        for benefit in branch['benefits']:
-            print(f"• {benefit}")
-            
-        print("\n⚠️ Key Challenges:")
-        for challenge in branch['challenges']:
-            print(f"• {challenge}")
-        print("\n" + "="*80)
-    
-    while True:
-        choice = input("\n[Agent 4] Select branch (A/B/C): ").upper()
-        if choice in ['A', 'B', 'C']:
-            selected = next(b for b in branches if b['branch'] == choice)
-            print(f"\n[Agent 4] ✅ Selected Branch {choice}")
-            print("[Agent 4] 📤 Forwarding to Agent 5 for task allocation...")
-            send_to_agent5(selected)
-            return selected
-        print("Invalid choice. Please enter A, B, or C.")
-
 # ── Public entry-point ─────────────────────────────
-def predict_all(analyses: list[str]) -> dict:  # Changed return type to dict
-    results = []
-    for analysis in analyses:
-        print("[Agent 4] 🔄 Generating outcome branches…")
-        subqs = generate_sub_questions(analysis)
-        facts = fetch_internal_facts(subqs)
-        branches = predict_outcomes(analysis, facts)
-        if branches:
-            selected_branch = select_branch(branches)
-            return selected_branch  # Return only the selected branch
-    return {}  # Return empty dict if no branches generated
+def predict_all(analysis: str) -> dict:
+    """
+    Generates branches, auto-selects one, calls Agent 5, and returns results.
+    """
+    print("[Agent 4] 🔄 Generating outcome branches…")
+    subqs = generate_sub_questions(analysis)
+    if not subqs:
+        print("[Agent 4] ⚠️ No sub-questions generated, cannot proceed.")
+        return {"branches": [], "summary_card": None, "error": "Failed to generate sub-questions"}
+        
+    facts = fetch_internal_facts(subqs)
+    if facts.startswith("Error"):
+         print(f"[Agent 4] ⚠️ Error fetching facts: {facts}")
+         # Proceed without facts, or return error? Let's proceed for now.
+         facts = f"Could not retrieve internal facts: {facts}" # Pass error info
+
+    branches = predict_outcomes(analysis, facts)
+    
+    selected_branch = None
+    summary_card_info = None
+    agent5_error = None
+
+    if branches:
+        # Auto-select branch 'B' (Balanced) if available, otherwise the first one
+        selected_branch = next((b for b in branches if b.get('branch') == 'B'), branches[0])
+        
+        print(f"\n[Agent 4] ✅ Auto-Selected Branch {selected_branch.get('branch', 'N/A')}")
+        print("[Agent 4] 📤 Forwarding to Agent 5 for task allocation...")
+        try:
+            # Ensure selected_branch has the required keys for send_to_agent5
+            if all(k in selected_branch for k in ["branch", "summary", "actionItems"]):
+                 agent5_response = send_to_agent5(selected_branch)
+                 # Agent 5 handler returns {"drafts": ..., "results": ..., "api_response": ...}
+                 summary_card_info = agent5_response.get("api_response", {}).get("summaryCard")
+                 if not summary_card_info:
+                     print("[Agent 4] ⚠️ Agent 5 did not return a summary card in api_response.")
+                     agent5_error = agent5_response.get("error", "Agent 5 returned no summary card.")
+                 else:
+                      print("[Agent 4] ✅ Received summary card info from Agent 5.")
+            else:
+                agent5_error = "Selected branch missing required keys for Agent 5."
+                print(f"[Agent 4] ❌ Error: {agent5_error}")
+
+        except Exception as e:
+            agent5_error = f"Failed to send to Agent 5: {str(e)}"
+            print(f"[Agent 4] ❌ Error: {agent5_error}")
+            
+    else:
+        print("[Agent 4] ⚠️ No outcome branches were generated.")
+
+    return {
+        "branches": branches,
+        "selected_branch_auto": selected_branch, # Include the auto-selected branch for context
+        "summary_card": summary_card_info,
+        "error": agent5_error # Include any error from Agent 5 call
+    }

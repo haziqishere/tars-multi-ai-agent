@@ -1,18 +1,13 @@
 import uvicorn
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+from app.utils.config import settings
 
 if __name__ == "__main__":
-    # Get port from environment variable or use default
-    port = int(os.getenv("PORT", 8000))
-    
-    # Run the FastAPI application
+    print(f"Starting TARS Multi-Agent System on port {settings.PORT}")
     uvicorn.run(
-        "api.main:app",
-        host="0.0.0.0",  # Bind to all interfaces
-        port=port,
-        reload=True      # Enable auto-reload for development
+        "app.main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+        timeout_keep_alive=300,  # Extended keep-alive timeout to 5 minutes
+        timeout_graceful_shutdown=300  # Extended graceful shutdown timeout to 5 minutes
     )
