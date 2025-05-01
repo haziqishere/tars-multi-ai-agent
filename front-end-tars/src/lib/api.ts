@@ -129,6 +129,13 @@ export const fetchOptimizationData = async (query: string): Promise<ApiResponse>
 export const fetchSummaryCardData = async (optionId: string): Promise<SummaryCardData> => {
   // In a real app, we'd fetch this from the API
   try {
+
+    // This is fallback data for the email only.
+    // In a real app, we ARE fetching this from the currently running server at Azure VM
+    // However, Agent 4 something went wrong and we're not getting emails data.
+    // The rest of the data are real from Azure VM that communicate with Microsoft AI Foundry
+
+    
     // If we're already given an option ID like "option-A", extract the letter part
     const optionLetter = optionId.includes('-') ? optionId.split('-')[1] : optionId;
 

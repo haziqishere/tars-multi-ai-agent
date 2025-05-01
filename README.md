@@ -166,3 +166,9 @@ Deployed on Vercel for seamless CI/CD and scalability.
 - Enhance agent logic with more advanced AI models
 - Improve front-end interactivity and visualizations
 - Automate deployment pipelines for faster updates
+
+
+# Disclaimer 
+- In a real app, we ARE fetching this from the currently running server at Azure VM
+-However, Agent 4 sometimes goes wrong and we're not getting emails data. So we backfill the missing email params.
+- The rest of the data are real from Azure VM that communicate with Microsoft AI Foundry
