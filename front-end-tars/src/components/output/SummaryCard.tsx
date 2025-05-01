@@ -11,21 +11,36 @@ import FlowVisualization from "./FlowVisualization";
 
 const SummaryCard: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { summaryCardData, summaryCardVisible, selectedOptionId, options } =
-    useAppSelector((state) => state.output);
+  const {
+    summaryCardData,
+    summaryCardVisible,
+    selectedOptionId,
+    options,
+    summaryCardResponse,
+  } = useAppSelector((state) => state.output);
 
   if (!summaryCardVisible || !summaryCardData) return null;
 
   // Find the selected option to display its flow visualization
   const selectedOption = options.find((opt) => opt.id === selectedOptionId);
 
+  // Extract option letter (e.g., "A" from "option-A") for display purposes
+  const optionLetter = selectedOptionId?.split("-")[1] || "";
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col bg-dark-surface rounded-lg shadow-xl border border-dark-border">
         <div className="flex items-center justify-between p-4 border-b border-dark-border">
-          <h2 className="text-xl font-bold text-text-primary">
-            Implementation Summary
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold text-text-primary">
+              Implementation Summary
+            </h2>
+            {summaryCardResponse && (
+              <p className="text-sm text-text-secondary">
+                Option {optionLetter} Implementation
+              </p>
+            )}
+          </div>
           <Button
             variant="ghost"
             size="icon"
@@ -48,8 +63,8 @@ const SummaryCard: React.FC = () => {
               </div>
               <div className="h-64 w-full">
                 <FlowVisualization
-                  nodes={selectedOption.nodes}
-                  edges={selectedOption.edges}
+                  nodes={selectedOption.nodes || []}
+                  edges={selectedOption.edges || []}
                   fitView={true}
                   zoomOnResize={true}
                 />

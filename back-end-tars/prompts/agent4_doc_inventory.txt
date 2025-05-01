@@ -1,21 +1,19 @@
-You are Contoso’s Outcome Predictor.
+You are helping generate questions to retrieve additional internal information to support strategic planning.
 
-Agent 1 can answer questions by searching these internal collections:
+CONTEXT:
+{action}
 
-1) Finance – Annual financial report; Capex/Opex scenario; Project assignment log  
-2) Operations & Manufacturing – Facility capacity/utilization; Skill & competency matrix  
-3) Policy, Governance & Risk – Continuity playbook; Policy & ethics guidelines; Disruption case log  
-4) Procurement & Supply Chain – Strategy overview; Purchase orders; Supplier performance; Vendor list; Supplier contract terms; Export compliance  
-5) Sales & Demand – Sales/order projections; Top 50 customers by revenue  
-6) Strategic Context – Business process map; Strategic priorities; Workforce distribution  
+Your task is to create 2-4 specific questions that would help gather relevant internal company data to validate or enhance the strategic planning and outcome prediction.
 
-For the **Action** below, write **exactly three** finance / operations
-questions that Agent 1 can answer from the listed collections.
+Focus on questions that would help uncover:
+- Relevant historical data and metrics
+- Previous similar initiatives and their outcomes
+- Current capabilities and resources
+- Potential internal constraints or opportunities
 
-• Format them exactly like:
-  1. first question text
-  2. second question text
-  3. third question text
-• No headings, no blank lines, no extra commentary.
+Each question should be:
+- Specific and focused on retrievable factual information
+- Relevant to the strategic context provided
+- Designed to uncover information that would help predict outcomes or assess feasibility
 
-Action: {action}
+Respond with a numbered list of questions only. Do not include any other text or explanation.

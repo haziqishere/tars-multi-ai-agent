@@ -1,0 +1,614 @@
+# TARS Multi-Agent System - API Documentation
+
+## Overview
+
+This document outlines the API structure for the TARS Multi-Agent System, including the request and response payload formats. The API is implemented as a Next.js API route at `/api/optimization`.
+
+## API Endpoint
+
+```
+POST /api/optimization
+```
+
+## Request Format
+
+### Headers
+
+```
+Content-Type: application/json
+```
+
+### Request Body
+
+The request body is a simple JSON object containing the user's query:
+
+```json
+{
+  "query": string
+}
+```
+
+### Parameters
+
+| Parameter | Type   | Required | Description                                          |
+|-----------|--------|----------|------------------------------------------------------|
+| query     | string | Yes      | User input message describing the business process or optimization request |
+
+### Example Request
+
+```json
+{
+  "query": "Analyze and optimize our manufacturing supply chain process"
+}
+```
+
+## Response Format
+
+### Headers
+
+```
+Content-Type: application/json
+```
+
+### Response Body
+
+The response is a comprehensive JSON object containing:
+1. Analysis data (business flow, analytics, news and impact)
+2. Recommendations (optimization options)
+3. A chat response message
+4. Summary Card data with implementations for ALL options (not just the selected one)
+5. System information including execution time and fallback status
+
+```json
+{
+  "analysis": {
+    "businessFlow": {
+      "nodes": Array<Node>,
+      "edges": Array<Edge>
+    },
+    "analytics": AnalyticsData,
+    "newsAndImpact": {
+      "newsItems": Array<NewsItem>,
+      "impactItems": Array<ImpactItem>
+    }
+  },
+  "recommendations": {
+    "options": Array<Option>
+  },
+  "chatResponse": string,
+  "summaryCard": {
+    "activeOption": string,  // The currently selected option (e.g., "A", "B", or "C")
+    "allOptions": {
+      // A map of option ID to SummaryCardData, containing info for ALL options
+      "A": SummaryCardData,
+      "B": SummaryCardData,
+      "C": SummaryCardData
+    }
+  },
+  "context": {
+    "internal": string,
+    "external": string
+  },
+  "system_info": {
+    "execution_time": number,
+    "status": "complete" | "partial" | "fallback",
+    "fallbacks": {
+      "agent1_fallback": boolean,
+      "agent2_fallback": boolean,
+      "agent3_fallback": boolean,
+      "agent4_fallback": boolean,
+      "agent5_fallback": boolean
+    }
+  }
+}
+```
+
+### Data Types
+
+#### Node
+```typescript
+{
+  id: string;
+  label: string;
+  type?: string;          // "start", "process", "end", etc.
+  position?: {
+    x: number;
+    y: number;
+  };
+  status?: {
+    type: "critical" | "new" | "warning" | string;  // Status type for visual styling
+    label: string;                                  // Status label to display (e.g. "⚠ Critical")
+  };
+  data?: any;             // Additional node data
+}
+```
+
+#### Edge
+```typescript
+{
+  id: string;
+  source: string;         // ID of source node
+  target: string;         // ID of target node
+  label?: string;
+  flowType?: "critical" | "optimized" | "standard" | string;  // Determines animation and styling
+  data?: any;             // Additional edge data
+}
+```
+
+#### AnalyticsData
+```typescript
+{
+  currentAnnualCost: number;
+  efficiencyRating: number;
+  averageProcessTime: number;
+  riskAssessment: number;
+  trends: {
+    costTrend: "increasing" | "decreasing" | "stable";
+    efficiencyTrend: "improving" | "worsening" | "stable";
+    timeTrend: "increasing" | "decreasing" | "stable";
+    riskTrend: "improving" | "worsening" | "stable";
+  }
+}
+```
+
+#### NewsItem
+```typescript
+{
+  id: string;
+  title: string;
+  date: string;
+  impact: "positive" | "negative" | "neutral";
+  description: string;
+}
+```
+
+#### ImpactItem
+```typescript
+{
+  id: string;
+  title: string;
+  description: string;
+  probability: number;    // 0-100
+  impact: number;         // 0-100
+}
+```
+
+#### Option (Enhanced)
+```typescript
+{
+  id: string;
+  title: string;
+  description: string;
+  timeToImplement: string;
+  costReduction: string;
+  additionalMetrics?: Array<{
+    label: string;
+    value: string;
+  }>;
+  selected: boolean;  // Whether this option is currently selected
+}
+```
+
+#### FinancialImpact
+```typescript
+{
+  metricName: string;
+  current: number;
+  projected: number;
+  change: number;         // Percentage change
+  unit: string;           // "$", "%", "days", etc.
+}
+```
+
+#### ImplementationTask
+```typescript
+{
+  id: string;
+  department: string;
+  task: string;
+  duration: string;
+  status: "pending" | "in-progress" | "completed";
+}
+```
+
+#### SummaryCardData (for implementation)
+```typescript
+{
+  businessOperationsFlow: {
+    summary: string;
+    steps: Array<{
+      id: string;
+      description: string;
+      department: string;
+    }>;
+  };
+  departments: Array<{
+    id: string;
+    department: string;
+    manager: string;
+    email: string;
+    tasks: Array<{
+      id: string;
+      description: string;
+      priority: "high" | "medium" | "low";
+      deadline: string; // ISO date format
+    }>;
+    emailTemplate: {
+      to: string;
+      recipient: string;
+      department: string;
+      subject: string;
+      body: string;
+    };
+  }>;
+}
+```
+
+### Email Templates
+
+A unique feature of this API is that it generates email templates for each department involved in implementing each option. This allows the system to send notifications or prepare implementation communications for any selected option without requiring additional API calls.
+
+Key aspects of the email templates:
+1. Each option (A, B, C) has its own set of email templates
+2. Templates are organized by department
+3. Each template includes:
+   - Recipient information (name, email, department)
+   - Subject line specific to the implementation task
+   - Body text with personalized task descriptions
+   - Due dates and priority levels
+
+This design ensures that regardless of which option is selected for implementation, the system immediately has access to all the communication templates needed to begin the implementation process.
+
+### Example Response
+
+```json
+{
+  "analysis": {
+    "businessFlow": {
+      "nodes": [
+        { "id": "node-1", "label": "Customer Inquiry", "type": "start" },
+        { "id": "node-2", "label": "IVR System", "type": "process" },
+        { "id": "node-3", "label": "Queue Assignment", "type": "process" },
+        { "id": "node-4", "label": "Agent Response", "type": "process", "status": {"type": "critical", "label": "⚠ Bottleneck"} },
+        { "id": "node-5", "label": "Issue Resolution", "type": "process" },
+        { "id": "node-6", "label": "Follow-up", "type": "process" },
+        { "id": "node-7", "label": "Case Closure", "type": "end" }
+      ],
+      "edges": [
+        { "id": "edge-1", "source": "node-1", "target": "node-2", "label": "Initial Contact" },
+        { "id": "edge-2", "source": "node-2", "target": "node-3", "label": "Categorization" },
+        { "id": "edge-3", "source": "node-3", "target": "node-4", "label": "Assignment", "flowType": "critical" },
+        { "id": "edge-4", "source": "node-4", "target": "node-5", "label": "Processing" },
+        { "id": "edge-5", "source": "node-5", "target": "node-6", "label": "Quality Check" },
+        { "id": "edge-6", "source": "node-6", "target": "node-7", "label": "Completion" }
+      ]
+    },
+    "analytics": {
+      "currentAnnualCost": 5750000,
+      "efficiencyRating": 68,
+      "averageProcessTime": 12.5,
+      "riskAssessment": 55,
+      "trends": {
+        "costTrend": "increasing",
+        "efficiencyTrend": "stable",
+        "timeTrend": "increasing",
+        "riskTrend": "stable"
+      }
+    },
+    "newsAndImpact": {
+      "newsItems": [
+        {
+          "id": "news-1",
+          "title": "Industry Shift to AI-Powered Customer Service",
+          "date": "May 1, 2025",
+          "impact": "positive",
+          "description": "Major competitors are adopting AI chatbots with 35% reduction in response times."
+        },
+        {
+          "id": "news-2",
+          "title": "Rising Customer Expectations for Omnichannel Support",
+          "date": "April 26, 2025",
+          "impact": "negative",
+          "description": "Customers now expect seamless integration across support channels, increasing complexity."
+        },
+        {
+          "id": "news-3",
+          "title": "New Training Methodology Shows Promise",
+          "date": "April 30, 2025",
+          "impact": "positive",
+          "description": "Scenario-based training program decreases time-to-proficiency by 40%."
+        }
+      ],
+      "impactItems": [
+        {
+          "id": "impact-1",
+          "title": "Customer Retention Risk",
+          "description": "Continued service delays could result in 12% customer attrition within 6 months",
+          "probability": 75,
+          "impact": 85
+        },
+        {
+          "id": "impact-2",
+          "title": "Competitive Advantage",
+          "description": "Implementing suggested optimizations could provide 18-month lead over competition",
+          "probability": 65,
+          "impact": 80
+        },
+        {
+          "id": "impact-3",
+          "title": "Cost Reduction Opportunity",
+          "description": "Process automation could reduce operational costs by up to 22%",
+          "probability": 82,
+          "impact": 70
+        }
+      ]
+    }
+  },
+  "recommendations": {
+    "options": [
+      {
+        "id": "option-A",
+        "title": "Implement AI-powered customer service chatbots",
+        "description": "Implement AI-powered customer service chatbots to handle routine inquiries, reducing wait times and allowing human agents to focus on complex issues.",
+        "timeToImplement": "1-3 months",
+        "costReduction": "10-15% cost reduction",
+        "additionalMetrics": [
+          { "label": "Response Time Improvement", "value": "20%" },
+          { "label": "Implementation Complexity", "value": "Low" }
+        ],
+        "selected": false
+      },
+      {
+        "id": "option-B",
+        "title": "Comprehensive training and development programs",
+        "description": "Implement comprehensive training and development programs for customer service representatives to enhance their skills in problem-solving, communication, and product knowledge.",
+        "timeToImplement": "3-6 months",
+        "costReduction": "15-25% cost reduction",
+        "additionalMetrics": [
+          { "label": "Response Time Improvement", "value": "40%" },
+          { "label": "Implementation Complexity", "value": "Medium" },
+          { "label": "ROI", "value": "180% over 2 years" }
+        ],
+        "selected": true
+      },
+      {
+        "id": "option-C",
+        "title": "Establish a customer feedback loop",
+        "description": "Establish a customer feedback loop with regular surveys, analysis, and action items to continuously improve service quality based on customer input.",
+        "timeToImplement": "6-12 months",
+        "costReduction": "25-40% cost reduction",
+        "additionalMetrics": [
+          { "label": "Response Time Improvement", "value": "65%" },
+          { "label": "Implementation Complexity", "value": "High" },
+          { "label": "ROI", "value": "220% over 3 years" },
+          { "label": "Training Requirements", "value": "Extensive" }
+        ],
+        "selected": false
+      }
+    ]
+  },
+  "chatResponse": "I've analyzed your request about \"How can we optimize our customer service department?\" and identified several optimization approaches. The recommended approach is Comprehensive training and development programs. This would result in significant improvements including 15-25% cost reduction and can be implemented in 3-6 months.",
+  
+  "summaryCard": {
+    "activeOption": "B",
+    "allOptions": {
+      "A": {
+        "businessOperationsFlow": {
+          "summary": "AI Chatbot Implementation",
+          "steps": [
+            { "id": "step-A-1", "description": "Implement AI chatbots", "department": "Customer Service" },
+            { "id": "step-A-2", "description": "Train staff on bot management", "department": "IT" },
+            { "id": "step-A-3", "description": "Monitor and optimize chatbot effectiveness", "department": "Training" }
+          ]
+        },
+        "departments": [
+          {
+            "id": "dept-A-1",
+            "department": "Customer Service",
+            "manager": "Alex Johnson",
+            "email": "alex.johnson@company.com",
+            "tasks": [
+              {
+                "id": "task-A-1",
+                "description": "Implement AI chatbots",
+                "priority": "high",
+                "deadline": "2025-05-15"
+              }
+            ],
+            "emailTemplate": {
+              "to": "alex.johnson@company.com",
+              "recipient": "Alex Johnson",
+              "department": "Customer Service",
+              "subject": "Action Required: AI Chatbot Implementation",
+              "body": "Dear Alex Johnson,\n\nI'm writing regarding our recently approved process optimization initiative for the Customer Service department. We're implementing Option A: AI Chatbot Implementation.\n\nYour team's key action item is:\n- Implement AI chatbots\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
+          },
+          {
+            "id": "dept-A-2",
+            "department": "IT",
+            "manager": "Sarah Miller",
+            "email": "sarah.miller@company.com",
+            "tasks": [
+              {
+                "id": "task-A-2",
+                "description": "Train staff on bot management",
+                "priority": "medium",
+                "deadline": "2025-05-29"
+              }
+            ],
+            "emailTemplate": {
+              "to": "sarah.miller@company.com",
+              "recipient": "Sarah Miller",
+              "department": "IT",
+              "subject": "Action Required: AI Chatbot Implementation",
+              "body": "Dear Sarah Miller,\n\nI'm writing regarding our recently approved process optimization initiative for the IT department. We're implementing Option A: AI Chatbot Implementation.\n\nYour team's key action item is:\n- Train staff on bot management\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
+          }
+        ]
+      },
+      "B": {
+        "businessOperationsFlow": {
+          "summary": "Training Program Development",
+          "steps": [
+            { "id": "step-B-1", "description": "Develop comprehensive training curriculum", "department": "Customer Service" },
+            { "id": "step-B-2", "description": "Implement skills assessment program", "department": "IT" },
+            { "id": "step-B-3", "description": "Establish mentorship opportunities", "department": "Training" }
+          ]
+        },
+        "departments": [
+          {
+            "id": "dept-B-1",
+            "department": "Training",
+            "manager": "David Chen",
+            "email": "david.chen@company.com",
+            "tasks": [
+              {
+                "id": "task-B-1",
+                "description": "Develop comprehensive training curriculum",
+                "priority": "high",
+                "deadline": "2025-05-15"
+              }
+            ],
+            "emailTemplate": {
+              "to": "david.chen@company.com",
+              "recipient": "David Chen",
+              "department": "Training",
+              "subject": "Action Required: Training Program Development",
+              "body": "Dear David Chen,\n\nI'm writing regarding our recently approved process optimization initiative for the Training department. We're implementing Option B: Training Program Development.\n\nYour team's key action item is:\n- Develop comprehensive training curriculum\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
+          },
+          {
+            "id": "dept-B-2",
+            "department": "Customer Service",
+            "manager": "Alex Johnson",
+            "email": "alex.johnson@company.com",
+            "tasks": [
+              {
+                "id": "task-B-2",
+                "description": "Implement skills assessment program",
+                "priority": "medium",
+                "deadline": "2025-05-29"
+              }
+            ],
+            "emailTemplate": {
+              "to": "alex.johnson@company.com",
+              "recipient": "Alex Johnson",
+              "department": "Customer Service",
+              "subject": "Action Required: Training Program Development",
+              "body": "Dear Alex Johnson,\n\nI'm writing regarding our recently approved process optimization initiative for the Customer Service department. We're implementing Option B: Training Program Development.\n\nYour team's key action item is:\n- Implement skills assessment program\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
+          }
+        ]
+      },
+      "C": {
+        "businessOperationsFlow": {
+          "summary": "Customer Feedback System",
+          "steps": [
+            { "id": "step-C-1", "description": "Develop customer survey mechanism", "department": "Customer Service" },
+            { "id": "step-C-2", "description": "Implement real-time feedback analysis", "department": "IT" },
+            { "id": "step-C-3", "description": "Create action item generation process", "department": "Training" }
+          ]
+        },
+        "departments": [
+          {
+            "id": "dept-C-1",
+            "department": "Operations",
+            "manager": "Maria Rodriguez",
+            "email": "maria.rodriguez@company.com",
+            "tasks": [
+              {
+                "id": "task-C-1",
+                "description": "Develop customer survey mechanism",
+                "priority": "high",
+                "deadline": "2025-05-15"
+              }
+            ],
+            "emailTemplate": {
+              "to": "maria.rodriguez@company.com",
+              "recipient": "Maria Rodriguez",
+              "department": "Operations",
+              "subject": "Action Required: Customer Feedback System Implementation",
+              "body": "Dear Maria Rodriguez,\n\nI'm writing regarding our recently approved process optimization initiative for the Operations department. We're implementing Option C: Customer Feedback System.\n\nYour team's key action item is:\n- Develop customer survey mechanism\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
+          },
+          {
+            "id": "dept-C-2",
+            "department": "IT",
+            "manager": "Sarah Miller",
+            "email": "sarah.miller@company.com",
+            "tasks": [
+              {
+                "id": "task-C-2",
+                "description": "Implement real-time feedback analysis",
+                "priority": "medium",
+                "deadline": "2025-05-29"
+              }
+            ],
+            "emailTemplate": {
+              "to": "sarah.miller@company.com",
+              "recipient": "Sarah Miller",
+              "department": "IT",
+              "subject": "Action Required: Customer Feedback System Implementation",
+              "body": "Dear Sarah Miller,\n\nI'm writing regarding our recently approved process optimization initiative for the IT department. We're implementing Option C: Customer Feedback System.\n\nYour team's key action item is:\n- Implement real-time feedback analysis\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "context": {
+    "internal": "Company has a customer service department with 50 employees. Current challenges include long wait times, inconsistent service quality, and manual processes. Previous initiatives have shown positive results from automation.",
+    "external": "Industry best practices suggest implementing AI chatbots, enhancing self-service options, and using analytics for workforce optimization. Recent technology innovations include predictive analytics and omnichannel integration."
+  },
+  "system_info": {
+    "execution_time": 42.3,
+    "status": "complete",
+    "fallbacks": {
+      "agent1_fallback": false,
+      "agent2_fallback": false,
+      "agent3_fallback": false,
+      "agent4_fallback": false,
+      "agent5_fallback": false
+    }
+  }
+}
+```
+
+## Error Responses
+
+### Status Codes
+
+- **200 OK**: Request successful
+- **400 Bad Request**: Invalid request format or missing required parameters
+- **500 Internal Server Error**: Server-side error while processing the request
+
+### Error Response Format
+
+```json
+{
+  "error": string
+}
+```
+
+### Example Error Response
+
+```json
+{
+  "error": "Failed to process optimization request"
+}
+```
+
+## Implementation Notes
+
+1. The API is implemented as a Next.js API route at `src/app/api/optimization/route.ts`
+2. In a production environment, this API would:
+   - Connect to AI services for analyzing the user query
+   - Retrieve real-time business data from databases
+   - Generate custom optimization options based on the specific query
+   - Use machine learning models for projections and impact analysis
+   - Create detailed implementation plans with department tasks and email templates
+3. The current implementation uses static mock data to demonstrate the structure
+
+## API Types
+
+The TypeScript interfaces for these API types are defined in `src/lib/api.ts` and can be imported and used throughout the application for type safety.

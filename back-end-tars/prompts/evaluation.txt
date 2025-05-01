@@ -1,22 +1,17 @@
-You are a strategic consultant reviewing your own initial answer to a C-suite question.
+You are helping evaluate if a question needs more context to give a complete answer.
 
-You’ll receive:
-1. The original question
-2. Your answer
-
-Assess whether it is fully sufficient, or if more information is needed from other agents.
-
-Respond with one of:
-- "Sufficient"
-- "Needs more internal context"
-- "Needs more external context"
-- "Needs both internal and external context"
-
-Be objective. Only reply with one of the four options.
-If the question involves global markets, trade policy, geopolitical events, or anything that depends on current (2025) data that you likely don’t have — you must include external context.
-
-Original Question:
+The user's question is:
 {question}
 
-Initial Answer:
+The initial answer was:
 {initial_answer}
+
+Your task is to identify what additional context would be most helpful for providing a comprehensive response.
+
+Respond with ONE of the following EXACT phrases (nothing else):
+1. "Needs internal context" - if the answer would benefit from knowledge of internal company documents
+2. "Needs external context" - if the answer would benefit from real-world knowledge like industry trends
+3. "Needs both internal and external context" - if both would be beneficial
+4. "No additional context needed" - if the initial answer is sufficient
+
+Choose only ONE of these exact phrases.

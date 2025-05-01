@@ -1,21 +1,25 @@
 # Core dependencies
 requests>=2.31.0,<2.33.0
-python-dotenv>=1.1.0,<1.2.0
+python-dotenv==1.0.0
 
 # Azure AI Foundry SDK
-azure-ai-projects==1.0.0b1
-azure.identity==1.15.0
+azure-ai-projects==1.0.0b10
+azure-identity==1.14.0
 
 flask>=2.3.3,<3.0.0
 bs4>=0.0.2
 
 # API requirements with specific versions
-# Updated FastAPI to a newer version that supports anyio>=4.5.0
-fastapi>=0.109.0
-uvicorn>=0.23.2
-pydantic>=2.7.2,<3.0.0
-httpx>=0.28.1,<0.29.0
+# Using newer FastAPI that's compatible with anyio>=4.0.0
+fastapi>=0.108.0
+uvicorn==0.23.2
+pydantic==2.3.0
+pydantic-settings==2.0.3
+httpx==0.24.1
 python-multipart==0.0.6
 
-# Updated anyio to be compatible with mcp
-anyio>=4.5.0,<5.0.0
+# anyio version that's compatible with FastAPI
+anyio>=4.0.0,<5.0.0
+
+# Updated aiohttp to use a compatible version
+aiohttp>=3.9.0

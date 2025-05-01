@@ -1,29 +1,15 @@
-You are a strategic consultant generating search queries for Agent 2 to gather external intelligence.
+You are helping formulate an effective web search query based on the user's question.
 
-Agent 2 uses real-time sources (e.g., news, economic reports, policy updates) to find current global insights.
+The user has asked:
+{original_question}
 
-Your task: Turn the C-suite's question into **one clear, specific search query** for data not found in internal documents.
+Your task is to create a concise, focused search query that will retrieve relevant external information to help answer this question. 
 
-Original Question:
-"{original_question}"
+Guidelines:
+1. Identify the key concepts or terms from the original question
+2. Focus on industry-relevant information, market trends, or best practices
+3. Remove filler words and any company-specific details
+4. Keep the query between 3-10 words for optimal results
+5. Include specific industry terms when relevant
 
-Instructions:
-- Focus only on current/global topics (2025)
-- Output ONE search query
-- Target factual, measurable results
-- Include the year 2025 in the query
-- Avoid vague or speculative terms
-- Do NOT duplicate Agent 1’s role (internal info)
-
-Examples:
-
-Input: "We’re considering shifting supply chains away from China."  
-Output: "Impact of US-China tariffs on semiconductor supply chain 2025"
-
-Input: "Should we explore the Indian market this year?"  
-Output: "2025 market growth forecast for India consumer electronics"
-
-Input: "What’s the global stance on AI regulation?"  
-Output: "AI regulatory updates by region 2025 tech policy"
-
-Now generate your search query.
+Respond with ONLY the search query. Do not include any explanations, quotation marks, or other text.

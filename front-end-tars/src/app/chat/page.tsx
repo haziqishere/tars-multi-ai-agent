@@ -27,6 +27,7 @@ import {
   setCurrentBusinessFlow,
   setOptions,
   selectOption,
+  setSummaryCardResponse,
 } from "@/store/slices/outputSlice";
 import { addMessage, setIsTyping } from "@/store/slices/chatSlice";
 import {
@@ -103,8 +104,18 @@ export default function SystemPage() {
       dispatch(setCurrentBusinessFlow(data.analysis.businessFlow));
       dispatch(setOptions(data.recommendations.options));
 
-      // Select the first option by default
-      if (data.recommendations.options.length > 0) {
+      // Handle summaryCard data if it exists in the response
+      if (data.summaryCard) {
+        dispatch(setSummaryCardResponse(data.summaryCard));
+      }
+
+      // Select the option marked as selected (if any) or the first option by default
+      const selectedOption = data.recommendations.options.find(
+        (opt) => opt.selected
+      );
+      if (selectedOption) {
+        dispatch(selectOption(selectedOption.id));
+      } else if (data.recommendations.options.length > 0) {
         dispatch(selectOption(data.recommendations.options[0].id));
       }
 

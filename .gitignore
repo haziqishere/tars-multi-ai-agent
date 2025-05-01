@@ -57,3 +57,20 @@ next-env.d.ts
 # Project specific
 /back-end-tars/.archive.do_not_enter/
 .DS_Store
+infra-tars/.terraform/providers/registry.terraform.io/azure/azapi/1.15.0/darwin_arm64/terraform-provider-azapi_v1.15.0
+infra-tars/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.0.2/darwin_arm64/terraform-provider-azurerm_v3.0.2_x5
+infra-tars/.terraform/providers/registry.terraform.io/hashicorp/random/3.7.2/darwin_arm64/terraform-provider-random_v3.7.2_x5
+infra-tars/.terraform.lock.hcl
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/logic.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/interactive.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/handler.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/client.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/__init__.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/logic.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/interactive.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/handler.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/client.cpython-312.pyc
+back-end-tars/agents/agent5_task_dispatcher/__pycache__/__init__.cpython-312.pyc
+back-end-tars/agents/agent4_outcome_predictor/__pycache__/logic.cpython-312.pyc
+*.pyc
+*.pyc

@@ -55,7 +55,8 @@ def serve_agent_card():
 
 def run_handler(host="0.0.0.0", port=8002):
     print(f"🧠 Agent 2 A2A Server listening on {host}:{port}")
-    app.run(host=host, port=port)
+    # Enable debug mode
+    app.run(host=host, port=port, debug=True)
 
 if __name__ == "__main__":
     run_handler()

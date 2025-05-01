@@ -200,26 +200,40 @@ class AgentManager:
                     agent3_text = agent3_response.get("output", {}).get("artifacts", [{}])[0].get("text", "")
                     logger.info(f"Received response from Agent 3: {agent3_text[:100]}...")
                     
-                    # Step 2: The agent system will automatically handle the workflow between
-                    # Agent 3 -> Agent 4 -> Agent 5 as configured in the agents' code
+                    # Step 2: Check for Agent 5's output to get the summaryCard data
+                    # Allow time for processing to complete through the agent chain
+                    await asyncio.sleep(10)
                     
-                    # Step 3: Wait for the processing to complete and gather results
-                    # In a production system, this would use a more robust mechanism like
-                    # webhooks, message queues, or a database to track the workflow state
+                    # Try to get Agent 5's output for the summaryCard
+                    agent5_url = "http://localhost:8005/a2a/v1/tasks/send"
+                    summary_card_data = None
                     
-                    # For the first version, we'll use a polling approach to check Agent 4's status
-                    agent4_url = "http://localhost:8004/a2a/v1/tasks/send"
+                    try:
+                        # For demonstration purposes, we're sending a simple query to agent5
+                        # In a production system, there would be a more robust message passing system
+                        agent5_payload = {
+                            "branch": "Operations",
+                            "action": "Process Optimization",
+                            "actionItems": ["Automate quality control", "Reduce production cycle time", "Improve supply chain visibility"],
+                            "query": query
+                        }
+                        
+                        agent5_response = await client.post(agent5_url, json=agent5_payload)
+                        if agent5_response.status_code == 200:
+                            agent5_data = agent5_response.json()
+                            if "api_response" in agent5_data and "summaryCard" in agent5_data["api_response"]:
+                                summary_card_data = agent5_data["api_response"]["summaryCard"]
+                                logger.info("Successfully retrieved summaryCard data from Agent 5")
+                    except Exception as e:
+                        logger.warning(f"Error retrieving Agent 5 summaryCard data: {str(e)}")
                     
-                    # Give time for Agent 3 to process and trigger Agent 4
-                    await asyncio.sleep(5)
-                    
-                    # Step 4: Transform the agent outputs into the API response format
-                    # For now, use our template response with the actual chat response
+                    # Step 3: Transform the agent outputs into the API response format
                     response = self._generate_response_template(query, agent3_text)
                     
-                    # TODO for future improvement: 
-                    # - Add monitoring of Agent 4/5 to get their outputs
-                    # - Parse the outputs to build the full response structure
+                    # If we have summaryCard data from Agent 5, use it
+                    if summary_card_data:
+                        response["summaryCard"] = summary_card_data
+                        logger.info("Integrated summaryCard data from Agent 5 into response")
                     
                     return response
                     
@@ -364,7 +378,81 @@ class AgentManager:
                     }
                 ]
             },
-            "chatResponse": f"I've analyzed your request about \"{query}\" and generated optimization options. You can review the detailed business flow analysis, along with alternatives for process optimization."
+            "chatResponse": f"I've analyzed your request about \"{query}\" and generated optimization options. You can review the detailed business flow analysis, along with alternatives for process optimization.",
+            "summaryCard": {
+                "businessOperationsFlow": {
+                    "summary": "Optimized 5-step procurement process with automated vendor validation",
+                    "steps": [
+                        {"id": "step1", "description": "Automated requisition approval", "department": "Procurement"},
+                        {"id": "step2", "description": "AI-powered vendor selection", "department": "Vendor Relations"},
+                        {"id": "step3", "description": "Contract negotiation assistance", "department": "Legal"},
+                        {"id": "step4", "description": "Digital invoice processing", "department": "Finance"},
+                        {"id": "step5", "description": "Payment automation", "department": "Finance"}
+                    ]
+                },
+                "departments": [
+                    {
+                        "id": "dept-1",
+                        "department": "Procurement",
+                        "manager": "Alex Johnson",
+                        "email": "alex.johnson@company.com",
+                        "tasks": [
+                            {
+                                "id": "task1-1",
+                                "description": "Update requisition form with new validation fields",
+                                "priority": "high",
+                                "deadline": "2025-05-15"
+                            },
+                            {
+                                "id": "task1-2",
+                                "description": "Configure automated PO generation rules",
+                                "priority": "medium",
+                                "deadline": "2025-05-30"
+                            },
+                            {
+                                "id": "task1-3",
+                                "description": "Train team on new system",
+                                "priority": "medium",
+                                "deadline": "2025-06-15"
+                            }
+                        ],
+                        "emailTemplate": {
+                            "to": "alex.johnson@company.com",
+                            "recipient": "Alex Johnson",
+                            "department": "Procurement",
+                            "subject": "Action Required: Procurement Process Optimization Implementation",
+                            "body": "Dear Alex,\n\nI'm reaching out regarding the recently approved procurement process optimization. The analysis has identified key areas where your department will play a critical role in implementation.\n\nKey tasks for the Procurement team:\n1. Update requisition form with new validation fields (High Priority, Due: May 15, 2025)\n2. Configure automated PO generation rules (Medium Priority, Due: May 30, 2025)\n3. Train team on new system (Medium Priority, Due: June 15, 2025)\n\nThe expected outcomes include a 30% reduction in processing time and 15% cost savings.\n\nPlease review the attached implementation schedule and confirm your team's availability for the kickoff meeting next Monday at 10:00 AM.\n\nBest regards,\nTARS System\nRan By J. Doe, Head of Operations"
+                        }
+                    },
+                    {
+                        "id": "dept-2",
+                        "department": "Vendor Relations",
+                        "manager": "Sarah Miller",
+                        "email": "sarah.miller@company.com",
+                        "tasks": [
+                            {
+                                "id": "task2-1",
+                                "description": "Create vendor scoring criteria",
+                                "priority": "high",
+                                "deadline": "2025-05-20"
+                            },
+                            {
+                                "id": "task2-2",
+                                "description": "Update vendor database with new fields",
+                                "priority": "medium",
+                                "deadline": "2025-06-05"
+                            }
+                        ],
+                        "emailTemplate": {
+                            "to": "sarah.miller@company.com",
+                            "recipient": "Sarah Miller",
+                            "department": "Vendor Relations",
+                            "subject": "Action Required: Vendor Selection Process Updates",
+                            "body": "Dear Sarah,\n\nFollowing our recent process optimization approval, we need your team's expertise to implement the new AI-powered vendor selection system.\n\nKey tasks for the Vendor Relations team:\n1. Create vendor scoring criteria (High Priority, Due: May 20, 2025)\n2. Update vendor database with new fields (Medium Priority, Due: June 05, 2025)\n\nThis new system will help reduce vendor selection time by 40% and improve quality scoring by 25%.\n\nLet's connect this week to discuss the implementation details further.\n\nBest regards,\nTARS System\nRan By J. Doe, Head of Operations"
+                        }
+                    }
+                ]
+            }
         }
 
 # Create a singleton instance

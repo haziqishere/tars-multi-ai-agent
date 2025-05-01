@@ -113,12 +113,55 @@ class Analysis(BaseModel):
 class Recommendations(BaseModel):
     options: List[Option]
 
+# Response Models - Summary Card
+
+# Summary Card - Business Operations Flow Step
+class BusinessOperationsFlowStep(BaseModel):
+    id: str
+    description: str
+    department: str
+
+# Summary Card - Business Operations Flow
+class BusinessOperationsFlow(BaseModel):
+    summary: str
+    steps: List[BusinessOperationsFlowStep]
+
+# Summary Card - Department Task
+class DepartmentTask(BaseModel):
+    id: str
+    description: str
+    priority: str  # "high", "medium", "low"
+    deadline: str  # ISO date format
+
+# Summary Card - Email Template
+class EmailTemplate(BaseModel):
+    to: str
+    recipient: str
+    department: str
+    subject: str
+    body: str
+
+# Summary Card - Department
+class Department(BaseModel):
+    id: str
+    department: str
+    manager: str
+    email: str
+    tasks: List[DepartmentTask]
+    emailTemplate: EmailTemplate
+
+# Summary Card
+class SummaryCard(BaseModel):
+    businessOperationsFlow: BusinessOperationsFlow
+    departments: List[Department]
+
 # Main Response Model
 class OptimizationResponse(BaseModel):
     analysis: Analysis
     recommendations: Recommendations
     chatResponse: str
+    summaryCard: Optional[SummaryCard] = None
 
 # Error Response Model
 class ErrorResponse(BaseModel):
-    error: str 
+    error: str
