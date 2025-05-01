@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## API Integration
+
+This project uses server-side API routes to proxy requests to the external API endpoint, which solves CORS issues in the Vercel deployment. The main API routes are:
+
+- `/api/optimization` - Proxies POST requests to the external optimization API
+- `/api/optimization/summary/[optionId]` - Proxies GET requests to fetch summary data for a specific option
+
+The external API endpoint is configured in the following places:
+1. `next.config.mjs` - Sets the `EXTERNAL_API_ENDPOINT` environment variable
+2. `vercel.json` - Sets the same environment variable for Vercel deployments
+
+If you need to change the external API endpoint, update it in both files.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

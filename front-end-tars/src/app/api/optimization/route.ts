@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Sample optimization data - this would typically come from an AI model or database
 const optimizationData = {
@@ -302,33 +302,35 @@ const generateChatResponse = (query: string): string => {
   return `I've analyzed your request about "${query}" and generated optimization options. You can review the detailed business flow analysis, along with two alternative optimization strategies: Process Automation Strategy (22% cost reduction) and Supply Chain Restructuring (18% cost reduction). Each option includes financial impacts and an implementation plan.`;
 };
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    // Get the query from the request body
+    // Get the external API endpoint from environment variables
+    // Fall back to the specific URL if not defined
+    const externalApiEndpoint = process.env.EXTERNAL_API_ENDPOINT || 'http://13.82.95.209/api/optimization';
+    
+    // Get the JSON body from the incoming request
     const body = await request.json();
-    const { query } = body;
 
-    console.log(`[API] Received optimization query: ${query}`);
-    
-    // In a real implementation, we would process the query with an AI model
-    // or retrieve data from a database based on the query
-    // For now, we just return our mock data
-    
-    // Add a slight delay to simulate processing (500ms)
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Generate chat response message
-    const chatResponse = generateChatResponse(query);
-    
-    // Return both the optimization data and chat response
-    return NextResponse.json({
-      ...optimizationData,
-      chatResponse
+    // Forward the request to the external API
+    const response = await fetch(externalApiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    // Get the response data
+    const data = await response.json();
+
+    // Return the response from the external API
+    return NextResponse.json(data, {
+      status: response.status,
     });
   } catch (error) {
-    console.error('Error processing optimization request:', error);
+    console.error('Error in API proxy:', error);
     return NextResponse.json(
-      { error: 'Failed to process optimization request' },
+      { error: 'Failed to fetch data from external API' },
       { status: 500 }
     );
   }

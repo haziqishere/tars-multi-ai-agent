@@ -97,8 +97,9 @@ export interface ApiResponse {
  */
 export const fetchOptimizationData = async (query: string): Promise<ApiResponse> => {
   try {
-    // Update the API endpoint to use an environment variable
-    const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || '/api/optimizat';
+    // Use the local API proxy endpoint which forwards to the external API
+    // This bypasses CORS issues in production
+    const apiEndpoint = '/api/optimization';
 
     const response = await fetch(apiEndpoint, {
       method: 'POST',
@@ -131,8 +132,9 @@ export const fetchSummaryCardData = async (optionId: string): Promise<SummaryCar
     // If we're already given an option ID like "option-A", extract the letter part
     const optionLetter = optionId.includes('-') ? optionId.split('-')[1] : optionId;
 
-    // The API endpoint for fetching a specific option's summary data
-    const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || '/api/optimization/summ';
+    // Use the local API proxy endpoint which forwards to the external API
+    // This bypasses CORS issues in production
+    const apiEndpoint = '/api/optimization/summary';
 
     const response = await fetch(`${apiEndpoint}/${optionLetter}`, {
       method: 'GET',
