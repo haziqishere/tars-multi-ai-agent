@@ -417,14 +417,85 @@ class ProcessManager:
     
     def _generate_fallback_summary_card(self) -> Dict[str, Any]:
         """Generate fallback summary card"""
+        # Define fallback steps with departments (still needed for department assignments)
+        steps = [
+            {"id": "step1", "description": "Implement process automation for key workflows", "department": "IT"},
+            {"id": "step2", "description": "Restructure team responsibilities for efficiency", "department": "Operations"},
+            {"id": "step3", "description": "Develop integrated systems for better data flow", "department": "IT"}
+        ]
+        
+        # Create nodes and edges structure for visualization
+        nodes = [
+            {
+                "id": "node-1",
+                "label": "Process Start",
+                "type": "start",
+                "position": {"x": 50, "y": 100}
+            },
+            {
+                "id": "node-2",
+                "label": "Process Automation",
+                "type": "process",
+                "position": {"x": 200, "y": 100},
+                "status": {"type": "new", "label": "+ New Process"}
+            },
+            {
+                "id": "node-3",
+                "label": "Team Restructuring",
+                "type": "process",
+                "position": {"x": 350, "y": 100}
+            },
+            {
+                "id": "node-4", 
+                "label": "Systems Integration",
+                "type": "process",
+                "position": {"x": 500, "y": 100},
+                "status": {"type": "new", "label": "+ New Process"}
+            },
+            {
+                "id": "node-5",
+                "label": "Process End",
+                "type": "end",
+                "position": {"x": 650, "y": 100}
+            }
+        ]
+        
+        edges = [
+            {
+                "id": "edge-1",
+                "source": "node-1",
+                "target": "node-2",
+                "label": "Start",
+                "flowType": "optimized"
+            },
+            {
+                "id": "edge-2",
+                "source": "node-2",
+                "target": "node-3",
+                "label": "Automation Complete",
+                "flowType": "optimized"
+            },
+            {
+                "id": "edge-3",
+                "source": "node-3",
+                "target": "node-4",
+                "label": "New Structure Ready",
+                "flowType": "optimized"
+            },
+            {
+                "id": "edge-4",
+                "source": "node-4",
+                "target": "node-5",
+                "label": "Integration Complete",
+                "flowType": "optimized"
+            }
+        ]
+        
         return {
             "businessOperationsFlow": {
                 "summary": "Strategic Process Optimization",
-                "steps": [
-                    {"id": "step1", "description": "Implement process automation for key workflows", "department": "IT"},
-                    {"id": "step2", "description": "Restructure team responsibilities for efficiency", "department": "Operations"},
-                    {"id": "step3", "description": "Develop integrated systems for better data flow", "department": "IT"}
-                ]
+                "nodes": nodes,
+                "edges": edges
             },
             "departments": [
                 {
@@ -780,7 +851,7 @@ Customer Service Optimization Team"""
                     "Train teams on responding to customer input effectively"
                 ]
         
-        # Create steps from action items
+        # Create steps from action items (still needed for backward compatibility and department assignment)
         for i, item in enumerate(action_items):
             # Assign a department based on the item content
             item_lower = item.lower()
@@ -801,6 +872,115 @@ Customer Service Optimization Team"""
                 "id": f"step-{branch_id}-{i+1}",
                 "description": item,
                 "department": department
+            })
+        
+        # Create nodes and edges structure (new code for improved visualization)
+        nodes = []
+        edges = []
+        
+        # Add process start node
+        nodes.append({
+            "id": f"node-{branch_id}-1",
+            "label": "Process Start",
+            "type": "start",
+            "position": {"x": 50, "y": 100}
+        })
+        
+        # Generate risk/reward type based on branch ID
+        status_type = None
+        status_label = None
+        flow_type = "standard"
+        
+        if branch_id == "A":
+            flow_type = "standard"  # Conservative approach
+        elif branch_id == "B":
+            flow_type = "optimized"  # Balanced approach 
+        else:  # branch_id == "C"
+            flow_type = "optimized"  # Aggressive approach
+            
+        # Create nodes for each action item
+        for i, item in enumerate(action_items):
+            # Add node for each action item
+            node_id = f"node-{branch_id}-{i+2}"  # +2 because we start with node 1 as Process Start
+            
+            # Determine if this node needs status highlighting
+            node_status = None
+            
+            # For branch B or C, mark new processes
+            if (branch_id in ["B", "C"] and ("new" in item.lower() or "implement" in item.lower() or 
+                                          "develop" in item.lower() or "create" in item.lower())):
+                node_status = {
+                    "type": "new", 
+                    "label": "+ New Process"
+                }
+            
+            # For branch C, mark critical processes
+            if branch_id == "C" and ("critical" in item.lower() or "key" in item.lower() or 
+                                  "essential" in item.lower() or "vital" in item.lower()):
+                node_status = {
+                    "type": "warning", 
+                    "label": "⚠ Critical"
+                }
+            
+            # Calculate position (simple left-to-right layout)
+            x_pos = 200 + i * 150
+            y_variation = 0
+            
+            # Add some variation to y-position for visual appeal in branches B and C
+            if branch_id in ["B", "C"] and i % 2 == 1:
+                y_variation = 50
+                if i % 4 == 3:  # Alternate direction
+                    y_variation = -50
+                    
+            node = {
+                "id": node_id,
+                "label": item[:30] + ("..." if len(item) > 30 else ""),  # Truncate long labels
+                "type": "process",
+                "position": {"x": x_pos, "y": 100 + y_variation}
+            }
+            
+            # Add status if present
+            if node_status:
+                node["status"] = node_status
+                
+            nodes.append(node)
+        
+        # Add process end node
+        nodes.append({
+            "id": f"node-{branch_id}-{len(action_items)+2}",
+            "label": "Process End",
+            "type": "end",
+            "position": {"x": 200 + len(action_items) * 150, "y": 100}
+        })
+        
+        # Create edges connecting all nodes
+        edge_labels = []
+        
+        # Generate edge labels based on branch ID and context
+        if branch_id == "A":
+            edge_labels = ["Start Analysis", "Requirements Complete", "System Ready", "Implementation Complete"]
+        elif branch_id == "B":
+            edge_labels = ["Start", "Tech Path", "Training Path", "Tech Ready", "Staff Ready", "Implementation Complete"]
+        else:  # branch_id == "C"
+            edge_labels = ["Start", "Planning", "Development", "Training", "Integration", "Deployment", "Complete"]
+        
+        # Fallback edge labels if we don't have enough
+        generic_edge_labels = ["Next Step", "Continue", "Proceed", "Advance", "Move Forward", "Progress"]
+        
+        # Create edges connecting nodes in sequence
+        for i in range(len(nodes) - 1):
+            # Get or generate an edge label
+            if i < len(edge_labels):
+                edge_label = edge_labels[i]
+            else:
+                edge_label = generic_edge_labels[i % len(generic_edge_labels)]
+            
+            edges.append({
+                "id": f"edge-{branch_id}-{i+1}",
+                "source": nodes[i]["id"],
+                "target": nodes[i+1]["id"],
+                "label": edge_label,
+                "flowType": flow_type
             })
         
         # Create departments section
@@ -896,11 +1076,11 @@ Customer Service Optimization Team"""
         
         # Generate a descriptive summary based on branch ID
         if branch_id == "A":
-            summary = "Implementation of AI Chatbot and Automated Support Systems"
+            summary = "Conservative approach (lower risk, lower reward) - Gradual implementation of technology integration with minimal system changes to maintain stability."
         elif branch_id == "B":
-            summary = "Comprehensive Customer Service Training and Skill Development"
+            summary = "Balanced approach (moderate risk, moderate reward) - Implement customer service optimization gradually, combining moderate technology upgrades, training, and phased process automation."
         else:  # branch_id == "C"
-            summary = "Customer Feedback System and Service Quality Improvement Initiative"
+            summary = "Aggressive approach (higher risk, higher reward) - Rapid, company-wide implementation of advanced technologies, comprehensive training, and end-to-end process automation."
         
         # Override with dispatch result action if available
         if dispatch_result.get("action"):
@@ -909,7 +1089,8 @@ Customer Service Optimization Team"""
         return {
             "businessOperationsFlow": {
                 "summary": summary,
-                "steps": steps
+                "nodes": nodes,
+                "edges": edges
             },
             "departments": departments
         }

@@ -216,11 +216,13 @@ The response is a comprehensive JSON object containing:
 {
   businessOperationsFlow: {
     summary: string;
-    steps: Array<{
+    steps?: Array<{
       id: string;
       description: string;
       department: string;
     }>;
+    nodes?: Array<Node>;  // The visual graph nodes for the business flow
+    edges?: Array<Edge>;  // The visual graph edges connecting the nodes
   };
   departments: Array<{
     id: string;
@@ -395,10 +397,18 @@ This design ensures that regardless of which option is selected for implementati
       "A": {
         "businessOperationsFlow": {
           "summary": "AI Chatbot Implementation",
-          "steps": [
-            { "id": "step-A-1", "description": "Implement AI chatbots", "department": "Customer Service" },
-            { "id": "step-A-2", "description": "Train staff on bot management", "department": "IT" },
-            { "id": "step-A-3", "description": "Monitor and optimize chatbot effectiveness", "department": "Training" }
+          "nodes": [
+            { "id": "node-A-1", "label": "Process Start", "type": "start", "position": {"x": 50, "y": 100} },
+            { "id": "node-A-2", "label": "Implement AI chatbots", "type": "process", "position": {"x": 200, "y": 100} },
+            { "id": "node-A-3", "label": "Train staff on bot management", "type": "process", "position": {"x": 350, "y": 100} },
+            { "id": "node-A-4", "label": "Monitor and optimize chatbot", "type": "process", "position": {"x": 500, "y": 100} },
+            { "id": "node-A-5", "label": "Process End", "type": "end", "position": {"x": 650, "y": 100} }
+          ],
+          "edges": [
+            { "id": "edge-A-1", "source": "node-A-1", "target": "node-A-2", "label": "Start", "flowType": "standard" },
+            { "id": "edge-A-2", "source": "node-A-2", "target": "node-A-3", "label": "Chatbots Ready", "flowType": "standard" },
+            { "id": "edge-A-3", "source": "node-A-3", "target": "node-A-4", "label": "Staff Trained", "flowType": "standard" },
+            { "id": "edge-A-4", "source": "node-A-4", "target": "node-A-5", "label": "Implementation Complete", "flowType": "standard" }
           ]
         },
         "departments": [
@@ -449,10 +459,18 @@ This design ensures that regardless of which option is selected for implementati
       "B": {
         "businessOperationsFlow": {
           "summary": "Training Program Development",
-          "steps": [
-            { "id": "step-B-1", "description": "Develop comprehensive training curriculum", "department": "Customer Service" },
-            { "id": "step-B-2", "description": "Implement skills assessment program", "department": "IT" },
-            { "id": "step-B-3", "description": "Establish mentorship opportunities", "department": "Training" }
+          "nodes": [
+            { "id": "node-B-1", "label": "Process Start", "type": "start", "position": {"x": 50, "y": 100} },
+            { "id": "node-B-2", "label": "Develop training curriculum", "type": "process", "position": {"x": 200, "y": 100} },
+            { "id": "node-B-3", "label": "Skills assessment program", "type": "process", "position": {"x": 350, "y": 150}, "status": {"type": "new", "label": "+ New Process"} },
+            { "id": "node-B-4", "label": "Mentorship opportunities", "type": "process", "position": {"x": 500, "y": 100} },
+            { "id": "node-B-5", "label": "Process End", "type": "end", "position": {"x": 650, "y": 100} }
+          ],
+          "edges": [
+            { "id": "edge-B-1", "source": "node-B-1", "target": "node-B-2", "label": "Start", "flowType": "optimized" },
+            { "id": "edge-B-2", "source": "node-B-2", "target": "node-B-3", "label": "Curriculum Ready", "flowType": "optimized" },
+            { "id": "edge-B-3", "source": "node-B-3", "target": "node-B-4", "label": "Assessment Ready", "flowType": "optimized" },
+            { "id": "edge-B-4", "source": "node-B-4", "target": "node-B-5", "label": "Implementation Complete", "flowType": "optimized" }
           ]
         },
         "departments": [
@@ -503,10 +521,18 @@ This design ensures that regardless of which option is selected for implementati
       "C": {
         "businessOperationsFlow": {
           "summary": "Customer Feedback System",
-          "steps": [
-            { "id": "step-C-1", "description": "Develop customer survey mechanism", "department": "Customer Service" },
-            { "id": "step-C-2", "description": "Implement real-time feedback analysis", "department": "IT" },
-            { "id": "step-C-3", "description": "Create action item generation process", "department": "Training" }
+          "nodes": [
+            { "id": "node-C-1", "label": "Process Start", "type": "start", "position": {"x": 50, "y": 100} },
+            { "id": "node-C-2", "label": "Survey mechanism", "type": "process", "position": {"x": 200, "y": 100}, "status": {"type": "new", "label": "+ New Process"} },
+            { "id": "node-C-3", "label": "Real-time feedback analysis", "type": "process", "position": {"x": 350, "y": 150}, "status": {"type": "new", "label": "+ New System"} },
+            { "id": "node-C-4", "label": "Action item generation", "type": "process", "position": {"x": 500, "y": 100}, "status": {"type": "warning", "label": "⚠ Critical"} },
+            { "id": "node-C-5", "label": "Process End", "type": "end", "position": {"x": 650, "y": 100} }
+          ],
+          "edges": [
+            { "id": "edge-C-1", "source": "node-C-1", "target": "node-C-2", "label": "Start", "flowType": "optimized" },
+            { "id": "edge-C-2", "source": "node-C-2", "target": "node-C-3", "label": "Surveys Ready", "flowType": "optimized" },
+            { "id": "edge-C-3", "source": "node-C-3", "target": "node-C-4", "label": "Analysis System Ready", "flowType": "optimized" },
+            { "id": "edge-C-4", "source": "node-C-4", "target": "node-C-5", "label": "Implementation Complete", "flowType": "optimized" }
           ]
         },
         "departments": [
@@ -612,3 +638,23 @@ This design ensures that regardless of which option is selected for implementati
 ## API Types
 
 The TypeScript interfaces for these API types are defined in `src/lib/api.ts` and can be imported and used throughout the application for type safety.
+
+## API Updates
+
+### May 2025 - Enhanced Summary Card Visualization
+
+We've improved the `summaryCard.allOptions[x].businessOperationsFlow` format to use a more consistent and visually rich data structure. This update ensures feature parity between the main flow visualizations and the alternative option visualizations.
+
+#### Key changes:
+
+1. **Consistent Data Structure**: All visualizations (main flow and alternative options) now use the same `nodes` and `edges` structure.
+
+2. **Rich Flow Type Information**: Edges now include `flowType` attributes (e.g., "optimized", "critical", "standard") to allow for proper styling and animation in the UI.
+
+3. **Node Status Indicators**: Nodes can include `status` objects for special highlighting (e.g., new processes, bottlenecks, critical components).
+
+4. **Proper Positioning**: All nodes include `position` coordinates for consistent visualization layout.
+
+5. **Complete Graph Structure**: Options now use a proper directed graph structure with nodes and edges rather than a linear step sequence.
+
+This update maintains backward compatibility, as the previous `steps` array is still supported, but priority is given to the `nodes` and `edges` format when present.

@@ -124,7 +124,9 @@ class BusinessOperationsFlowStep(BaseModel):
 # Summary Card - Business Operations Flow
 class BusinessOperationsFlow(BaseModel):
     summary: str
-    steps: List[BusinessOperationsFlowStep]
+    steps: Optional[List[BusinessOperationsFlowStep]] = None
+    nodes: Optional[List[Node]] = None
+    edges: Optional[List[Edge]] = None
 
 # Summary Card - Department Task
 class DepartmentTask(BaseModel):

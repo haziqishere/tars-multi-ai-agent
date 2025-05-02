@@ -24,14 +24,14 @@ docker buildx use mybuilder
 echo "Building Docker image for AMD64..."
 docker buildx build --platform=linux/amd64 \
   --output type=docker \
-  -t haziqishere/tars-multi-agent:v3-amd64 .
+  -t haziqishere/tars-multi-agent:v3.1-amd64 .
 
 echo "Verifying image architecture..."
-docker inspect haziqishere/tars-multi-agent:v3-amd64 | grep -i architecture
+docker inspect haziqishere/tars-multi-agent:v3.1-amd64 | grep -i architecture
 
 echo ""
 echo "Image built successfully! You can now push it to Docker Hub with:"
-echo "docker push haziqishere/tars-multi-agent:v3-amd64"
+echo "docker push haziqishere/tars-multi-agent:v3.1-amd64"
 echo ""
 echo "Or run it locally with:"
-echo "docker run -d -p 80:8000 haziqishere/tars-multi-agent:v3-amd64"
+echo "docker run -d -p 80:8000 haziqishere/tars-multi-agent:v3.1-amd64"

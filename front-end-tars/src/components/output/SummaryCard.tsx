@@ -8,6 +8,7 @@ import { hideSummaryCard } from "../../store/slices/outputSlice";
 import DepartmentSummary from "./DepartmentSummary";
 import EmailPreview from "./EmailPreview";
 import FlowVisualization from "./FlowVisualization";
+import BusinessFlowSummary from "./BusinessFlowSummary";
 
 const SummaryCard: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -26,6 +27,15 @@ const SummaryCard: React.FC = () => {
 
   // Extract option letter (e.g., "A" from "option-A") for display purposes
   const optionLetter = selectedOptionId?.split("-")[1] || "";
+
+  // Extract business operations flow data
+  const businessFlow = summaryCardData.businessOperationsFlow;
+  const hasFlowVisualization =
+    businessFlow &&
+    businessFlow.nodes &&
+    businessFlow.edges &&
+    businessFlow.nodes.length > 0 &&
+    businessFlow.edges.length > 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -54,22 +64,28 @@ const SummaryCard: React.FC = () => {
 
         <div className="flex-1 overflow-auto p-4 space-y-6">
           {/* Selected Option Flow Visualization */}
-          {selectedOption && (
+          {hasFlowVisualization ? (
             <Card className="overflow-hidden border border-dark-border bg-white">
               <div className="p-4 bg-dark-elevated border-b border-dark-border">
                 <h3 className="font-medium text-text-primary">
-                  Selected Implementation: {selectedOption.title}
+                  Selected Implementation:{" "}
+                  {selectedOption?.title || businessFlow.summary}
                 </h3>
               </div>
               <div className="h-64 w-full">
                 <FlowVisualization
-                  nodes={selectedOption.nodes || []}
-                  edges={selectedOption.edges || []}
+                  nodes={businessFlow.nodes || []}
+                  edges={businessFlow.edges || []}
                   fitView={true}
                   zoomOnResize={true}
                 />
               </div>
             </Card>
+          ) : (
+            <BusinessFlowSummary
+              flowSummary={businessFlow.summary}
+              steps={businessFlow.steps || []}
+            />
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[500px]">

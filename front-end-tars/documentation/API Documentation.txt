@@ -56,7 +56,8 @@ The response is a comprehensive JSON object containing:
 1. Analysis data (business flow, analytics, news and impact)
 2. Recommendations (optimization options)
 3. A chat response message
-4. Summary Card data for implementation (when an option is approved)
+4. Summary Card data with implementations for ALL options (not just the selected one)
+5. System information including execution time and fallback status
 
 ```json
 {
@@ -75,7 +76,30 @@ The response is a comprehensive JSON object containing:
     "options": Array<Option>
   },
   "chatResponse": string,
-  "summaryCard": SummaryCardData
+  "summaryCard": {
+    "activeOption": string,  // The currently selected option (e.g., "A", "B", or "C")
+    "allOptions": {
+      // A map of option ID to SummaryCardData, containing info for ALL options
+      "A": SummaryCardData,
+      "B": SummaryCardData,
+      "C": SummaryCardData
+    }
+  },
+  "context": {
+    "internal": string,
+    "external": string
+  },
+  "system_info": {
+    "execution_time": number,
+    "status": "complete" | "partial" | "fallback",
+    "fallbacks": {
+      "agent1_fallback": boolean,
+      "agent2_fallback": boolean,
+      "agent3_fallback": boolean,
+      "agent4_fallback": boolean,
+      "agent5_fallback": boolean
+    }
+  }
 }
 ```
 
@@ -161,10 +185,7 @@ The response is a comprehensive JSON object containing:
     label: string;
     value: string;
   }>;
-  nodes: Array<Node>;
-  edges: Array<Edge>;
-  financialImpact: Array<FinancialImpact>;
-  implementationPlan: Array<ImplementationTask>;
+  selected: boolean;  // Whether this option is currently selected
 }
 ```
 
@@ -195,11 +216,13 @@ The response is a comprehensive JSON object containing:
 {
   businessOperationsFlow: {
     summary: string;
-    steps: Array<{
+    steps?: Array<{
       id: string;
       description: string;
       department: string;
     }>;
+    nodes?: Array<Node>;  // The visual graph nodes for the business flow
+    edges?: Array<Edge>;  // The visual graph edges connecting the nodes
   };
   departments: Array<{
     id: string;
@@ -223,6 +246,21 @@ The response is a comprehensive JSON object containing:
 }
 ```
 
+### Email Templates
+
+A unique feature of this API is that it generates email templates for each department involved in implementing each option. This allows the system to send notifications or prepare implementation communications for any selected option without requiring additional API calls.
+
+Key aspects of the email templates:
+1. Each option (A, B, C) has its own set of email templates
+2. Templates are organized by department
+3. Each template includes:
+   - Recipient information (name, email, department)
+   - Subject line specific to the implementation task
+   - Body text with personalized task descriptions
+   - Due dates and priority levels
+
+This design ensures that regardless of which option is selected for implementation, the system immediately has access to all the communication templates needed to begin the implementation process.
+
 ### Example Response
 
 ```json
@@ -230,67 +268,80 @@ The response is a comprehensive JSON object containing:
   "analysis": {
     "businessFlow": {
       "nodes": [
-        { "id": "node-1", "label": "Raw Materials Intake", "type": "start", "position": { "x": 50, "y": 100 } },
-        { "id": "node-2", "label": "Quality Control", "type": "process", "position": { "x": 200, "y": 50 } },
-        { "id": "node-3", "label": "Production Line A", "type": "process", "position": { "x": 350, "y": 100 } },
-        { "id": "node-4", "label": "Production Line B", "type": "process", "position": { "x": 350, "y": 200 } },
-        { "id": "node-5", "label": "Assembly", "type": "process", "position": { "x": 500, "y": 150 } },
-        { "id": "node-6", "label": "Packaging", "type": "process", "position": { "x": 650, "y": 100 } },
-        { "id": "node-7", "label": "Warehouse", "type": "end", "position": { "x": 800, "y": 150 } }
+        { "id": "node-1", "label": "Customer Inquiry", "type": "start" },
+        { "id": "node-2", "label": "IVR System", "type": "process" },
+        { "id": "node-3", "label": "Queue Assignment", "type": "process" },
+        { "id": "node-4", "label": "Agent Response", "type": "process", "status": {"type": "critical", "label": "⚠ Bottleneck"} },
+        { "id": "node-5", "label": "Issue Resolution", "type": "process" },
+        { "id": "node-6", "label": "Follow-up", "type": "process" },
+        { "id": "node-7", "label": "Case Closure", "type": "end" }
       ],
       "edges": [
-        { "id": "edge-1", "source": "node-1", "target": "node-2", "label": "Inspection" },
-        { "id": "edge-2", "source": "node-2", "target": "node-3", "label": "Passed QC - High Priority" },
-        { "id": "edge-3", "source": "node-2", "target": "node-4", "label": "Passed QC - Standard" },
-        { "id": "edge-4", "source": "node-3", "target": "node-5", "label": "Component A" },
-        { "id": "edge-5", "source": "node-4", "target": "node-5", "label": "Component B" },
-        { "id": "edge-6", "source": "node-5", "target": "node-6", "label": "Assembled Product" },
-        { "id": "edge-7", "source": "node-6", "target": "node-7", "label": "Finished Goods" }
+        { "id": "edge-1", "source": "node-1", "target": "node-2", "label": "Initial Contact" },
+        { "id": "edge-2", "source": "node-2", "target": "node-3", "label": "Categorization" },
+        { "id": "edge-3", "source": "node-3", "target": "node-4", "label": "Assignment", "flowType": "critical" },
+        { "id": "edge-4", "source": "node-4", "target": "node-5", "label": "Processing" },
+        { "id": "edge-5", "source": "node-5", "target": "node-6", "label": "Quality Check" },
+        { "id": "edge-6", "source": "node-6", "target": "node-7", "label": "Completion" }
       ]
     },
     "analytics": {
-      "currentAnnualCost": 8750000,
-      "efficiencyRating": 73,
-      "averageProcessTime": 14.5,
-      "riskAssessment": 63,
+      "currentAnnualCost": 5750000,
+      "efficiencyRating": 68,
+      "averageProcessTime": 12.5,
+      "riskAssessment": 55,
       "trends": {
         "costTrend": "increasing",
         "efficiencyTrend": "stable",
         "timeTrend": "increasing",
-        "riskTrend": "worsening"
+        "riskTrend": "stable"
       }
     },
     "newsAndImpact": {
       "newsItems": [
         {
           "id": "news-1",
-          "title": "New Tariff Regulations",
-          "date": "April 15, 2025",
-          "impact": "negative",
-          "description": "New tariffs of 25% imposed on key materials affecting Production Line B."
+          "title": "Industry Shift to AI-Powered Customer Service",
+          "date": "May 1, 2025",
+          "impact": "positive",
+          "description": "Major competitors are adopting AI chatbots with 35% reduction in response times."
         },
         {
           "id": "news-2",
-          "title": "Competitor Restructuring",
-          "date": "April 10, 2025",
+          "title": "Rising Customer Expectations for Omnichannel Support",
+          "date": "April 26, 2025",
+          "impact": "negative",
+          "description": "Customers now expect seamless integration across support channels, increasing complexity."
+        },
+        {
+          "id": "news-3",
+          "title": "New Training Methodology Shows Promise",
+          "date": "April 30, 2025",
           "impact": "positive",
-          "description": "Main competitor implementing similar restructuring with 9-month timeline."
+          "description": "Scenario-based training program decreases time-to-proficiency by 40%."
         }
       ],
       "impactItems": [
         {
           "id": "impact-1",
-          "title": "Supply Chain Disruption",
-          "description": "Potential delays in raw material sourcing affecting production timeline",
-          "probability": 68,
-          "impact": 72
+          "title": "Customer Retention Risk",
+          "description": "Continued service delays could result in 12% customer attrition within 6 months",
+          "probability": 75,
+          "impact": 85
         },
         {
           "id": "impact-2",
-          "title": "Market Share Growth",
-          "description": "Optimization could lead to 15% increase in market share within 12 months",
-          "probability": 75,
-          "impact": 85
+          "title": "Competitive Advantage",
+          "description": "Implementing suggested optimizations could provide 18-month lead over competition",
+          "probability": 65,
+          "impact": 80
+        },
+        {
+          "id": "impact-3",
+          "title": "Cost Reduction Opportunity",
+          "description": "Process automation could reduce operational costs by up to 22%",
+          "probability": 82,
+          "impact": 70
         }
       ]
     }
@@ -298,146 +349,253 @@ The response is a comprehensive JSON object containing:
   "recommendations": {
     "options": [
       {
-        "id": "option-1",
-        "title": "Process Automation Strategy",
-        "description": "Implement AI-driven automation in the manufacturing workflow, optimizing the connection between Quality Control and Assembly.",
-        "timeToImplement": "3-4 months",
-        "costReduction": "22% cost reduction",
+        "id": "option-A",
+        "title": "Implement AI-powered customer service chatbots",
+        "description": "Implement AI-powered customer service chatbots to handle routine inquiries, reducing wait times and allowing human agents to focus on complex issues.",
+        "timeToImplement": "1-3 months",
+        "costReduction": "10-15% cost reduction",
         "additionalMetrics": [
-          {
-            "label": "ROI",
-            "value": "134% in 12 months"
-          },
-          {
-            "label": "Risk Reduction",
-            "value": "42%"
-          }
+          { "label": "Response Time Improvement", "value": "20%" },
+          { "label": "Implementation Complexity", "value": "Low" }
         ],
-        "nodes": [
-          { "id": "node-1", "label": "Raw Materials Intake", "type": "start", "position": { "x": 50, "y": 100 } },
-          { "id": "node-2", "label": "Automated Quality Control", "type": "process", "position": { "x": 200, "y": 100 } },
-          { "id": "node-3", "label": "Smart Production Line", "type": "process", "position": { "x": 400, "y": 100 } },
-          { "id": "node-5", "label": "Automated Assembly", "type": "process", "position": { "x": 550, "y": 100 } },
-          { "id": "node-6", "label": "Packaging", "type": "process", "position": { "x": 700, "y": 100 } },
-          { "id": "node-7", "label": "Warehouse", "type": "end", "position": { "x": 850, "y": 100 } }
+        "selected": false
+      },
+      {
+        "id": "option-B",
+        "title": "Comprehensive training and development programs",
+        "description": "Implement comprehensive training and development programs for customer service representatives to enhance their skills in problem-solving, communication, and product knowledge.",
+        "timeToImplement": "3-6 months",
+        "costReduction": "15-25% cost reduction",
+        "additionalMetrics": [
+          { "label": "Response Time Improvement", "value": "40%" },
+          { "label": "Implementation Complexity", "value": "Medium" },
+          { "label": "ROI", "value": "180% over 2 years" }
         ],
-        "edges": [
-          { "id": "edge-1", "source": "node-1", "target": "node-2", "label": "AI Sorting" },
-          { "id": "edge-2", "source": "node-2", "target": "node-3", "label": "Real-time Optimization" },
-          { "id": "edge-4", "source": "node-3", "target": "node-5", "label": "Smart Routing" },
-          { "id": "edge-6", "source": "node-5", "target": "node-6", "label": "Assembled Product" },
-          { "id": "edge-7", "source": "node-6", "target": "node-7", "label": "Finished Goods" }
+        "selected": true
+      },
+      {
+        "id": "option-C",
+        "title": "Establish a customer feedback loop",
+        "description": "Establish a customer feedback loop with regular surveys, analysis, and action items to continuously improve service quality based on customer input.",
+        "timeToImplement": "6-12 months",
+        "costReduction": "25-40% cost reduction",
+        "additionalMetrics": [
+          { "label": "Response Time Improvement", "value": "65%" },
+          { "label": "Implementation Complexity", "value": "High" },
+          { "label": "ROI", "value": "220% over 3 years" },
+          { "label": "Training Requirements", "value": "Extensive" }
         ],
-        "financialImpact": [
-          {
-            "metricName": "Annual Operating Costs",
-            "current": 8750000,
-            "projected": 6825000,
-            "change": -22,
-            "unit": "$"
-          },
-          {
-            "metricName": "Process Time",
-            "current": 14.5,
-            "projected": 8.7,
-            "change": -40,
-            "unit": "days"
-          }
-        ],
-        "implementationPlan": [
-          {
-            "id": "task-1-1",
-            "department": "IT",
-            "task": "Setup automation infrastructure",
-            "duration": "4 weeks",
-            "status": "pending"
-          },
-          {
-            "id": "task-1-2",
-            "department": "Operations",
-            "task": "Process automation integration",
-            "duration": "6 weeks",
-            "status": "pending"
-          }
-        ]
+        "selected": false
       }
     ]
   },
-  "chatResponse": "I've analyzed your request about \"Analyze and optimize our manufacturing supply chain process\" and generated optimization options. You can review the detailed business flow analysis, along with two alternative optimization strategies: Process Automation Strategy (22% cost reduction) and Supply Chain Restructuring (18% cost reduction). Each option includes financial impacts and an implementation plan.",
+  "chatResponse": "I've analyzed your request about \"How can we optimize our customer service department?\" and identified several optimization approaches. The recommended approach is Comprehensive training and development programs. This would result in significant improvements including 15-25% cost reduction and can be implemented in 3-6 months.",
   
   "summaryCard": {
-    "businessOperationsFlow": {
-      "summary": "Optimized 5-step procurement process with automated vendor validation",
-      "steps": [
-        { "id": "step1", "description": "Automated requisition approval", "department": "Procurement" },
-        { "id": "step2", "description": "AI-powered vendor selection", "department": "Vendor Relations" },
-        { "id": "step3", "description": "Contract negotiation assistance", "department": "Legal" },
-        { "id": "step4", "description": "Digital invoice processing", "department": "Finance" },
-        { "id": "step5", "description": "Payment automation", "department": "Finance" }
-      ]
-    },
-    "departments": [
-      {
-        "id": "dept-1",
-        "department": "Procurement",
-        "manager": "Alex Johnson",
-        "email": "alex.johnson@company.com",
-        "tasks": [
+    "activeOption": "B",
+    "allOptions": {
+      "A": {
+        "businessOperationsFlow": {
+          "summary": "AI Chatbot Implementation",
+          "nodes": [
+            { "id": "node-A-1", "label": "Process Start", "type": "start", "position": {"x": 50, "y": 100} },
+            { "id": "node-A-2", "label": "Implement AI chatbots", "type": "process", "position": {"x": 200, "y": 100} },
+            { "id": "node-A-3", "label": "Train staff on bot management", "type": "process", "position": {"x": 350, "y": 100} },
+            { "id": "node-A-4", "label": "Monitor and optimize chatbot", "type": "process", "position": {"x": 500, "y": 100} },
+            { "id": "node-A-5", "label": "Process End", "type": "end", "position": {"x": 650, "y": 100} }
+          ],
+          "edges": [
+            { "id": "edge-A-1", "source": "node-A-1", "target": "node-A-2", "label": "Start", "flowType": "standard" },
+            { "id": "edge-A-2", "source": "node-A-2", "target": "node-A-3", "label": "Chatbots Ready", "flowType": "standard" },
+            { "id": "edge-A-3", "source": "node-A-3", "target": "node-A-4", "label": "Staff Trained", "flowType": "standard" },
+            { "id": "edge-A-4", "source": "node-A-4", "target": "node-A-5", "label": "Implementation Complete", "flowType": "standard" }
+          ]
+        },
+        "departments": [
           {
-            "id": "task1-1",
-            "description": "Update requisition form with new validation fields",
-            "priority": "high",
-            "deadline": "2025-05-15"
+            "id": "dept-A-1",
+            "department": "Customer Service",
+            "manager": "Alex Johnson",
+            "email": "alex.johnson@company.com",
+            "tasks": [
+              {
+                "id": "task-A-1",
+                "description": "Implement AI chatbots",
+                "priority": "high",
+                "deadline": "2025-05-15"
+              }
+            ],
+            "emailTemplate": {
+              "to": "alex.johnson@company.com",
+              "recipient": "Alex Johnson",
+              "department": "Customer Service",
+              "subject": "Action Required: AI Chatbot Implementation",
+              "body": "Dear Alex Johnson,\n\nI'm writing regarding our recently approved process optimization initiative for the Customer Service department. We're implementing Option A: AI Chatbot Implementation.\n\nYour team's key action item is:\n- Implement AI chatbots\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
           },
           {
-            "id": "task1-2",
-            "description": "Configure automated PO generation rules",
-            "priority": "medium",
-            "deadline": "2025-05-30"
-          },
-          {
-            "id": "task1-3",
-            "description": "Train team on new system",
-            "priority": "medium",
-            "deadline": "2025-06-15"
+            "id": "dept-A-2",
+            "department": "IT",
+            "manager": "Sarah Miller",
+            "email": "sarah.miller@company.com",
+            "tasks": [
+              {
+                "id": "task-A-2",
+                "description": "Train staff on bot management",
+                "priority": "medium",
+                "deadline": "2025-05-29"
+              }
+            ],
+            "emailTemplate": {
+              "to": "sarah.miller@company.com",
+              "recipient": "Sarah Miller",
+              "department": "IT",
+              "subject": "Action Required: AI Chatbot Implementation",
+              "body": "Dear Sarah Miller,\n\nI'm writing regarding our recently approved process optimization initiative for the IT department. We're implementing Option A: AI Chatbot Implementation.\n\nYour team's key action item is:\n- Train staff on bot management\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
           }
-        ],
-        "emailTemplate": {
-          "to": "alex.johnson@company.com",
-          "recipient": "Alex Johnson",
-          "department": "Procurement",
-          "subject": "Action Required: Procurement Process Optimization Implementation",
-          "body": "Dear Alex,\n\nI'm reaching out regarding the recently approved procurement process optimization. The analysis has identified key areas where your department will play a critical role in implementation.\n\nKey tasks for the Procurement team:\n1. Update requisition form with new validation fields (High Priority, Due: May 15, 2025)\n2. Configure automated PO generation rules (Medium Priority, Due: May 30, 2025)\n3. Train team on new system (Medium Priority, Due: June 15, 2025)\n\nThe expected outcomes include a 30% reduction in processing time and 15% cost savings.\n\nPlease review the attached implementation schedule and confirm your team's availability for the kickoff meeting next Monday at 10:00 AM.\n\nBest regards,\nTARS System\nRan By J. Doe, Head of Operations"
-        }
+        ]
       },
-      {
-        "id": "dept-2",
-        "department": "Vendor Relations",
-        "manager": "Sarah Miller",
-        "email": "sarah.miller@company.com",
-        "tasks": [
+      "B": {
+        "businessOperationsFlow": {
+          "summary": "Training Program Development",
+          "nodes": [
+            { "id": "node-B-1", "label": "Process Start", "type": "start", "position": {"x": 50, "y": 100} },
+            { "id": "node-B-2", "label": "Develop training curriculum", "type": "process", "position": {"x": 200, "y": 100} },
+            { "id": "node-B-3", "label": "Skills assessment program", "type": "process", "position": {"x": 350, "y": 150}, "status": {"type": "new", "label": "+ New Process"} },
+            { "id": "node-B-4", "label": "Mentorship opportunities", "type": "process", "position": {"x": 500, "y": 100} },
+            { "id": "node-B-5", "label": "Process End", "type": "end", "position": {"x": 650, "y": 100} }
+          ],
+          "edges": [
+            { "id": "edge-B-1", "source": "node-B-1", "target": "node-B-2", "label": "Start", "flowType": "optimized" },
+            { "id": "edge-B-2", "source": "node-B-2", "target": "node-B-3", "label": "Curriculum Ready", "flowType": "optimized" },
+            { "id": "edge-B-3", "source": "node-B-3", "target": "node-B-4", "label": "Assessment Ready", "flowType": "optimized" },
+            { "id": "edge-B-4", "source": "node-B-4", "target": "node-B-5", "label": "Implementation Complete", "flowType": "optimized" }
+          ]
+        },
+        "departments": [
           {
-            "id": "task2-1",
-            "description": "Create vendor scoring criteria",
-            "priority": "high",
-            "deadline": "2025-05-20"
+            "id": "dept-B-1",
+            "department": "Training",
+            "manager": "David Chen",
+            "email": "david.chen@company.com",
+            "tasks": [
+              {
+                "id": "task-B-1",
+                "description": "Develop comprehensive training curriculum",
+                "priority": "high",
+                "deadline": "2025-05-15"
+              }
+            ],
+            "emailTemplate": {
+              "to": "david.chen@company.com",
+              "recipient": "David Chen",
+              "department": "Training",
+              "subject": "Action Required: Training Program Development",
+              "body": "Dear David Chen,\n\nI'm writing regarding our recently approved process optimization initiative for the Training department. We're implementing Option B: Training Program Development.\n\nYour team's key action item is:\n- Develop comprehensive training curriculum\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
           },
           {
-            "id": "task2-2",
-            "description": "Update vendor database with new fields",
-            "priority": "medium",
-            "deadline": "2025-06-05"
+            "id": "dept-B-2",
+            "department": "Customer Service",
+            "manager": "Alex Johnson",
+            "email": "alex.johnson@company.com",
+            "tasks": [
+              {
+                "id": "task-B-2",
+                "description": "Implement skills assessment program",
+                "priority": "medium",
+                "deadline": "2025-05-29"
+              }
+            ],
+            "emailTemplate": {
+              "to": "alex.johnson@company.com",
+              "recipient": "Alex Johnson",
+              "department": "Customer Service",
+              "subject": "Action Required: Training Program Development",
+              "body": "Dear Alex Johnson,\n\nI'm writing regarding our recently approved process optimization initiative for the Customer Service department. We're implementing Option B: Training Program Development.\n\nYour team's key action item is:\n- Implement skills assessment program\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
           }
-        ],
-        "emailTemplate": {
-          "to": "sarah.miller@company.com",
-          "recipient": "Sarah Miller",
-          "department": "Vendor Relations",
-          "subject": "Action Required: Vendor Selection Process Updates",
-          "body": "Dear Sarah,\n\nFollowing our recent process optimization approval, we need your team's expertise to implement the new AI-powered vendor selection system.\n\nKey tasks for the Vendor Relations team:\n1. Create vendor scoring criteria (High Priority, Due: May 20, 2025)\n2. Update vendor database with new fields (Medium Priority, Due: June 5, 2025)\n\nThis new system will help reduce vendor selection time by 40% and improve quality scoring by 25%.\n\nLet's connect this week to discuss the implementation details further.\n\nBest regards,\nTARS System\nRan By J. Doe, Head of Operations"
-        }
+        ]
+      },
+      "C": {
+        "businessOperationsFlow": {
+          "summary": "Customer Feedback System",
+          "nodes": [
+            { "id": "node-C-1", "label": "Process Start", "type": "start", "position": {"x": 50, "y": 100} },
+            { "id": "node-C-2", "label": "Survey mechanism", "type": "process", "position": {"x": 200, "y": 100}, "status": {"type": "new", "label": "+ New Process"} },
+            { "id": "node-C-3", "label": "Real-time feedback analysis", "type": "process", "position": {"x": 350, "y": 150}, "status": {"type": "new", "label": "+ New System"} },
+            { "id": "node-C-4", "label": "Action item generation", "type": "process", "position": {"x": 500, "y": 100}, "status": {"type": "warning", "label": "⚠ Critical"} },
+            { "id": "node-C-5", "label": "Process End", "type": "end", "position": {"x": 650, "y": 100} }
+          ],
+          "edges": [
+            { "id": "edge-C-1", "source": "node-C-1", "target": "node-C-2", "label": "Start", "flowType": "optimized" },
+            { "id": "edge-C-2", "source": "node-C-2", "target": "node-C-3", "label": "Surveys Ready", "flowType": "optimized" },
+            { "id": "edge-C-3", "source": "node-C-3", "target": "node-C-4", "label": "Analysis System Ready", "flowType": "optimized" },
+            { "id": "edge-C-4", "source": "node-C-4", "target": "node-C-5", "label": "Implementation Complete", "flowType": "optimized" }
+          ]
+        },
+        "departments": [
+          {
+            "id": "dept-C-1",
+            "department": "Operations",
+            "manager": "Maria Rodriguez",
+            "email": "maria.rodriguez@company.com",
+            "tasks": [
+              {
+                "id": "task-C-1",
+                "description": "Develop customer survey mechanism",
+                "priority": "high",
+                "deadline": "2025-05-15"
+              }
+            ],
+            "emailTemplate": {
+              "to": "maria.rodriguez@company.com",
+              "recipient": "Maria Rodriguez",
+              "department": "Operations",
+              "subject": "Action Required: Customer Feedback System Implementation",
+              "body": "Dear Maria Rodriguez,\n\nI'm writing regarding our recently approved process optimization initiative for the Operations department. We're implementing Option C: Customer Feedback System.\n\nYour team's key action item is:\n- Develop customer survey mechanism\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
+          },
+          {
+            "id": "dept-C-2",
+            "department": "IT",
+            "manager": "Sarah Miller",
+            "email": "sarah.miller@company.com",
+            "tasks": [
+              {
+                "id": "task-C-2",
+                "description": "Implement real-time feedback analysis",
+                "priority": "medium",
+                "deadline": "2025-05-29"
+              }
+            ],
+            "emailTemplate": {
+              "to": "sarah.miller@company.com",
+              "recipient": "Sarah Miller",
+              "department": "IT",
+              "subject": "Action Required: Customer Feedback System Implementation",
+              "body": "Dear Sarah Miller,\n\nI'm writing regarding our recently approved process optimization initiative for the IT department. We're implementing Option C: Customer Feedback System.\n\nYour team's key action item is:\n- Implement real-time feedback analysis\n\nThis is part of our overall strategy to improve customer service efficiency and satisfaction.\n\nPlease review this task and confirm your department's availability for a kickoff meeting next week. The full implementation plan with detailed timelines will be shared during the meeting.\n\nBest regards,\nTARS System\nProcess Optimization Team"
+            }
+          }
+        ]
       }
-    ]
+    }
+  },
+  "context": {
+    "internal": "Company has a customer service department with 50 employees. Current challenges include long wait times, inconsistent service quality, and manual processes. Previous initiatives have shown positive results from automation.",
+    "external": "Industry best practices suggest implementing AI chatbots, enhancing self-service options, and using analytics for workforce optimization. Recent technology innovations include predictive analytics and omnichannel integration."
+  },
+  "system_info": {
+    "execution_time": 42.3,
+    "status": "complete",
+    "fallbacks": {
+      "agent1_fallback": false,
+      "agent2_fallback": false,
+      "agent3_fallback": false,
+      "agent4_fallback": false,
+      "agent5_fallback": false
+    }
   }
 }
 ```
@@ -480,3 +638,23 @@ The response is a comprehensive JSON object containing:
 ## API Types
 
 The TypeScript interfaces for these API types are defined in `src/lib/api.ts` and can be imported and used throughout the application for type safety.
+
+## API Updates
+
+### May 2025 - Enhanced Summary Card Visualization
+
+We've improved the `summaryCard.allOptions[x].businessOperationsFlow` format to use a more consistent and visually rich data structure. This update ensures feature parity between the main flow visualizations and the alternative option visualizations.
+
+#### Key changes:
+
+1. **Consistent Data Structure**: All visualizations (main flow and alternative options) now use the same `nodes` and `edges` structure.
+
+2. **Rich Flow Type Information**: Edges now include `flowType` attributes (e.g., "optimized", "critical", "standard") to allow for proper styling and animation in the UI.
+
+3. **Node Status Indicators**: Nodes can include `status` objects for special highlighting (e.g., new processes, bottlenecks, critical components).
+
+4. **Proper Positioning**: All nodes include `position` coordinates for consistent visualization layout.
+
+5. **Complete Graph Structure**: Options now use a proper directed graph structure with nodes and edges rather than a linear step sequence.
+
+This update maintains backward compatibility, as the previous `steps` array is still supported, but priority is given to the `nodes` and `edges` format when present.

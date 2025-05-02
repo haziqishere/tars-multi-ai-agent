@@ -9,6 +9,7 @@ import {
   selectOption,
   setSummaryCardData,
   showSummaryCard,
+  setSummaryCardResponse,
 } from "@/store/slices/outputSlice";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,6 +122,9 @@ const OutputInterface: React.FC = () => {
 
         // Handle summary card data if present in the API response
         if (data.summaryCard) {
+          // Store the full summary card response
+          dispatch(setSummaryCardResponse(data.summaryCard));
+
           // If the API already provides summary card data, we can use it directly
           // Find the active option based on the activeOption field
           const activeOptionLetter = data.summaryCard.activeOption;
@@ -132,9 +136,41 @@ const OutputInterface: React.FC = () => {
           }
         }
 
-        // Update options
+        // Update options - Enhanced to include businessOperationsFlow data from summaryCard
         if (data.recommendations && data.recommendations.options) {
-          dispatch(setOptions(data.recommendations.options));
+          // If we have summaryCard data, enhance the options with the businessOperationsFlow
+          if (data.summaryCard && data.summaryCard.allOptions) {
+            const enhancedOptions = data.recommendations.options.map(
+              (option: any) => {
+                // Extract the option letter from the id (e.g., "option-A" -> "A")
+                const optionIdParts = option.id.split("-");
+                const optionLetter =
+                  optionIdParts.length > 1 ? optionIdParts[1] : "";
+
+                // If we have summary card data for this option, enhance it with flow data
+                if (optionLetter && data.summaryCard.allOptions[optionLetter]) {
+                  const summaryOption =
+                    data.summaryCard.allOptions[optionLetter];
+
+                  // Extract nodes and edges from businessOperationsFlow if available
+                  if (summaryOption.businessOperationsFlow) {
+                    const flow = summaryOption.businessOperationsFlow;
+                    return {
+                      ...option,
+                      nodes: flow.nodes || [],
+                      edges: flow.edges || [],
+                      businessOperationsFlow: flow,
+                    };
+                  }
+                }
+                return option;
+              }
+            );
+
+            dispatch(setOptions(enhancedOptions));
+          } else {
+            dispatch(setOptions(data.recommendations.options));
+          }
 
           // Select the option marked as selected (if any) or the first option by default
           const selectedOption = data.recommendations.options.find(
@@ -186,7 +222,32 @@ const OutputInterface: React.FC = () => {
 
     setApprovingOption(true);
     try {
-      // We could fetch summary data from the API or use what we might already have
+      // First check if we already have summary data from the API response
+      if (options.length > 0 && selectedOptionId) {
+        // Extract the option letter (e.g., "A" from "option-A")
+        const optionLetter = selectedOptionId.split("-")[1];
+
+        // If we have a summaryCardResponse with allOptions, use it
+        const state = (window as any).__REDUX_STORE__?.getState?.();
+        const summaryCardResponse = state?.output?.summaryCardResponse;
+
+        if (
+          summaryCardResponse &&
+          summaryCardResponse.allOptions &&
+          optionLetter &&
+          summaryCardResponse.allOptions[optionLetter]
+        ) {
+          // We already have the summary data for this option
+          dispatch(
+            setSummaryCardData(summaryCardResponse.allOptions[optionLetter])
+          );
+          dispatch(showSummaryCard());
+          setApprovingOption(false);
+          return;
+        }
+      }
+
+      // If we don't have the data already, fetch it
       const summaryData = await fetchSummaryCardData(selectedOptionId);
       dispatch(setSummaryCardData(summaryData));
       dispatch(showSummaryCard());

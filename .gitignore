@@ -74,3 +74,4 @@ back-end-tars/agents/agent5_task_dispatcher/__pycache__/__init__.cpython-312.pyc
 back-end-tars/agents/agent4_outcome_predictor/__pycache__/logic.cpython-312.pyc
 *.pyc
 *.pyc
+.DS_Store

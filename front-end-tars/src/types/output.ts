@@ -74,7 +74,9 @@ export interface Department {
 export interface SummaryCardData {
   businessOperationsFlow: {
     summary: string;
-    steps: BusinessFlowStep[];
+    steps?: BusinessFlowStep[];
+    nodes?: Node[];  // Add optional nodes property
+    edges?: Edge[];  // Add optional edges property
   };
   departments: Department[];
 }
