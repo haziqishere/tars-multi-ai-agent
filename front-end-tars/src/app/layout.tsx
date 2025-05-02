@@ -3,6 +3,7 @@ import "./globals.css";
 import { Providers } from "@/store/provider";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/react";
 
 // Import Geist font
 const geistSans = localFont({
@@ -46,7 +47,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
       <body className="h-full bg-dark-base text-text-primary">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <Analytics />
+        </Providers>
       </body>
     </html>
   );
