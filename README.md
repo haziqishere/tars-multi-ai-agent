@@ -1,6 +1,3 @@
-# tars-multi-ai-agent
- TARS Multi AI Agent System
-
 # TARS Multi-Agent System
 
 ## Overview
@@ -35,7 +32,11 @@ The repository is organized into three main folders:
 
 ## Architecture
 
-### High-Level Architecture
+### Back-end Architecture
+The back-end is a FastAPI application that:
+- Coordinates multiple agents through a centralized process manager
+- Implements agent logic for tasks such as retrieving internal knowledge, performing external searches, and generating recommendations
+- Provides a standardized API for front-end interaction
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       FastAPI Application                            │
@@ -67,17 +68,13 @@ The repository is organized into three main folders:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+
 ### Front-End
 The front-end is built with Next.js and TypeScript, leveraging Redux for state management. It provides a responsive and interactive interface for:
 - Submitting optimization queries
 - Visualizing agent workflows
 - Displaying analytics and recommendations
 
-### Back-End
-The back-end is a FastAPI application that:
-- Coordinates multiple agents through a centralized process manager
-- Implements agent logic for tasks such as retrieving internal knowledge, performing external searches, and generating recommendations
-- Provides a standardized API for front-end interaction
 
 ### Infrastructure
 The infrastructure is managed using Terraform, which:
@@ -88,6 +85,8 @@ The infrastructure is managed using Terraform, which:
 - **Front-End**: Next.js, TypeScript, Redux, Tailwind CSS
 - **Back-End**: FastAPI, Python, Docker
 - **Infrastructure**: Terraform, Azure
+- **AI Platform & Infrastructure**: Microsoft AI Foundry
+- **MCP**: Brave Search, Firecrawl
 
 ## Deployment
 
