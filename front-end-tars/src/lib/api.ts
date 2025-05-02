@@ -99,7 +99,7 @@ export const fetchOptimizationData = async (query: string): Promise<ApiResponse>
   try {
     // Use the local API proxy endpoint which forwards to the external API
     // This bypasses CORS issues in production
-    const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || '/api/optimization';
+    const apiEndpoint = '/api/optimization';
 
     const response = await fetch(apiEndpoint, {
       method: 'POST',
