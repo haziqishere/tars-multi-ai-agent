@@ -1,9 +1,68 @@
-# TARS Multi-Agent System
+<!-- TARS Logo -->
+<p align="center">
+  <img src="front-end-tars/public/assets/images/TARS LOGO small.png" alt="TARS AI Agent Logo" width="180" height="180" />
+</p>
 
-## Overview
-The TARS Multi-Agent System is a sophisticated platform designed to optimize business processes through a multi-agent architecture. It integrates a front-end interface, a back-end service for agent logic, and infrastructure for deployment on Azure. The system leverages Microsoft AI Foundry, A2A, and MCP for advanced AI capabilities.
+# tars-multi-ai-agent
+TARS Multi AI Agent System
 
-## Project Structure
+---
+
+# Table of Contents
+- [Project Overview](#project-overview)
+- [Architecture](#architecture)
+  - [System Deployment & Flow](#system-deployment--flow)
+  - [Problem Statement & Solution](#problem-statement--solution)
+  - [High-Level AI Agent Architecture](#high-level-ai-agent-architecture)
+  - [Agent Orchestration & Roles](#agent-orchestration--roles)
+- [Project Structure](#project-structure)
+- [Tech Stack](#tech-stack)
+- [Deployment Guide](#deployment-guide)
+  - [Front-End Deployment](#front-end-deployment)
+  - [Back-End Deployment on Azure VM](#back-end-deployment-on-azure-vm)
+  - [Infrastructure Deployment with Terraform](#infrastructure-deployment-with-terraform)
+- [How It Works](#how-it-works)
+- [Key Features](#key-features)
+- [Collaborators](#collaborators)
+- [Future Improvements](#future-improvements)
+- [Disclaimer](#disclaimer)
+
+---
+
+# Project Overview
+TARS Multi-Agent System is a platform for business process optimization using a multi-agent AI architecture. It consists of a Next.js front-end, a FastAPI back-end, and Terraform-managed Azure infrastructure. The system leverages Microsoft AI Foundry, A2A, and MCP for advanced AI capabilities.
+
+# Architecture
+
+## System Deployment & Flow
+<p align="center">
+  <img src="front-end-tars/public/assets/images/Software-Architecture.png" alt="System Deployment & Flow" width="600" />
+</p>
+
+This diagram shows how the front-end (deployed on Vercel) communicates with the back-end FastAPI service running in a Docker container on an Azure VM. The back-end orchestrates agent logic, calls to Microsoft AI Foundry, and MCP (Brave Search, Firecrawl, Tavily).
+
+## Problem Statement & Solution
+<p align="center">
+  <img src="front-end-tars/public/assets/images/problems-and-solution.png" alt="Problem Statement & Solution" width="600" />
+</p>
+
+This illustration highlights the business pain points (siloed data, slow manual analysis) and how TARS unifies internal and external data for actionable, real-time recommendations.
+
+## High-Level AI Agent Architecture
+<p align="center">
+  <img src="front-end-tars/public/assets/images/high-level-agent-interactions.png" alt="High-Level AI Agent Architecture" width="900" />
+</p>
+
+This architecture details the flow between SharePoint/Fabrics, the five agents (Enterprise Knowledge, Global Intelligence, Consultant, Outcome Predictor, Informant), and how outputs are structured for the front-end.
+
+## Agent Orchestration & Roles
+<p align="center">
+  <img src="front-end-tars/public/assets/images/agent_architecture.png" alt="Agent Orchestration & Roles" width="900" />
+</p>
+
+This diagram shows the A2A (Agent-to-Agent) orchestration, the role of the Strategic Analyst Agent as orchestrator, and the division between knowledge agents and action agents.
+
+# Project Structure
 The repository is organized into three main folders:
 
 ### 1. Front-End
@@ -84,11 +143,11 @@ The infrastructure is managed using Terraform, which:
 ## Tech Stack
 - **Front-End**: Next.js, TypeScript, Redux, Tailwind CSS
 - **Back-End**: FastAPI, Azure AI Agent Service, Python, Docker
-- **Infrastructure**: Terraform, Azure
+- **Infrastructure**: Terraform, Azure VM
 - **AI Platform & Infrastructure**: Microsoft AI Foundry
 - **MCP**: Brave Search, Firecrawl
 
-## Deployment
+## Deployment Guide
 
 ### Front-End Deployment
 Deployed on Vercel for seamless CI/CD and scalability.
@@ -108,12 +167,12 @@ Deployed on Vercel for seamless CI/CD and scalability.
 
 2. Pull the Docker image:
    ```bash
-   docker pull haziqishere/tars-multi-agent:v2-amd64
+   docker pull haziqishere/tars-multi-agent:v3.1-amd64
    ```
 
 3. Run the Docker container:
    ```bash
-   sudo docker run -d -p 80:80 --platform=linux/arm64/v8 haziqishere/tars-multi-agent:v2-amd64
+   sudo docker run -d -p 80:80 --platform=linux/arm64/v8 haziqishere/tars-multi-agent:v3.1-amd64
    ```
 
 4. Verify the container is running:
@@ -147,10 +206,6 @@ Deployed on Vercel for seamless CI/CD and scalability.
 
 4. Confirm the resources have been provisioned successfully.
 
-## Collaborators
-- **Haziq Ishere**: MLOps Engineer
-- **Ilham**: AI Engineer
-
 ## How It Works
 1. **User Interaction**: Users interact with the front-end to submit queries.
 2. **Agent Coordination**: The back-end processes the query through a pipeline of agents.
@@ -161,13 +216,16 @@ Deployed on Vercel for seamless CI/CD and scalability.
 - Integration with Microsoft AI Foundry, A2A, and MCP
 - Scalable and modular architecture
 
+## Collaborators
+- **Haziq**: MLOps Engineer
+- **Ilham**: AI Engineer
+
 ## Future Improvements
 - Enhance agent logic with more advanced AI models
 - Improve front-end interactivity and visualizations
 - Automate deployment pipelines for faster updates
 
-
-# Disclaimer 
-- In a real app, we ARE fetching this from the currently running server at Azure VM
--However, Agent 4 sometimes goes wrong and we're not getting emails data. So we backfill the missing email params.
-- The rest of the data are real from Azure VM that communicate with Microsoft AI Foundry
+## Disclaimer 
+- We ARE fetching this from the currently running server at Azure VM
+- However, Agent 4 sometimes goes wrong and we're not getting emails data. So we backfill the missing email params.
+- The rest of the data are real from Azure VM that communicate with Microsoft AI Foundry (which the document data is located)
