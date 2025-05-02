@@ -88,6 +88,8 @@ The infrastructure is managed using Terraform, which:
 - **Front-End**: Next.js, TypeScript, Redux, Tailwind CSS
 - **Back-End**: FastAPI, Python, Docker
 - **Infrastructure**: Terraform, Azure
+- **AI Platform & Infrastructure**: Microsoft AI Foundry
+- **MCP**: Brave Search, Firecrawl
 
 ## Deployment
 
