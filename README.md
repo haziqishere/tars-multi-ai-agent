@@ -10,9 +10,12 @@ TARS Multi AI Agent System
 
 # Table of Contents
 - [Project Overview](#project-overview)
+  - [Problem Statement & Solution](#problem-statement--solution)
 - [Architecture](#architecture)
   - [System Deployment & Flow](#system-deployment--flow)
-  - [Problem Statement & Solution](#problem-statement--solution)
+  - [Microsoft AI Foundry Integration](#microsoft-ai-foundry-integration)
+  - [Azure VM Deployment](#azure-vm-deployment)
+  - [Front-end Deployment on Vercel](#front-end-deployment-on-vercel)
   - [High-Level AI Agent Architecture](#high-level-ai-agent-architecture)
   - [Agent Orchestration & Roles](#agent-orchestration--roles)
 - [Project Structure](#project-structure)
@@ -32,6 +35,13 @@ TARS Multi AI Agent System
 # Project Overview
 TARS Multi-Agent System is a platform for business process optimization using a multi-agent AI architecture. It consists of a Next.js front-end, a FastAPI back-end, and Terraform-managed Azure infrastructure. The system leverages Microsoft AI Foundry, A2A, and MCP for advanced AI capabilities.
 
+## Problem Statement & Solution
+<p align="center">
+  <img src="front-end-tars/public/assets/images/problems-and-solution.png" alt="Problem Statement & Solution" width="600" />
+</p>
+
+This illustration highlights the business pain points (siloed data, slow manual analysis) and how TARS unifies internal and external data for actionable, real-time recommendations.
+
 # Architecture
 
 ## System Deployment & Flow
@@ -41,12 +51,26 @@ TARS Multi-Agent System is a platform for business process optimization using a 
 
 This diagram shows how the front-end (deployed on Vercel) communicates with the back-end FastAPI service running in a Docker container on an Azure VM. The back-end orchestrates agent logic, calls to Microsoft AI Foundry, and MCP (Brave Search, Firecrawl, Tavily).
 
-## Problem Statement & Solution
+### Microsoft AI Foundry Integration
 <p align="center">
-  <img src="front-end-tars/public/assets/images/problems-and-solution.png" alt="Problem Statement & Solution" width="600" />
+  <img src="front-end-tars/public/assets/images/ui-screenshot-of-microsoft-ai-froundry-running.png" alt="Microsoft AI Foundry" width="800" />
 </p>
 
-This illustration highlights the business pain points (siloed data, slow manual analysis) and how TARS unifies internal and external data for actionable, real-time recommendations.
+The TARS system integrates with Microsoft AI Foundry, accessing the ContosoDataV2:1 dataset containing organizational documents structured in various departments including Finance, Operations, Policy, Procurement, Sales, and Strategic departments. This data provides the internal knowledge base that powers Agent 1's enterprise knowledge capabilities.
+
+### Azure VM Deployment
+<p align="center">
+  <img src="front-end-tars/public/assets/images/ui-screenshot-of-vm-running-at-azure.png" alt="Azure VM Deployment" width="800" />
+</p>
+
+Azure VM running the TARS multi-agent backend in a Docker container, with Standard_B2s size and Linux OS in East US region, managed through pay-as-u-go subscription.
+
+### Front-end Deployment on Vercel
+<p align="center">
+  <img src="front-end-tars/public/assets/images/ui-screenshot-of-vercel-showing-front-end-running.png" alt="Vercel Deployment" width="800" />
+</p>
+
+The front-end is deployed on Vercel's platform, with automated CI/CD from the main branch, providing high availability and scaling capabilities.
 
 ## High-Level AI Agent Architecture
 <p align="center">
