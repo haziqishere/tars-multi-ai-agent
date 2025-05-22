@@ -1,6 +1,6 @@
 {
   "env": {
-    "EXTERNAL_API_ENDPOINT": "http://13.82.95.209/api/optimization"
+    "EXTERNAL_API_ENDPOINT": "http://20.185.179.3/api/optimization" 
   },
   "buildCommand": "next build"
 } 
