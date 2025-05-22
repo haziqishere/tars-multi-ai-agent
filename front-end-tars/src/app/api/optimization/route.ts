@@ -304,39 +304,27 @@ const generateChatResponse = (query: string): string => {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the external API endpoint from environment variables
-    // Fall back to the specific URL if not defined
-    const externalApiEndpoint = process.env.EXTERNAL_API_ENDPOINT || 'http://13.82.95.209/api/optimization';
-    
-    // Get the JSON body from the incoming request
-    const body = await request.json();
-
-    // Forward the request to the external API
-    const response = await fetch(externalApiEndpoint, {
+    // Make the request directly to the backend
+    const response = await fetch('http://20.185.179.3/api/optimization', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(await request.json()),
     });
 
     // Get the response data
     const data = await response.json();
-
-    // Return the response from the external API
-    return NextResponse.json(data, {
-      status: response.status,
-    });
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Error in API proxy:', error);
+    console.error('Error in optimization route:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch data from external API' },
+      { error: 'Failed to process request' },
       { status: 500 }
     );
   }
 }
 
-// Health check endpoint
 export async function GET() {
   return NextResponse.json({ 
     status: 'ok', 
